@@ -1,0 +1,92 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Tests>
+  <Test name="1" description="Same ID, different VersionSpec">
+    <Input>
+      <Package id="1" version="1.1.1.1" spec="(1.2,2.3)"/>
+      <Package id="1" version="1.1.1.1" spec="(1.2,2.3]"/>
+    </Input>
+    <Output>
+      <Package id="1" version="1.1.1.1" spec="(1.2,2.3)"/>
+    </Output>
+    <Error/>
+  </Test>
+  <Test name="2" description="Returns all input packages of same ID when constraint cant be met">
+    <Input>
+      <Package id="1" version="1.1.1.1" spec="(1.2,2.3)"/>
+      <Package id="1" version="1.1.1.1" spec="(1.2,2.3]"/>
+      <Package id="1" version="7.6" spec=""/>
+    </Input>
+    <Output/>
+    <Error>
+      <Package id="1" version="1.1.1.1" spec="(1.2,2.3)"/>
+      <Package id="1" version="1.1.1.1" spec="(1.2,2.3]"/>
+      <Package id="1" version="7.6" spec=""/>
+    </Error>
+  </Test>
+  <Test name="3" description="Single package just gets added">
+    <Input>
+      <Package id="NUnit" version="2.1.4" spec=""/>
+    </Input>
+    <Output>
+      <Package id="NUnit" version="2.1.4" spec=""/>
+    </Output>
+    <Error>
+    </Error>
+  </Test>
+  <Test name="4" description="If we have two that have different versions that both fall within a resolved versionspec, take the highest with resolved versionspec">
+    <Input>
+      <Package id="Package" version="1.5" spec="(1.2,2.3)"/>
+      <Package id="Package" version="1.2.5" spec="(1.2,2.3]"/>
+    </Input>
+    <Output>
+      <Package id="Package" version="1.5" spec="(1.2,2.3)"/>
+    </Output>
+    <Error>
+    </Error>
+  </Test>
+  <Test name="5" description="Take specific when it matches an allowedVersion match">
+    <Input>
+      <Package id="Package" version="1.2.1" spec=""/>
+      <Package id="Package" version="1.3" spec="(1.2,2.3]"/>
+    </Input>
+    <Output>
+      <Package id="Package" version="1.2.1" spec=""/>
+    </Output>
+    <Error>
+    </Error>
+  </Test>
+  <Test name="6" description="Null Versionspec doesnt blow up?">
+    <Input>
+      <Package id="blah" version="1.1"/>
+    </Input>
+    <Output>
+      <Package id="blah" version="1.1"/>
+    </Output>
+    <Error>
+    </Error>
+  </Test>
+  <Test name="7" description="Test specific and allowed combination">
+    <Input>
+      <Package id="foo" version="0.27.1.2" />
+      <Package id="foo" version="0.27.1.2" />
+      <Package id="foo" version="0.27.1.1" spec="[0.27.1,0.27.2)"/>
+    </Input>
+    <Output>
+      <Package id="foo" version="0.27.1.2" />
+    </Output>
+    <Error>
+    </Error>
+  </Test>
+  <Test name="999" description="Template">
+    <Input>
+      <Package id="" version="" spec=""/>
+    </Input>
+    <Output>
+      <Package id="" version="" spec=""/>
+    </Output>
+    <Error>
+      <Package id="" version="" spec=""/>
+    </Error>
+  </Test>
+</Tests>
+
