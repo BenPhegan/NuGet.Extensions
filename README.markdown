@@ -1,13 +1,18 @@
-h1. NuGet.Extensions
+# NuGet.Extensions
 
 Provides a set of extensions to NuGet.  These include:
 
-h2. GET
+## GET
+Simplified update of full solution or directory structure NuGet package requirements.
 
-h2. FINDASSEMBLY
+## FINDASSEMBLY
+Find a specific assembly within packages on a specific feed.
 
-h2. NUGETIFY
+## NUGETIFY
+Modify a solution to use NuGet packages instead of existing references (INCOMPLETE)
 
-h2. CLONE
+## CLONE
+Clone a feed from one location to another (INCOMPLETE)
 
-h2. COPY
+## COPY
+Copy a package from one feed to another (INCOMPLETE)
