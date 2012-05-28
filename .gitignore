@@ -1,0 +1,22 @@
+syntax: glob
+*.suo
+obj/
+bin/
+*.user
+packages/**
+*.crunchsolution.local.xml
+*.crunchproject.local.xml
+*.crunchsolution.cache
+_ReSharper.*/**
+**/*.ncrunchproject
+*.ncrunchsolution
+*.suo
+/NuGet.Extensions/bin/**
+/NuGet.Extensions/obj/**
+/NuGet.Extensions.Tests/bin/**
+/NuGet.Extensions.Tests/obj/**
+/Build.Debug
+/Build.Release
+/Test.Debug
+/Test.Release
+_Resharper.*/**
