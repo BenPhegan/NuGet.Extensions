@@ -54,6 +54,7 @@
   <ItemGroup>
     <Compile Include="Commands\FindAssembly.cs" />
     <Compile Include="Commands\Get.cs" />
+    <Compile Include="Commands\ListPackageAssemblies.cs" />
     <Compile Include="Commands\Nugetify.cs" />
     <Compile Include="GetResources.Designer.cs">
       <AutoGen>True</AutoGen>
