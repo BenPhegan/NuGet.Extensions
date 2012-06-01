@@ -42,6 +42,12 @@
     <Reference Include="NuGet.Extras">
       <HintPath>..\packages\NuGet.Extras.1.0\lib\net40\NuGet.Extras.dll</HintPath>
     </Reference>
+    <Reference Include="QuickGraph">
+      <HintPath>..\packages\QuickGraph.3.6.61119.7\lib\net4\QuickGraph.dll</HintPath>
+    </Reference>
+    <Reference Include="QuickGraph.Serialization">
+      <HintPath>..\packages\QuickGraph.3.6.61119.7\lib\net4\QuickGraph.Serialization.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.Core" />
@@ -52,6 +58,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Commands\Graph.cs" />
     <Compile Include="Commands\FindAssembly.cs" />
     <Compile Include="Commands\Get.cs" />
     <Compile Include="Commands\Details.cs" />
@@ -76,7 +83,7 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>if not exist $(TargetDir)Merged mkdir $(TargetDir)Merged
-$(SolutionDir)tools\ilmerge\ilmerge.exe /v4 /t:library /out:$(TargetDir)Merged\$(TargetFileName) $(TargetPath) $(TargetDir)Nuget.Extras.dll</PostBuildEvent>
+$(SolutionDir)tools\ilmerge\ilmerge.exe /v4 /t:library /out:$(TargetDir)Merged\$(TargetFileName) $(TargetPath) $(TargetDir)Nuget.Extras.dll $(TargetDir)QuickGraph.dll $(TargetDir)QuickGraph.Serialization.dll</PostBuildEvent>
   </PropertyGroup>
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
