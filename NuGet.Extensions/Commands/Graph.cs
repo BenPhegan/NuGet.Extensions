@@ -33,8 +33,14 @@ namespace NuGet.Extensions.Commands
         [Option("Cull any disconnected vertices from the graph.")]
         public Boolean NoLoners { get; set; }
 
+        private string _output = "graph.dgml";
+
         [Option("Output file name.")]
-        public string Output { get; set; }
+        public string Output
+        {
+            get { return _output; }
+            set { _output = value; }
+        }
 
         [ImportingConstructor]
         public Graph(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider sourceProvider)
