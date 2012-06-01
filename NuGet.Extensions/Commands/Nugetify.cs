@@ -63,11 +63,11 @@ namespace NuGet.Extensions.Commands
                                     //project.RemoveItem(referenceMatch);
                                     var package = mapping.Value.First();
                                     var fileLocation = GetFileLocationFromPackage(package, mapping.Key);
-                                    var newHintPath = Path.Combine(solutionRoot.Name, "packages",package.Id, fileLocation);
+                                    var newHintPathFull = Path.Combine(solutionRoot.Name, "packages",package.Id, fileLocation);
+                                    var newHintPath = GetRelativePath(solutionRoot.Name, newHintPathFull);
                                     referenceMatch.SetMetadataValue("HintPath", newHintPath);
                                 }
                             }
-
                             project.Save();
                         }
                     }
@@ -80,6 +80,23 @@ namespace NuGet.Extensions.Commands
             return (from fileLocation in package.GetFiles() 
                     where fileLocation.Path.ToLowerInvariant().EndsWith(key, StringComparison.OrdinalIgnoreCase) 
                     select fileLocation.Path).FirstOrDefault();
+        }
+
+        private static String GetRelativePath(string root, string child)
+        {
+            // Validate paths.
+            Contract.Assert(!String.IsNullOrEmpty(root));
+            Contract.Assert(!String.IsNullOrEmpty(child));
+            
+            // Create Uris
+            var rootUri = new Uri(root);
+            var childUri = new Uri(child);
+
+            // Get relative path.
+            var relativeUri = rootUri.MakeRelativeUri(childUri);
+
+            // Clean path and return.
+            return Uri.UnescapeDataString(relativeUri.ToString()).Replace('/', Path.DirectorySeparatorChar);
         }
 
         private Dictionary<string, List<IPackage>> ResolveAssembliesToPackagesConfigFile(FileInfo projectFileInfo, IEnumerable<ProjectItem> references)
