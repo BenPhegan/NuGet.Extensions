@@ -212,7 +212,7 @@ namespace NuGet.Extensions.Commands
 
             try {
                 using (Stream stream = package.GetStream()) {
-                    packageServer.PushPackage(apiKey, stream, 600);
+                    packageServer.PushPackage(apiKey, stream, 60000);
                 }
             }
             catch {
