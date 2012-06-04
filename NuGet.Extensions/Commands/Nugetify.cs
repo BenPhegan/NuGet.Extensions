@@ -11,8 +11,21 @@ using NuGet.Extras.Repositories;
 
 namespace NuGet.Extensions.Commands
 {
+        [Command("nugetify", "Given a solution, attempts to replace all file references with package references, adding all reqhired" +
+                "packages.config files as it goes.", MinArgs = 1, MaxArgs = 1)]
     public class Nugetify : Command
     {
+        private readonly List<string> _sources = new List<string>();
+        public IPackageRepositoryFactory RepositoryFactory { get; set; }
+        public IPackageSourceProvider SourceProvider { get; set; }
+        private RepositoryAssemblyResolver _resolver;
+        private IFileSystem _fileSystem;
+
+        [Option("A list of sources to search")]
+        public ICollection<string> Source
+        {
+            get { return _sources; }
+        }
 
         private readonly IPackageRepositoryFactory _repositoryFactory;
         private readonly IPackageSourceProvider _sourceProvider;
