@@ -74,6 +74,7 @@
     </Compile>
     <Compile Include="MSBuild\Solution.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TeamCity\TeamCityApi.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="GetResources.resx">
