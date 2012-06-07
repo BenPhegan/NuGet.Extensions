@@ -38,7 +38,7 @@ namespace NuGet.Extensions.TeamCity
 
         public IEnumerable<Artifact> GetArtifactListByBuildType(string buildType)
         {
-            var request = new RestRequest("repository/download/{IID}/lastSuccessful/teamcity-ivy.xml");
+            var request = new RestRequest("repository/download/{ID}/lastSuccessful/teamcity-ivy.xml");
             request.AddParameter("ID", buildType, ParameterType.UrlSegment);
             request.RequestFormat = DataFormat.Xml;
             request.AddHeader("Accept", "application/xml");
