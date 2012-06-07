@@ -43,7 +43,7 @@ namespace NuGet.Extensions.TeamCity
             request.RequestFormat = DataFormat.Xml;
             request.AddHeader("Accept", "application/xml");
             var response = _client.Execute<IvyModule>(request);
-            return response.Data.Publications;
+            return response.Data != null ? response.Data.Publications : new List<Artifact>();
         }
     }
 
