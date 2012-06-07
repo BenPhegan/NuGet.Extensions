@@ -19,23 +19,13 @@ namespace NuGet.Extensions.Commands
     [Command("teamcity", "Graphs details regarding NuGet and TeamCity", MinArgs = 0)]
     public class TeamCity : Command
     {
-        private readonly List<string> _sources = new List<string>();
-        public IPackageRepositoryFactory RepositoryFactory { get; set; }
-        public IPackageSourceProvider SourceProvider { get; set; }
-        private RepositoryAssemblyResolver _resolver;
-        private IFileSystem _fileSystem;
         private AdjacencyGraph<string, TaggedEquatableEdge<string, string>> _simpleGraph = new AdjacencyGraph<string, TaggedEquatableEdge<string, string>>();
         private AdjacencyGraph<VertexBase, EquatableEdge<VertexBase>> _fancyGraph = new AdjacencyGraph<VertexBase, EquatableEdge<VertexBase>>();
         private Dictionary<string, BuildPackageMapping> _mappings = new Dictionary<string, BuildPackageMapping>();
+        private string _outputFilename = "TeamCityGraph.dgml";
 
         [Option("Project to confine search within")]
         public string Project { get; set; }
-
-        [Option("A list of sources to search")]
-        public ICollection<string> Source
-        {
-            get { return _sources; }
-        }
 
         [Option("Target TeamCity server")]
         public string TeamCityServer { get; set; }
@@ -46,15 +36,19 @@ namespace NuGet.Extensions.Commands
         [Option("Outputs a Package as a node, rather than just as a label on an edge.")]
         public Boolean PackageAsVertex { get; set; }
 
-        [ImportingConstructor]
-        public TeamCity(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider sourceProvider)
-        {
-            Contract.Assert(packageRepositoryFactory != null);
-            Contract.Assert(sourceProvider != null);
+        [Option("Don't use the presence of a package in the artifacts as evidence of a publish")]
+        public Boolean NoArtifact { get; set; }
 
-            RepositoryFactory = packageRepositoryFactory;
-            SourceProvider = sourceProvider;
+        [Option("Filename to output")]
+        public string Output 
+        { 
+            get { return _outputFilename; }
+            set { _outputFilename = value; } 
         }
+
+        [ImportingConstructor]
+        public TeamCity()
+        {}
 
         public override void ExecuteCommand()
         {
@@ -73,18 +67,20 @@ namespace NuGet.Extensions.Commands
 
                 AddSubscribeDataFromTriggers(buildConfig, details);
 
-                AddPublishDataFromArtifacts(buildConfig, api);
+                if(!NoArtifact)
+                    AddPublishDataFromArtifacts(buildConfig, api);
             }
+
 
             if (PackageAsVertex)
             {
                 BuildGraphWithPackagesAsVertices(_mappings);
-                _fancyGraph.ToDirectedGraphML(_fancyGraph.GetVertexIdentity(), _fancyGraph.GetEdgeIdentity(), GetNodeFormat(), GetEdgeFormat()).WriteXml("BuildDependencyGraph-PackagesAsVertices.dgml");
+                _fancyGraph.ToDirectedGraphML(_fancyGraph.GetVertexIdentity(), _fancyGraph.GetEdgeIdentity(), GetNodeFormat(), GetEdgeFormat()).WriteXml(_outputFilename);
             }
             else
             {
                 BuildGraphWithPackagesAsLabels(_mappings);
-                _simpleGraph.ToDirectedGraphML(_simpleGraph.GetVertexIdentity(), _simpleGraph.GetEdgeIdentity(),(s,n) => n.Label = s,(s, e) => e.Label = s.Tag).WriteXml("BuildDependencyGraph.dgml");
+                _simpleGraph.ToDirectedGraphML(_simpleGraph.GetVertexIdentity(), _simpleGraph.GetEdgeIdentity(),(s,n) => n.Label = s,(s, e) => e.Label = s.Tag).WriteXml(_outputFilename);
             }
 
             Console.WriteLine();
@@ -105,8 +101,7 @@ namespace NuGet.Extensions.Commands
                                                                        }
                                                                        else
                                                                        {
-                                                                           SetNodeDetails(n, "Green", "RoundedRectangle",
-                                                                                          "Build");
+                                                                           SetNodeDetails(n, "Green", "RoundedRectangle", "Build");
                                                                        }
                                                                    };
             return formatNode;
@@ -250,18 +245,6 @@ namespace NuGet.Extensions.Commands
         private void OutputElapsedTime(Stopwatch sw)
         {
             Console.WriteLine("Completed search in {0} seconds", sw.Elapsed.TotalSeconds);
-        }
-
-        private IPackageRepository GetRepository()
-        {
-            var repository = AggregateRepositoryHelper.CreateAggregateRepositoryFromSources(RepositoryFactory, SourceProvider, Source);
-            repository.Logger = Console;
-            return repository;
-        }
-
-        protected virtual IFileSystem CreateFileSystem(string root)
-        {
-            return new PhysicalFileSystem(root);
         }
     }
 
