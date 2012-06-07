@@ -59,6 +59,7 @@ namespace NuGet.Extensions.Commands
         public override void ExecuteCommand()
         {
             var sw = new Stopwatch();
+            sw.Start();
             var api = new TeamCityApi(TeamCityServer);
             var buildConfigs = string.IsNullOrEmpty(Project)
                                    ? api.GetBuildTypes()
@@ -78,28 +79,12 @@ namespace NuGet.Extensions.Commands
             if (PackageAsVertex)
             {
                 BuildGraphWithPackagesAsVertices(_mappings);
-                Action<EquatableEdge<VertexBase>, DirectedGraphLink> formatEdge = (e, l) =>
-                                                                                      {
-                                                                                          l.Label = "";
-                                                                                      };
-                Action<VertexBase, DirectedGraphNode> formatNode = (v, n) =>
-                                                                       {
-                                                                            n.Label = v.Name;
-                                                                            if (v is PackageVertex)
-                                                                            {
-                                                                                SetNodeDetails(n, null, "None", "Package");
-                                                                            }
-                                                                            else
-                                                                            {
-                                                                                SetNodeDetails(n, "Green", "RoundedRectangle", "Build");
-                                                                            }
-                                                                       };
-                _fancyGraph.ToDirectedGraphML(_fancyGraph.GetVertexIdentity(), _fancyGraph.GetEdgeIdentity(), formatNode, formatEdge).WriteXml("BuildDependencyGraph-PackagesAsVertices.dgml");
+                _fancyGraph.ToDirectedGraphML(_fancyGraph.GetVertexIdentity(), _fancyGraph.GetEdgeIdentity(), GetNodeFormat(), GetEdgeFormat()).WriteXml("BuildDependencyGraph-PackagesAsVertices.dgml");
             }
             else
             {
                 BuildGraphWithPackagesAsLabels(_mappings);
-                _simpleGraph.ToDirectedGraphML().WriteXml("BuildDependencyGraph.dgml");
+                _simpleGraph.ToDirectedGraphML(_simpleGraph.GetVertexIdentity(), _simpleGraph.GetEdgeIdentity(),(s,n) => n.Label = s,(s, e) => e.Label = s.Tag).WriteXml("BuildDependencyGraph.dgml");
             }
 
             Console.WriteLine();
@@ -107,6 +92,30 @@ namespace NuGet.Extensions.Commands
             OutputElapsedTime(sw);
             Environment.Exit(0);
 
+        }
+
+        private static Action<VertexBase, DirectedGraphNode> GetNodeFormat()
+        {
+            Action<VertexBase, DirectedGraphNode> formatNode = (v, n) =>
+                                                                   {
+                                                                       n.Label = v.Name;
+                                                                       if (v is PackageVertex)
+                                                                       {
+                                                                           SetNodeDetails(n, null, "None", "Package");
+                                                                       }
+                                                                       else
+                                                                       {
+                                                                           SetNodeDetails(n, "Green", "RoundedRectangle",
+                                                                                          "Build");
+                                                                       }
+                                                                   };
+            return formatNode;
+        }
+
+        private static Action<EquatableEdge<VertexBase>, DirectedGraphLink> GetEdgeFormat()
+        {
+            Action<EquatableEdge<VertexBase>, DirectedGraphLink> formatEdge = (e, l) => { l.Label = ""; };
+            return formatEdge;
         }
 
         private static void SetNodeDetails(DirectedGraphNode n, string background, string shape, string category)
@@ -141,7 +150,13 @@ namespace NuGet.Extensions.Commands
 
             //Constrain by feed if required
             if (!string.IsNullOrEmpty(Feed))
-                triggers = triggers.Where(t => t.Properties.First(p => p.Name.Equals("nuget.publish.source")).value.Equals(Feed));
+                triggers = triggers.Where(t =>
+                                              {
+                                                  var prop = t.Properties.FirstOrDefault(p => p.Name.Equals("nuget.source"));
+                                                  if (prop != null && prop.value.Equals(Feed))
+                                                      return true;
+                                                  return false;
+                                              });
 
             foreach (var trigger in triggers)
             {
@@ -158,7 +173,13 @@ namespace NuGet.Extensions.Commands
             var steps = details.Steps.Where(s => s.Type.Equals("jb.nuget.publish"));
             //Constrain by feed if required.
             if (!string.IsNullOrEmpty(Feed))
-                steps = steps.Where(s => s.Properties.First(p => p.Name.Equals("nuget.publish.source")).value.Equals(Feed));
+                steps = steps.Where(s =>
+                                        {
+                                            var prop = s.Properties.FirstOrDefault(p => p.Name.Equals("nuget.publish.source"));
+                                            if (prop != null && prop.value.Equals(Feed))
+                                                return true;
+                                            return false;
+                                        });
 
             foreach (var publishStep in steps)
             {
@@ -178,7 +199,7 @@ namespace NuGet.Extensions.Commands
                     var matches = mappings.Where(n => n.Value.Publishes.Any(p => p.Equals(subscription)));
                     foreach (var match in matches)
                     {
-                        _simpleGraph.AddEdge(new TaggedEquatableEdge<string, string>(mapping.Key, match.Key,subscription));
+                        _simpleGraph.AddVerticesAndEdge(new TaggedEquatableEdge<string, string>(match.Key, mapping.Key,subscription));
                     }
                 }
             }
