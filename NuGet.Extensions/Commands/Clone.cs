@@ -1,10 +1,10 @@
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.Composition;
+using System.Diagnostics;
 using System.Linq;
 using NuGet.Commands;
-using System.Diagnostics;
-using System;
 using NuGet.Extras;
 using NuGet.Extras.Commands;
 using NuGet.Extras.Comparers;
@@ -54,6 +54,11 @@ namespace NuGet.Extensions.Commands
         [Option(typeof(CloneResources), "TagsDescription")]
         public string Tags { get; set; }
 
+        [Option("Gets a list of the Ids availabble on the destination, and only clones them")]
+        public bool Refresh { get; set; }
+
+        private IQueryable<string> _packageList;
+
         /// <summary>
         /// Prepares the sources.
         /// </summary>
@@ -92,21 +97,11 @@ namespace NuGet.Extensions.Commands
 
             //TODO: Move to base class?
             string packageId = base.Arguments.Count > 0 ? base.Arguments[0] : string.Empty;
-            //Either use just one package id
-            if (!string.IsNullOrEmpty(packageId))
-            {
-                PackageList.Add(packageId);
-            }
-            else
-            {
-                //or get the full list from the source, and go from there....
-                //REVIEW: this is a potential bottleneck - maybe split out in to batch call
-                PackageList.AddRange(GetPackageList(false, string.Empty, SourceProvider, _tags).Select(p => p.Id));
-            }
+            PopulateSourcePackageList(packageId);
 
             //Grab each package, get the full list of versions, and then call a Copy on each.
             //TODO Copy is currently using the default InstallCommand under the covers, which means this is a bit messy on the dependencies (ie it gets them all)
-            foreach (string packageName in PackageList)
+            foreach (string packageName in _packageList)
             {
                 //Get the list of packages from both source and destination, and if we only have one destination then find the set difference
                 IEnumerable<IPackage> sourcePackages = GetPackageList(AllVersions, packageName, SourceProvider);
@@ -141,6 +136,21 @@ namespace NuGet.Extensions.Commands
                         Console.WriteLine();
                     }
                 }
+            }
+        }
+
+        private void PopulateSourcePackageList(string packageId)
+        {
+            if (!string.IsNullOrEmpty(packageId))
+            {
+                _packageList = new EnumerableQuery<string>(new List<string>(){packageId});
+            }
+            else
+            {
+                //or get the full list from the source, and go from there....
+                //REVIEW: this is a potential bottleneck - maybe split out in to batch call
+                _packageList = Refresh ? GetPackageList(false, string.Empty, DestinationProvider, _tags).Select(p => p.Id) 
+                                       : GetPackageList(false, string.Empty, SourceProvider, _tags).Select(p => p.Id);
             }
         }
 
@@ -191,7 +201,8 @@ namespace NuGet.Extensions.Commands
             return GetPackageList(allVersions, id, sourceProvider, null);
         }
 
-        public IEnumerable<IPackage> GetPackageList(bool allVersions, string id, IPackageSourceProvider sourceProvider, IEnumerable<string> tags)
+
+        public IQueryable<IPackage> GetPackageList(bool allVersions, string id, IPackageSourceProvider sourceProvider, IEnumerable<string> tags)
         {
             bool singular = !string.IsNullOrEmpty(id);
 
@@ -212,9 +223,9 @@ namespace NuGet.Extensions.Commands
 
             //listcommand doesnt return just the matching packages, so filter here...
             if (singular)
-                return packages.Where(p => p.Id.ToLowerInvariant() == id.ToLowerInvariant());
+                return packages.Where(p => p.Id.ToLowerInvariant() == id.ToLowerInvariant()).AsQueryable();
             else
-                return packages;
+                return packages.AsQueryable();
         }
 
         private void LogPackageList(IEnumerable<IPackage> packages, IEnumerable<string> tags)
