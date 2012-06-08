@@ -13,6 +13,7 @@ using QuickGraph;
 using QuickGraph.Serialization;
 using QuickGraph.Serialization.DirectedGraphML;
 using QuickGraph.Algorithms;
+using System.Text.RegularExpressions;
 
 namespace NuGet.Extensions.Commands
 {
@@ -131,7 +132,7 @@ namespace NuGet.Extensions.Commands
             //TODO we cant detect feed here, so turn off when feed specific?
             foreach (var artifact in api.GetArtifactListByBuildType(buildConfig.Id).Where(a => a.Ext.Equals("nupkg")))
             {
-                var package = artifact.Name;
+                var package = Regex.Match(artifact.Name, @".+?(?=(?:(?:[\._]\d+){2,})$)").Value;
                 AddBuildPackageMappingIfRequired(buildConfig);
                 if (!_mappings[buildConfig.Name].Publishes.Contains(package))
                     _mappings[buildConfig.Name].Publishes.Add(package);
