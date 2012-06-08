@@ -8,6 +8,9 @@ Targetted at the package restore use case, but does only what it says (it **get*
 ## FINDASSEMBLY
 Find a specific assembly within packages on a specific feed.
 
+## DETAILS
+Allows you to query details about a specific package ID from the commandline.  Provides information such as the file paths, dependencies, authors etc.
+
 ## GRAPH
 Provides the ability to graph the package dependency for an entire feed.  Also lets you know if there are any cyclic dependencies on your feed.  Primarily aimed at large internal feed management.
 
