@@ -1,23 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using NuGet.Commands;
 using System.ComponentModel.Composition;
-using NuGet.Common;
-using System.IO;
 using System.Diagnostics;
-using System.Diagnostics.Contracts;
+using System.Linq;
+using System.Text.RegularExpressions;
+using NuGet.Commands;
+using NuGet.Common;
 using NuGet.Extensions.TeamCity;
-using NuGet.Extras.Repositories;
 using QuickGraph;
+using QuickGraph.Algorithms;
 using QuickGraph.Serialization;
 using QuickGraph.Serialization.DirectedGraphML;
-using QuickGraph.Algorithms;
-using System.Text.RegularExpressions;
 
 namespace NuGet.Extensions.Commands
 {
-    [Command("teamcity", "Graphs details regarding NuGet and TeamCity", MinArgs = 0)]
+    [Command("teamcity", "Provides the ability to graph NuGet publish and subscribe details into a graphical representaiton" +
+             "of your builds dependency graph.", MinArgs = 0)]
     public class TeamCity : Command
     {
         private AdjacencyGraph<string, TaggedEquatableEdge<string, string>> _simpleGraph = new AdjacencyGraph<string, TaggedEquatableEdge<string, string>>();
@@ -40,11 +38,17 @@ namespace NuGet.Extensions.Commands
         [Option("Don't use the presence of a package in the artifacts as evidence of a publish")]
         public Boolean NoArtifact { get; set; }
 
+        [Option("Don't use NuGet Publish step to build publish output.")]
+        public Boolean NoPublishStep { get; set; }
+
+        [Option("Don't graph packages that are not consumed within graph.")]
+        public Boolean NoUnconsumedPackages { get; set; }
+
         [Option("Filename to output")]
-        public string Output 
-        { 
+        public string Output
+        {
             get { return _outputFilename; }
-            set { _outputFilename = value; } 
+            set { _outputFilename = value; }
         }
 
         [ImportingConstructor]
@@ -63,12 +67,14 @@ namespace NuGet.Extensions.Commands
             foreach (var buildConfig in buildConfigs)
             {
                 var details = api.GetBuildTypeDetailsById(buildConfig.Id);
-                
-                AddPublishDataFromSteps(buildConfig, details);
 
                 AddSubscribeDataFromTriggers(buildConfig, details);
 
-                if(!NoArtifact)
+                if (!NoPublishStep)
+                    AddPublishDataFromSteps(buildConfig, details);
+
+
+                if (!NoArtifact)
                     AddPublishDataFromArtifacts(buildConfig, api);
             }
 
@@ -81,7 +87,7 @@ namespace NuGet.Extensions.Commands
             else
             {
                 BuildGraphWithPackagesAsLabels(_mappings);
-                _simpleGraph.ToDirectedGraphML(_simpleGraph.GetVertexIdentity(), _simpleGraph.GetEdgeIdentity(),(s,n) => n.Label = s,(s, e) => e.Label = s.Tag).WriteXml(_outputFilename);
+                _simpleGraph.ToDirectedGraphML(_simpleGraph.GetVertexIdentity(), _simpleGraph.GetEdgeIdentity(),(s, n) => n.Label = s, (s, e) => e.Label = s.Tag).WriteXml(_outputFilename);
             }
 
             Console.WriteLine();
@@ -180,10 +186,26 @@ namespace NuGet.Extensions.Commands
             foreach (var publishStep in steps)
             {
                 AddBuildPackageMappingIfRequired(buildConfig);
-                var package = publishStep.Properties.First(p => p.Name.Equals("nuget.publish.files")).value.Replace(".nupkg", "");
-                if (!_mappings[buildConfig.Name].Publishes.Contains(package))
-                    _mappings[buildConfig.Name].Publishes.Add(package);
+                var packageNames = GetPackageNames(publishStep.Properties.First(p => p.Name.Equals("nuget.publish.files")).value);
+                foreach (var package in packageNames)
+                {
+                    if (!_mappings[buildConfig.Name].Publishes.Contains(package))
+                        _mappings[buildConfig.Name].Publishes.Add(package);
+                }
             }
+        }
+
+        private IEnumerable<string> GetPackageNames(string fullValue)
+        {
+            var strings = fullValue.Split(Environment.NewLine.ToCharArray());
+            var returnStrings = new List<string>();
+            foreach (var s in strings)
+            {
+                var temp = Regex.Replace(s, @"\%.*\%", "");
+                temp = temp.Replace(".nupkg", "").TrimEnd('.');
+                returnStrings.Add(temp);
+            }
+            return returnStrings;
         }
 
         private void BuildGraphWithPackagesAsLabels(Dictionary<string, BuildPackageMapping> mappings)
@@ -195,7 +217,7 @@ namespace NuGet.Extensions.Commands
                     var matches = mappings.Where(n => n.Value.Publishes.Any(p => p.Equals(subscription)));
                     foreach (var match in matches)
                     {
-                        _simpleGraph.AddVerticesAndEdge(new TaggedEquatableEdge<string, string>(match.Key, mapping.Key,subscription));
+                        _simpleGraph.AddVerticesAndEdge(new TaggedEquatableEdge<string, string>(match.Key, mapping.Key, subscription));
                     }
                 }
             }
@@ -216,6 +238,15 @@ namespace NuGet.Extensions.Commands
                 {
                     var package = FindOrCreateVertex<PackageVertex>(publications);
                     _fancyGraph.AddEdge(new EquatableEdge<VertexBase>(build, package));
+                }
+            }
+            if (NoUnconsumedPackages)
+            {
+                //Clean any edges where there are no outgoing and the vertex is of type PackageVertex
+                var sinks = _fancyGraph.Sinks().Where(s => s is PackageVertex).ToList();
+                foreach (var vertexBase in sinks)
+                {
+                    _fancyGraph.RemoveVertex(vertexBase);
                 }
             }
         }
@@ -247,21 +278,27 @@ namespace NuGet.Extensions.Commands
         {
             Console.WriteLine("Completed search in {0} seconds", sw.Elapsed.TotalSeconds);
         }
+
+
+        private class VertexBase
+        {
+            public string Name { get; set; }
+        }
+
+        private class PackageVertex : VertexBase
+        {
+        }
+
+        private class BuildVertex : VertexBase
+        {
+        }
+
+        private class BuildPackageMapping
+        {
+            public string Build { get; set; }
+            public List<String> Publishes { get; set; }
+            public List<String> Subscribes { get; set; }
+        }
     }
 
-    internal class VertexBase
-    {
-        public string Name { get; set; }
-    }
-
-    internal class PackageVertex : VertexBase {}
-    internal class BuildVertex : VertexBase {}
-
-    public class BuildPackageMapping
-    {
-        public string Build { get; set; }
-        public List<String> Publishes { get; set; }
-        public List<String> Subscribes { get; set; }
-    }
-    
 }
