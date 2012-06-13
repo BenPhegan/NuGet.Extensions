@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<DirectedGraph xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://schemas.microsoft.com/vs/2009/dgml">
+  <Nodes>
+    <Node Id="0" Shape="RoundedRectangle" Label="Test.Artifact" Background="Green">
+      <Category Ref="Build" />
+    </Node>
+    <Node Id="1" Shape="None" Label="Test.Dependency">
+      <Category Ref="Package" />
+    </Node>
+    <Node Id="2" Shape="None" Label="Test.Artifact">
+      <Category Ref="Package" />
+    </Node>
+    <Node Id="3" Shape="RoundedRectangle" Label="Test.Common" Background="Green">
+      <Category Ref="Build" />
+    </Node>
+    <Node Id="4" Shape="None" Label="Test.Common">
+      <Category Ref="Package" />
+    </Node>
+    <Node Id="5" Shape="RoundedRectangle" Label="Test.Core" Background="Green">
+      <Category Ref="Build" />
+    </Node>
+    <Node Id="6" Shape="None" Label="Test.Core">
+      <Category Ref="Package" />
+    </Node>
+    <Node Id="7" Shape="None" Label="Test.Core.Other">
+      <Category Ref="Package" />
+    </Node>
+    <Node Id="8" Shape="RoundedRectangle" Label="Test.Dependency" Background="Green">
+      <Category Ref="Build" />
+    </Node>
+    <Node Id="9" Shape="RoundedRectangle" Label="Test.Middle" Background="Green">
+      <Category Ref="Build" />
+    </Node>
+    <Node Id="10" Shape="None" Label="Test.Middle">
+      <Category Ref="Package" />
+    </Node>
+    <Node Id="11" Shape="RoundedRectangle" Label="Test.Top" Background="Green">
+      <Category Ref="Build" />
+    </Node>
+    <Node Id="12" Shape="None" Label="Test.Top">
+      <Category Ref="Package" />
+    </Node>
+  </Nodes>
+  <Links>
+    <Link Label="" Source="0" Target="2" />
+    <Link Label="" Source="1" Target="0" />
+    <Link Label="" Source="1" Target="3" />
+    <Link Label="" Source="1" Target="5" />
+    <Link Label="" Source="1" Target="9" />
+    <Link Label="" Source="2" Target="11" />
+    <Link Label="" Source="3" Target="4" />
+    <Link Label="" Source="4" Target="9" />
+    <Link Label="" Source="4" Target="11" />
+    <Link Label="" Source="5" Target="6" />
+    <Link Label="" Source="5" Target="7" />
+    <Link Label="" Source="6" Target="9" />
+    <Link Label="" Source="8" Target="1" />
+    <Link Label="" Source="9" Target="10" />
+    <Link Label="" Source="10" Target="11" />
+    <Link Label="" Source="11" Target="12" />
+  </Links>
+</DirectedGraph>
