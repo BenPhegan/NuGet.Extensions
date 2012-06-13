@@ -16,7 +16,7 @@ Allows you to query details about a specific package ID from the commandline.  P
 ## GRAPH
 Provides the ability to graph the package dependency for an entire feed.  Also lets you know if there are any cyclic dependencies on your feed.  Primarily aimed at large internal feed management.
 
-For an example of the output, the graph below was produced by pointing it at http://nuget.org.  Turns out, their graph is currently cyclic (this is a GOOD thing!).  There are quite a lot of disconnected graphs, and some quite interesting clusters of usage.  Worth a browse.
+For an example of the output, the graph below was produced by pointing it at http://nuget.org.  Turns out, their graph is currently acyclic (this is a GOOD thing!).  There are quite a lot of disconnected graphs, and some quite interesting clusters of usage.  Worth a browse.
 
 <img src="http://github.com/BenPhegan/NuGet.Extensions/raw/master/images/NuGetOrgDependencyGraph.png" alt="NuGet TeamCity Package Dependency Graph" height="500" width="700" />
 
