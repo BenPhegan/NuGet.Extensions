@@ -28,17 +28,14 @@ namespace NuGet.Extensions.Commands
             get { return _sources; }
         }
 
-        private readonly IPackageRepositoryFactory _repositoryFactory;
-        private readonly IPackageSourceProvider _sourceProvider;
-
         [ImportingConstructor]
         public Nugetify(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider sourceProvider)
         {
             Contract.Assert(packageRepositoryFactory != null);
             Contract.Assert(sourceProvider != null);
 
-            _repositoryFactory = packageRepositoryFactory;
-            _sourceProvider = sourceProvider;
+            RepositoryFactory = packageRepositoryFactory;
+            SourceProvider = sourceProvider;
         }
 
         public override void ExecuteCommand()
@@ -52,45 +49,58 @@ namespace NuGet.Extensions.Commands
                     var solution = new Solution(solutionFile.FullName);
                     var simpleProjectObjects = solution.Projects;
 
-
+                    Console.WriteLine("Processing {0} Projects...", simpleProjectObjects.Count);
                     foreach (var simpleProject in simpleProjectObjects)
                     {
                         var projectPath = Path.Combine(solutionFile.Directory.FullName, simpleProject.RelativePath);
                         if (File.Exists(projectPath))
                         {
+                            Console.WriteLine("Processing Project: {0}", simpleProject.ProjectName);
                             var projectFileInfo = new FileInfo(projectPath);
                             var project = new Project(projectPath);
                             var references = project.GetItems("Reference");
 
-                            //First, generate the packages.config
                             var referenceMappings = ResolveAssembliesToPackagesConfigFile(projectFileInfo, references);
-
+                            var resolvedMappings = referenceMappings.Where(m => m.Value.Any());
+                            var failedMappings = referenceMappings.Where(m => m.Value.Count == 0);
                             //next, lets rewrite the project file with the mappings to the new location...
                             //Going to have to use the mapping to assembly name that we get back from the resolve above
-                            foreach (var mapping in referenceMappings)
-                            {
+                            Console.WriteLine();
+                            Console.WriteLine("Found {0} package to assembly mappings on feed...", resolvedMappings.Count());
+                            failedMappings.ToList().ForEach(f => Console.WriteWarning("Could not match: {0}", f.Key));
 
-                                var referenceMatch = references.FirstOrDefault(r => ResolveProjectReferenceItemByAssemblyName(r, mapping.Key));
-                                if (referenceMatch != null)
+                            if (resolvedMappings.Any())
+                            {
+                                foreach (var mapping in resolvedMappings)
                                 {
-                                    //Remove the old one....
-                                    //project.RemoveItem(referenceMatch);
-                                    var package = mapping.Value.First();
-                                    var fileLocation = GetFileLocationFromPackage(package, mapping.Key);
-                                    var newHintPathFull = Path.Combine(solutionRoot.Name, "packages",package.Id, fileLocation);
-                                    var newHintPath = GetRelativePath(solutionRoot.Name, newHintPathFull);
-                                    referenceMatch.SetMetadataValue("HintPath", newHintPath);
+                                    var referenceMatch = references.FirstOrDefault(r => ResolveProjectReferenceItemByAssemblyName(r, mapping.Key));
+                                    if (referenceMatch != null)
+                                    {
+                                        Console.WriteLine("Attempting to update hintpaths for {0} using package {1}", referenceMatch.GetMetadataValue("Include"), mapping.Key);
+                                        //Remove the old one....
+                                        //project.RemoveItem(referenceMatch);
+                                        var package = mapping.Value.First();
+                                        var fileLocation = GetFileLocationFromPackage(package, mapping.Key);
+                                        var newHintPathFull = Path.Combine(solutionRoot.FullName,"packages", package.Id, fileLocation);
+                                        var newHintPath = String.Format("..\\{0}",GetRelativePath(solutionRoot.Parent.FullName, newHintPathFull));
+                                        referenceMatch.SetMetadataValue("HintPath", newHintPath);
+                                    }
+                                }
+                                project.Save();
+
+                                //Now, create the packages.config for the resolved packages, and update the repositories.config
+                                Console.WriteLine("Creating packages.config");
+                                var packagesConfig = new PackageReferenceFile(Path.Combine(projectFileInfo.Directory.FullName, "packages.config"));
+                                foreach (var referenceMapping in resolvedMappings)
+                                {
+                                    packagesConfig.AddEntry(referenceMapping.Key, referenceMapping.Value.First().Version);
                                 }
                             }
-                            project.Save();
 
-                            //Now, create the packages.config for the resolved packages, and update the repositories.config
-                            var packagesConfig = new PackageReferenceFile(projectFileInfo.Directory.FullName);
-                            foreach (var referenceMapping in referenceMappings)
-                            {
-                                packagesConfig.AddEntry(referenceMapping.Key,referenceMapping.Value.First().Version);
-                            }
-                            
+                        }
+                        else
+                        {
+                            Console.WriteWarning("Project: {0} was not found on disk", simpleProject.ProjectName);
                         }
                     }
                 }
@@ -134,15 +144,25 @@ namespace NuGet.Extensions.Commands
                     referenceFiles.Add(Path.GetFileName(hintPath));
                 }
             }
-            IQueryable<IPackage> packageSource = _sourceProvider.GetAggregate(_repositoryFactory).GetPackages();
 
-            var assemblyResolver = new RepositoryAssemblyResolver(referenceFiles,
-                                                                  packageSource,
-                                                                  new PhysicalFileSystem(projectFileInfo.Directory.ToString()),
-                                                                  Console);
-            var results = assemblyResolver.ResolveAssemblies(false);
-            assemblyResolver.OutputPackageConfigFile();
+            Dictionary<string, List<IPackage>> results = new Dictionary<string, List<IPackage>>();
+            if (referenceFiles.Any())
+            {
+                Console.WriteLine("Checking feed for {0} references...", referenceFiles.Count);
 
+                IQueryable<IPackage> packageSource = GetRepository().GetPackages().OrderBy(p => p.Id);
+
+                var assemblyResolver = new RepositoryAssemblyResolver(referenceFiles,
+                                                                      packageSource,
+                                                                      new PhysicalFileSystem(projectFileInfo.Directory.ToString()),
+                                                                      Console);
+                results = assemblyResolver.ResolveAssemblies(false);
+                assemblyResolver.OutputPackageConfigFile();
+            }
+            else
+            {
+                Console.WriteLine("No references found to resolve (all GAC?)");
+            }
             return results;
         }
 
@@ -156,6 +176,13 @@ namespace NuGet.Extensions.Commands
             }
 
             return false;
+        }
+
+        private IPackageRepository GetRepository()
+        {
+            var repository = AggregateRepositoryHelper.CreateAggregateRepositoryFromSources(RepositoryFactory, SourceProvider, Source);
+            repository.Logger = Console;
+            return repository;
         }
 
     }
