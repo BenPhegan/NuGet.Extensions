@@ -8,6 +8,7 @@ using Microsoft.Build.Evaluation;
 using NuGet.Commands;
 using NuGet.Extensions.GetLatest.MSBuild;
 using NuGet.Extras.Repositories;
+using NuGet.Common;
 
 namespace NuGet.Extensions.Commands
 {
@@ -82,6 +83,14 @@ namespace NuGet.Extensions.Commands
                                 }
                             }
                             project.Save();
+
+                            //Now, create the packages.config for the resolved packages, and update the repositories.config
+                            var packagesConfig = new PackageReferenceFile(projectFileInfo.Directory.FullName);
+                            foreach (var referenceMapping in referenceMappings)
+                            {
+                                packagesConfig.AddEntry(referenceMapping.Key,referenceMapping.Value.First().Version);
+                            }
+                            
                         }
                     }
                 }
