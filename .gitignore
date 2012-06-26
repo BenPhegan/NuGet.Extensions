@@ -19,3 +19,4 @@ _ReSharper.*/**
 /Build.Release
 /Test.Debug
 /Test.Release
+_Resharper.*/**
