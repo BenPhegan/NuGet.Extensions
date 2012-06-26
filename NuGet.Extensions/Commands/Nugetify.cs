@@ -46,6 +46,8 @@ namespace NuGet.Extensions.Commands
                 if (solutionFile.Exists && solutionFile.Extension == ".sln")
                 {
                     var solutionRoot = solutionFile.Directory;
+                    var packagesRoot = Path.Combine(solutionRoot.FullName, "packages");
+                    var sharedPackagesRepository = new SharedPackageRepository(packagesRoot);
                     var solution = new Solution(solutionFile.FullName);
                     var simpleProjectObjects = solution.Projects;
 
@@ -82,19 +84,22 @@ namespace NuGet.Extensions.Commands
                                         var package = mapping.Value.First();
                                         var fileLocation = GetFileLocationFromPackage(package, mapping.Key);
                                         var newHintPathFull = Path.Combine(solutionRoot.FullName,"packages", package.Id, fileLocation);
-                                        var newHintPath = String.Format("..\\{0}",GetRelativePath(solutionRoot.Parent.FullName, newHintPathFull));
-                                        referenceMatch.SetMetadataValue("HintPath", newHintPath);
+                                        var newHintPathRelative = String.Format(GetRelativePath(projectPath, newHintPathFull));
+                                        //TODO make version available, currently only works for non versioned package directories...
+                                        referenceMatch.SetMetadataValue("HintPath", newHintPathRelative);
                                     }
                                 }
                                 project.Save();
 
                                 //Now, create the packages.config for the resolved packages, and update the repositories.config
                                 Console.WriteLine("Creating packages.config");
-                                var packagesConfig = new PackageReferenceFile(Path.Combine(projectFileInfo.Directory.FullName, "packages.config"));
+                                var packagesConfigFilePath = Path.Combine(projectFileInfo.Directory.FullName + "\\", "packages.config");
+                                var packagesConfig = new PackageReferenceFile(packagesConfigFilePath);
                                 foreach (var referenceMapping in resolvedMappings)
                                 {
                                     packagesConfig.AddEntry(referenceMapping.Key, referenceMapping.Value.First().Version);
                                 }
+                                sharedPackagesRepository.RegisterRepository(packagesConfigFilePath);
                             }
 
                         }
