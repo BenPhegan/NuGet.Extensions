@@ -78,10 +78,11 @@ namespace NuGet.Extensions.Commands
                                     var referenceMatch = references.FirstOrDefault(r => ResolveProjectReferenceItemByAssemblyName(r, mapping.Key));
                                     if (referenceMatch != null)
                                     {
-                                        Console.WriteLine("Attempting to update hintpaths for {0} using package {1}", referenceMatch.GetMetadataValue("Include"), mapping.Key);
+                                        var includeName = referenceMatch.EvaluatedInclude.Contains(',') ? referenceMatch.EvaluatedInclude.Split(',')[0] : referenceMatch.EvaluatedInclude;
+                                        Console.WriteLine("Attempting to update hintpaths for \"{0}\" using package \"{1}\"", includeName, mapping.Value.First().Id);
                                         //Remove the old one....
                                         //project.RemoveItem(referenceMatch);
-                                        var package = mapping.Value.First();
+                                        var package = mapping.Value.OrderBy(p => p.GetFiles().Count()).First();
                                         var fileLocation = GetFileLocationFromPackage(package, mapping.Key);
                                         var newHintPathFull = Path.Combine(solutionRoot.FullName,"packages", package.Id, fileLocation);
                                         var newHintPathRelative = String.Format(GetRelativePath(projectPath, newHintPathFull));
@@ -97,7 +98,9 @@ namespace NuGet.Extensions.Commands
                                 var packagesConfig = new PackageReferenceFile(packagesConfigFilePath);
                                 foreach (var referenceMapping in resolvedMappings)
                                 {
-                                    packagesConfig.AddEntry(referenceMapping.Key, referenceMapping.Value.First().Version);
+                                    //TODO We shouldnt need to resolve this twice....
+                                    var package = referenceMapping.Value.OrderBy(p => p.GetFiles().Count()).First();
+                                    packagesConfig.AddEntry(package.Id, package.Version);
                                 }
                                 sharedPackagesRepository.RegisterRepository(packagesConfigFilePath);
                             }
