@@ -146,8 +146,10 @@ namespace NuGet.Extensions.Commands
                                     //TODO We shouldnt need to resolve this twice....
                                     var package = referenceMapping.Value.OrderBy(p => p.GetFiles().Count()).First();
                                     packagesConfig.AddEntry(package.Id, package.Version);
-                                    if (NuSpec)
+                                    if (NuSpec && manifestDependencies.All(m => m.Id != package.Id))
+                                    {
                                         manifestDependencies.Add(new ManifestDependency {Id = package.Id});
+                                    }
                                 }
                                 sharedPackagesRepository.RegisterRepository(packagesConfigFilePath);
                             }
