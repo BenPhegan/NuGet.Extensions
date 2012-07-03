@@ -17,7 +17,6 @@ namespace NuGet.Extensions.Commands
                          "packages.config files as it goes.", MinArgs = 1, MaxArgs = 1)]
     public class Nugetify : Command
     {
-        private readonly List<ManifestDependency> ManifestDependencies = new List<ManifestDependency>();
         private readonly List<string> _sources = new List<string>();
         private IFileSystem _fileSystem;
         private RepositoryAssemblyResolver _resolver;
@@ -97,6 +96,7 @@ namespace NuGet.Extensions.Commands
                     Console.WriteLine("Processing {0} Projects...", simpleProjectObjects.Count);
                     foreach (var simpleProject in simpleProjectObjects)
                     {
+                        var manifestDependencies = new List<ManifestDependency>();
                         var projectPath = Path.Combine(solutionFile.Directory.FullName, simpleProject.RelativePath);
                         if (File.Exists(projectPath))
                         {
@@ -147,7 +147,7 @@ namespace NuGet.Extensions.Commands
                                     var package = referenceMapping.Value.OrderBy(p => p.GetFiles().Count()).First();
                                     packagesConfig.AddEntry(package.Id, package.Version);
                                     if (NuSpec)
-                                        ManifestDependencies.Add(new ManifestDependency {Id = package.Id});
+                                        manifestDependencies.Add(new ManifestDependency {Id = package.Id});
                                 }
                                 sharedPackagesRepository.RegisterRepository(packagesConfigFilePath);
                             }
@@ -155,7 +155,7 @@ namespace NuGet.Extensions.Commands
                             //Create nuspec regardless of whether we have added dependencies
                             if (NuSpec)
                             {
-                                CreateAndOutputNuSpecFile(assemblyOutput);
+                                CreateAndOutputNuSpecFile(assemblyOutput, manifestDependencies);
                             }
                         }
                         else
@@ -167,13 +167,13 @@ namespace NuGet.Extensions.Commands
             }
         }
 
-        private void CreateAndOutputNuSpecFile(string assemblyOutput)
+        private void CreateAndOutputNuSpecFile(string assemblyOutput, List<ManifestDependency> manifestDependencies)
         {
             var manifest = new Manifest
                                {
                                    Metadata =
                                        {
-                                           Dependencies = ManifestDependencies,
+                                           Dependencies = manifestDependencies,
                                            Id = Id ?? assemblyOutput,
                                            Title = Title ?? assemblyOutput,
                                            Version = "$version$",
