@@ -19,17 +19,8 @@ namespace NuGet.Extensions.Commands
     {
         private readonly List<ManifestDependency> ManifestDependencies = new List<ManifestDependency>();
         private readonly List<string> _sources = new List<string>();
-        private string _author;
-        private string _copyright;
-        private string _description;
         private IFileSystem _fileSystem;
-        private string _id;
-        private string _licenseUrl;
-        private string _releaseNotes;
-        private Boolean _requireLicenseAcceptance;
         private RepositoryAssemblyResolver _resolver;
-        private string _tags;
-        private string _title;
 
         [ImportingConstructor]
         public Nugetify(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider sourceProvider)
@@ -55,73 +46,40 @@ namespace NuGet.Extensions.Commands
         public string ProjectUrl { get; set; }
 
         [Option("NuSpec LicenseUrl")]
-        public string LicenseUrl
-        {
-            get { return _licenseUrl; }
-            set { _licenseUrl = value; }
-        }
+        public string LicenseUrl { get; set; }
 
         [Option("NuSpec Icon URL")]
         public string IconUrl { get; set; }
 
         [Option("NuSpec tags")]
-        public string Tags
-        {
-            get { return _tags; }
-            set { _tags = value; }
-        }
+        public string Tags { get; set; }
 
         [Option("NuSpec release notes")]
-        public string ReleaseNotes
-        {
-            get { return _releaseNotes; }
-            set { _releaseNotes = value; }
-        }
+        public string ReleaseNotes { get; set; }
 
         [Option("NuSpec description")]
-        public string Description
-        {
-            get { return _description; }
-            set { _description = value; }
-        }
+        public string Description { get; set; }
 
         [Option("NuSpec ID")]
-        public string Id
-        {
-            get { return _id; }
-            set { _id = value; }
-        }
+        public string Id { get; set; }
 
         [Option("Create NuSpecs for solution")]
         public Boolean NuSpec { get; set; }
 
         [Option("NuSpec title")]
-        public string Title
-        {
-            get { return _title; }
-            set { _title = value; }
-        }
+        public string Title { get; set; }
 
         [Option("NuSpec Author")]
-        public string Author
-        {
-            get { return _author; }
-            set { _author = value; }
-        }
+        public string Author { get; set; }
 
         [Option("NuSpec RequireLicenseAcceptance (defaults to false)")]
-        public bool RequireLicenseAcceptance
-        {
-            get { return _requireLicenseAcceptance; }
-            set { _requireLicenseAcceptance = value; }
-        }
+        public bool RequireLicenseAcceptance { get; set; }
 
         [Option(("NuSpec Copyright"))]
-        public string Copyright
-        {
-            get { return _copyright; }
-            set { _copyright = value; }
-        }
+        public string Copyright { get; set; }
+
+        [Option("NuSpec Owners")]
+        public string Owners { get; set; }
 
         public override void ExecuteCommand()
         {
@@ -216,16 +174,19 @@ namespace NuGet.Extensions.Commands
                                    Metadata =
                                        {
                                            Dependencies = ManifestDependencies,
-                                           Id = _id ?? assemblyOutput,
-                                           Title = _title ?? assemblyOutput,
+                                           Id = Id ?? assemblyOutput,
+                                           Title = Title ?? assemblyOutput,
                                            Version = "$version$",
-                                           Description = _description ?? assemblyOutput,
-                                           Authors = _author ?? "$author$",
-                                           Tags = _tags ?? "$tags$",
-                                           LicenseUrl = _licenseUrl ?? "$licenseurl$",
-                                           RequireLicenseAcceptance = _requireLicenseAcceptance,
-                                           ReleaseNotes = _releaseNotes ?? "$releasenotes$",
-                                           Copyright = _copyright ?? "$copyright$"
+                                           Description = Description ?? assemblyOutput,
+                                           Authors = Author ?? "$author$",
+                                           Tags = Tags ?? "$tags$",
+                                           LicenseUrl = LicenseUrl ?? "$licenseurl$",
+                                           RequireLicenseAcceptance = RequireLicenseAcceptance,
+                                           ReleaseNotes = ReleaseNotes ?? "$releasenotes$",
+                                           Copyright = Copyright ?? "$copyright$",
+                                           IconUrl = IconUrl ?? "$iconurl",
+                                           ProjectUrl = ProjectUrl ?? "$projrcturl$",
+                                           Owners = Owners ?? Author ?? "$author$"                                          
                                        },
                                    Files = new List<ManifestFile>
                                                {
