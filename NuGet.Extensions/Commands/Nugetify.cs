@@ -184,7 +184,7 @@ namespace NuGet.Extensions.Commands
                                            RequireLicenseAcceptance = RequireLicenseAcceptance,
                                            ReleaseNotes = ReleaseNotes ?? "$releasenotes$",
                                            Copyright = Copyright ?? "$copyright$",
-                                           IconUrl = IconUrl ?? "$iconurl",
+                                           IconUrl = IconUrl ?? "$iconurl$",
                                            ProjectUrl = ProjectUrl ?? "$projrcturl$",
                                            Owners = Owners ?? Author ?? "$author$"                                          
                                        },
