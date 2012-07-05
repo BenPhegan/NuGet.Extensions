@@ -88,8 +88,7 @@ namespace NuGet.Extensions.Commands
                 if (solutionFile.Exists && solutionFile.Extension == ".sln")
                 {
                     var solutionRoot = solutionFile.Directory;
-                    var packagesRoot = Path.Combine(solutionRoot.FullName, "packages");
-                    var sharedPackagesRepository = new SharedPackageRepository(packagesRoot);
+                    var sharedPackagesRepository = new SharedPackageRepository(Path.Combine(solutionRoot.FullName, "packages"));
                     var solution = new Solution(solutionFile.FullName);
                     var simpleProjectObjects = solution.Projects;
 
@@ -107,51 +106,13 @@ namespace NuGet.Extensions.Commands
 
                             var references = project.GetItems("Reference");
 
-                            var referenceMappings = ResolveAssembliesToPackagesConfigFile(projectFileInfo, references);
-                            var resolvedMappings = referenceMappings.Where(m => m.Value.Any());
-                            var failedMappings = referenceMappings.Where(m => m.Value.Count == 0);
-                            //next, lets rewrite the project file with the mappings to the new location...
-                            //Going to have to use the mapping to assembly name that we get back from the resolve above
-                            Console.WriteLine();
-                            Console.WriteLine("Found {0} package to assembly mappings on feed...", resolvedMappings.Count());
-                            failedMappings.ToList().ForEach(f => Console.WriteWarning("Could not match: {0}", f.Key));
+                            var resolvedMappings = ResolveReferenceMappings(references, projectFileInfo);
 
                             if (resolvedMappings.Any())
                             {
-                                foreach (var mapping in resolvedMappings)
-                                {
-                                    var referenceMatch = references.FirstOrDefault(r => ResolveProjectReferenceItemByAssemblyName(r, mapping.Key));
-                                    if (referenceMatch != null)
-                                    {
-                                        var includeName = referenceMatch.EvaluatedInclude.Contains(',') ? referenceMatch.EvaluatedInclude.Split(',')[0] : referenceMatch.EvaluatedInclude;
-                                        Console.WriteLine("Attempting to update hintpaths for \"{0}\" using package \"{1}\"", includeName, mapping.Value.First().Id);
-                                        //Remove the old one....
-                                        //project.RemoveItem(referenceMatch);
-                                        var package = mapping.Value.OrderBy(p => p.GetFiles().Count()).First();
-                                        var fileLocation = GetFileLocationFromPackage(package, mapping.Key);
-                                        var newHintPathFull = Path.Combine(solutionRoot.FullName, "packages", package.Id, fileLocation);
-                                        var newHintPathRelative = String.Format(GetRelativePath(projectPath, newHintPathFull));
-                                        //TODO make version available, currently only works for non versioned package directories...
-                                        referenceMatch.SetMetadataValue("HintPath", newHintPathRelative);
-                                    }
-                                }
-                                project.Save();
-
-                                //Now, create the packages.config for the resolved packages, and update the repositories.config
-                                Console.WriteLine("Creating packages.config");
-                                var packagesConfigFilePath = Path.Combine(projectFileInfo.Directory.FullName + "\\", "packages.config");
-                                var packagesConfig = new PackageReferenceFile(packagesConfigFilePath);
-                                foreach (var referenceMapping in resolvedMappings)
-                                {
-                                    //TODO We shouldnt need to resolve this twice....
-                                    var package = referenceMapping.Value.OrderBy(p => p.GetFiles().Count()).First();
-                                    packagesConfig.AddEntry(package.Id, package.Version);
-                                    if (NuSpec && manifestDependencies.All(m => m.Id != package.Id))
-                                    {
-                                        manifestDependencies.Add(new ManifestDependency {Id = package.Id});
-                                    }
-                                }
-                                sharedPackagesRepository.RegisterRepository(packagesConfigFilePath);
+                                UpdateProjectFileReferenceHintPaths(solutionRoot, project, projectPath, resolvedMappings, references);
+                                var projectReferences = ParseProjectReferences(project);
+                                CreateNuGetScaffolding(sharedPackagesRepository, manifestDependencies, resolvedMappings, projectFileInfo, project, projectReferences);
                             }
 
                             //Create nuspec regardless of whether we have added dependencies
@@ -167,6 +128,94 @@ namespace NuGet.Extensions.Commands
                     }
                 }
             }
+        }
+
+        private List<string> ParseProjectReferences(Project project)
+        {
+            var refs = new List<string>();
+            var references = project.GetItems("ProjectReference");
+            foreach (var reference in references)
+            {
+                var refProject = new Project(Path.Combine(project.DirectoryPath, reference.UnevaluatedInclude));
+                refs.Add(refProject.GetPropertyValue("AssemblyName"));
+            }
+            return refs;
+        }
+
+        private void UpdateProjectFileReferenceHintPaths(DirectoryInfo solutionRoot, Project project, string projectPath, IEnumerable<KeyValuePair<string, List<IPackage>>> resolvedMappings, ICollection<ProjectItem> references)
+        {
+            foreach (var mapping in resolvedMappings)
+            {
+                var referenceMatch = references.FirstOrDefault(r => ResolveProjectReferenceItemByAssemblyName(r, mapping.Key));
+                if (referenceMatch != null)
+                {
+                    var includeName = referenceMatch.EvaluatedInclude.Contains(',') ? referenceMatch.EvaluatedInclude.Split(',')[0] : referenceMatch.EvaluatedInclude;
+                    Console.WriteLine("Attempting to update hintpaths for \"{0}\" using package \"{1}\"", includeName, mapping.Value.First().Id);
+                    //Remove the old one....
+                    //project.RemoveItem(referenceMatch);
+                    var package = mapping.Value.OrderBy(p => p.GetFiles().Count()).First();
+                    var fileLocation = GetFileLocationFromPackage(package, mapping.Key);
+                    var newHintPathFull  = Path.Combine(solutionRoot.FullName, "packages", package.Id, fileLocation);
+                    var newHintPathRelative = String.Format(GetRelativePath(projectPath, newHintPathFull));
+                    //TODO make version available, currently only works for non versioned package directories...
+                    referenceMatch.SetMetadataValue("HintPath", newHintPathRelative);
+                }
+            }
+            project.Save();
+        }
+
+        private void CreateNuGetScaffolding(SharedPackageRepository sharedPackagesRepository, List<ManifestDependency> manifestDependencies, IEnumerable<KeyValuePair<string, List<IPackage>>> resolvedMappings, FileInfo projectFileInfo, Project project, List<string> projectDependencies)
+        {
+            //Now, create the packages.config for the resolved packages, and update the repositories.config
+            Console.WriteLine("Creating packages.config");
+            var packagesConfigFilePath = Path.Combine(projectFileInfo.Directory.FullName + "\\", "packages.config");
+            var packagesConfig = new PackageReferenceFile(packagesConfigFilePath);
+            foreach (var referenceMapping in resolvedMappings)
+            {
+                //TODO We shouldnt need to resolve this twice....
+                var package = referenceMapping.Value.OrderBy(p => p.GetFiles().Count()).First();
+                if (!packagesConfig.EntryExists(package.Id, package.Version))
+                    packagesConfig.AddEntry(package.Id, package.Version);
+                if (NuSpec && manifestDependencies.All(m => m.Id != package.Id))
+                {
+                    manifestDependencies.Add(new ManifestDependency {Id = package.Id});
+                }
+            }
+
+            //This is messy...refactor
+            //For any resolved project dependencies, add a manifest dependency if we are doing nuspecs
+            if (NuSpec)
+            {
+                foreach (var projectDependency in projectDependencies)
+                {
+                    if (manifestDependencies.All(m => m.Id != projectDependency))
+                    {
+                        manifestDependencies.Add(new ManifestDependency {Id = projectDependency});
+                    }
+                }
+            }
+            //Register the packages.config
+            sharedPackagesRepository.RegisterRepository(packagesConfigFilePath);
+
+            //Add the packages.config to the project content, otherwise later versions of the VSIX fail...
+            if (!project.GetItems("None").Any(i => i.UnevaluatedInclude.Equals("packages.config")))
+            {
+                project.Xml.AddItemGroup().AddItem("None", "packages.config");
+                project.Save();
+            }
+        }
+
+        private IEnumerable<KeyValuePair<string, List<IPackage>>> ResolveReferenceMappings(ICollection<ProjectItem> references, FileInfo projectFileInfo)
+        {
+            var referenceMappings = ResolveAssembliesToPackagesConfigFile(projectFileInfo, references);
+            var resolvedMappings = referenceMappings.Where(m => m.Value.Any());
+            var failedMappings = referenceMappings.Where(m => m.Value.Count == 0);
+            //next, lets rewrite the project file with the mappings to the new location...
+            //Going to have to use the mapping to assembly name that we get back from the resolve above
+            Console.WriteLine();
+            Console.WriteLine("Found {0} package to assembly mappings on feed...", resolvedMappings.Count());
+            failedMappings.ToList().ForEach(f => Console.WriteWarning("Could not match: {0}", f.Key));
+            return resolvedMappings;
         }
 
         private void CreateAndOutputNuSpecFile(string assemblyOutput, List<ManifestDependency> manifestDependencies)
