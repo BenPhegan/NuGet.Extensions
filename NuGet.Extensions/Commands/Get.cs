@@ -389,7 +389,7 @@ namespace NuGet.Extensions.Commands
             }
             //TODO Will need to expose the last boolean here......
             var package = _packageResolutionManager.ResolvePackage(packageManager.LocalRepository, _repository, packageId, version, allowPreReleaseVersion);
-            packageManager.InstallPackage(package, ignoreDependencies: true, allowPrereleaseVersions: allowPreReleaseVersion);
+            packageManager.InstallPackage(package, ignoreDependencies: !IncludeDependencies, allowPrereleaseVersions: allowPreReleaseVersion);
             //packageManager.InstallPackage(packageId, version, !IncludeDependencies, allowPreReleaseVersion);
             return true;
         }
