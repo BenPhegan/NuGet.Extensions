@@ -101,7 +101,7 @@ namespace NuGet.Extensions.Commands
                         {
                             Console.WriteLine("Processing Project: {0}", simpleProject.ProjectName);
                             var projectFileInfo = new FileInfo(projectPath);
-                            var project = new Project(projectPath);
+                            var project = new Project(projectPath,new Dictionary<string, string>(),null,new ProjectCollection());
                             var assemblyOutput = project.GetPropertyValue("AssemblyName");
 
                             var references = project.GetItems("Reference");
@@ -127,16 +127,21 @@ namespace NuGet.Extensions.Commands
                         }
                     }
                 }
+                else
+                {
+                    Console.WriteError("Could not find solution file : {0}", solutionFile);
+                }
             }
         }
 
         private List<string> ParseProjectReferences(Project project)
         {
+            Console.WriteLine("Checking Project References...");
             var refs = new List<string>();
             var references = project.GetItems("ProjectReference");
             foreach (var reference in references)
             {
-                var refProject = new Project(Path.Combine(project.DirectoryPath, reference.UnevaluatedInclude));
+                var refProject = new Project(Path.Combine(project.DirectoryPath, reference.UnevaluatedInclude),new Dictionary<string, string>(),null,new ProjectCollection());
                 refs.Add(refProject.GetPropertyValue("AssemblyName"));
             }
             return refs;
