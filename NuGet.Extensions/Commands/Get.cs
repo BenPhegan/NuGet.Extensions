@@ -141,7 +141,8 @@ namespace NuGet.Extensions.Commands
             }
             catch (Exception e)
             {
-                Console.WriteError(e.Message);
+                //HACK big catch here, but if anything goes wrong we want to log it and ensure a non-zero exit code...
+                throw new CommandLineException(String.Format("GET Failed: {0}",e.Message),e);
             }
         }
 
