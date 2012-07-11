@@ -13,8 +13,8 @@ using NuGet.Extras.Repositories;
 
 namespace NuGet.Extensions.Commands
 {
-    [Command("nugetify", "Given a solution, attempts to replace all file references with package references, adding all reqhired" +
-                         "packages.config files as it goes.", MinArgs = 1, MaxArgs = 1)]
+    [Command("nugetify", "Given a solution, attempts to replace all file references with package references, adding all required" +
+                         " packages.config files as it goes.", MinArgs = 1, MaxArgs = 1)]
     public class Nugetify : Command
     {
         private readonly List<string> _sources = new List<string>();
