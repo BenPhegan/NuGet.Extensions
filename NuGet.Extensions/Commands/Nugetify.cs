@@ -238,7 +238,6 @@ namespace NuGet.Extensions.Commands
                                            Tags = Tags ?? "$tags$",
                                            LicenseUrl = LicenseUrl ?? "$licenseurl$",
                                            RequireLicenseAcceptance = RequireLicenseAcceptance,
-                                           ReleaseNotes = ReleaseNotes ?? "$releasenotes$",
                                            Copyright = Copyright ?? "$copyright$",
                                            IconUrl = IconUrl ?? "$iconurl$",
                                            ProjectUrl = ProjectUrl ?? "$projrcturl$",
@@ -255,6 +254,10 @@ namespace NuGet.Extensions.Commands
                                };
 
             string nuspecFile = assemblyOutput + Constants.ManifestExtension;
+            
+            //Dont add a releasenotes node if we dont have any to add...
+            if (!string.IsNullOrEmpty(ReleaseNotes))
+                manifest.Metadata.ReleaseNotes = ReleaseNotes;
 
             try
             {
