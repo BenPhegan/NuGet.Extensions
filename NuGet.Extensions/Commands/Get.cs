@@ -338,7 +338,7 @@ namespace NuGet.Extensions.Commands
                 {
                     //We got it straight from the server, check whether we get a cache hit, else just install
                     var resolvedPackage = _packageResolutionManager.FindPackageInAllLocalSources(packageManager.LocalRepository, packageManager.SourceRepository, package);
-                    packageManager.InstallPackage(resolvedPackage ?? package, true, false);
+                    packageManager.InstallPackage(resolvedPackage ?? package, !IncludeDependencies, false);
                 }
                 // Note that we ignore dependencies here because packages.config already contains the full closure
             }
