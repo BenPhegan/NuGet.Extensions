@@ -5,7 +5,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
 using NuGet.Commands;
-using NuGet.Common;
 using NuGet.Extensions.TeamCity;
 using QuickGraph;
 using QuickGraph.Algorithms;
@@ -14,7 +13,7 @@ using QuickGraph.Serialization.DirectedGraphML;
 
 namespace NuGet.Extensions.Commands
 {
-    [Command("teamcity", "Provides the ability to graph NuGet publish and subscribe details into a graphical representaiton" +
+    [Command("teamcity", "Provides the ability to graph NuGet publish and subscribe details into a graphical representaiton " +
              "of your builds dependency graph.", MinArgs = 0)]
     public class TeamCity : Command
     {
@@ -23,28 +22,28 @@ namespace NuGet.Extensions.Commands
         private Dictionary<string, BuildPackageMapping> _mappings = new Dictionary<string, BuildPackageMapping>();
         private string _outputFilename = "TeamCityGraph.dgml";
 
-        [Option("Project to confine search within")]
+        [Option("Project to confine search within", AltName = "p")]
         public string Project { get; set; }
 
-        [Option("Target TeamCity server")]
+        [Option("Target TeamCity server",AltName = "t")]
         public string TeamCityServer { get; set; }
 
-        [Option("Constrain to a single target feed.")]
+        [Option("Constrain to a single target feed.", AltName = "f")]
         public string Feed { get; set; }
 
-        [Option("Outputs a Package as a node, rather than just as a label on an edge.")]
-        public Boolean PackageAsVertex { get; set; }
+        [Option("Does not output a package as a node, instead they are output as just a label on an edge.",AltName = "v")]
+        public Boolean NoPackageAsVertex { get; set; }
 
-        [Option("Don't use the presence of a package in the artifacts as evidence of a publish")]
+        [Option("Don't use the presence of a package in the artifacts as evidence of a publish", AltName = "a")]
         public Boolean NoArtifact { get; set; }
 
-        [Option("Don't use NuGet Publish step to build publish output.")]
+        [Option("Don't use NuGet Publish step to build publish output.", AltName = "b")]
         public Boolean NoPublishStep { get; set; }
 
-        [Option("Don't graph packages that are not consumed within graph.")]
-        public Boolean NoUnconsumedPackages { get; set; }
+        [Option("Graph packages that are not consumed within graph.", AltName = "u")]
+        public Boolean IncludeUnconsumedPackages { get; set; }
 
-        [Option("Filename to output")]
+        [Option("Filename to output", AltName = "o")]
         public string Output
         {
             get { return _outputFilename; }
@@ -57,13 +56,23 @@ namespace NuGet.Extensions.Commands
 
         public override void ExecuteCommand()
         {
+            //HACK Must be a better way to do this??
+            if (string.IsNullOrEmpty(TeamCityServer))
+            {
+                HelpCommand.Arguments.Add("teamcity");
+                HelpCommand.ExecuteCommand();
+                return;
+            }
+
             var sw = new Stopwatch();
             sw.Start();
+            Console.WriteLine("Attempting to create graph from TeamCity server: {0}",TeamCityServer);
             var api = new TeamCityApi(TeamCityServer);
             var buildConfigs = string.IsNullOrEmpty(Project)
-                                   ? api.GetBuildTypes()
-                                   : api.GetBuildTypes().Where(b => b.ProjectName.Equals(Project, StringComparison.InvariantCultureIgnoreCase));
+                                   ? api.GetBuildTypes().ToList()
+                                   : api.GetBuildTypes().Where(b => b.ProjectName.Equals(Project, StringComparison.InvariantCultureIgnoreCase)).ToList();
 
+            Console.WriteLine("Processing {0} build configurations...", buildConfigs.Count());
             foreach (var buildConfig in buildConfigs)
             {
                 var details = api.GetBuildTypeDetailsById(buildConfig.Id);
@@ -79,15 +88,15 @@ namespace NuGet.Extensions.Commands
             }
 
 
-            if (PackageAsVertex)
+            if (NoPackageAsVertex)
             {
-                BuildGraphWithPackagesAsVertices(_mappings);
-                _fancyGraph.ToDirectedGraphML(_fancyGraph.GetVertexIdentity(), _fancyGraph.GetEdgeIdentity(), GetNodeFormat(), GetEdgeFormat()).WriteXml(_outputFilename);
+                BuildGraphWithPackagesAsLabels(_mappings);
+                _simpleGraph.ToDirectedGraphML(_simpleGraph.GetVertexIdentity(), _simpleGraph.GetEdgeIdentity(), (s, n) => n.Label = s, (s, e) => e.Label = s.Tag).WriteXml(_outputFilename);
             }
             else
             {
-                BuildGraphWithPackagesAsLabels(_mappings);
-                _simpleGraph.ToDirectedGraphML(_simpleGraph.GetVertexIdentity(), _simpleGraph.GetEdgeIdentity(),(s, n) => n.Label = s, (s, e) => e.Label = s.Tag).WriteXml(_outputFilename);
+                BuildGraphWithPackagesAsVertices(_mappings);
+                _fancyGraph.ToDirectedGraphML(_fancyGraph.GetVertexIdentity(), _fancyGraph.GetEdgeIdentity(), GetNodeFormat(), GetEdgeFormat()).WriteXml(_outputFilename);
             }
 
             Console.WriteLine();
@@ -240,14 +249,12 @@ namespace NuGet.Extensions.Commands
                     _fancyGraph.AddEdge(new EquatableEdge<VertexBase>(build, package));
                 }
             }
-            if (NoUnconsumedPackages)
+            if (IncludeUnconsumedPackages) return;
+            //Clean any edges where there are no outgoing and the vertex is of type PackageVertex
+            var sinks = _fancyGraph.Sinks().Where(s => s is PackageVertex).ToList();
+            foreach (var vertexBase in sinks)
             {
-                //Clean any edges where there are no outgoing and the vertex is of type PackageVertex
-                var sinks = _fancyGraph.Sinks().Where(s => s is PackageVertex).ToList();
-                foreach (var vertexBase in sinks)
-                {
-                    _fancyGraph.RemoveVertex(vertexBase);
-                }
+                _fancyGraph.RemoveVertex(vertexBase);
             }
         }
 
@@ -276,7 +283,7 @@ namespace NuGet.Extensions.Commands
 
         private void OutputElapsedTime(Stopwatch sw)
         {
-            Console.WriteLine("Completed search in {0} seconds", sw.Elapsed.TotalSeconds);
+            Console.WriteLine("Completed graph in {0} seconds", sw.Elapsed.TotalSeconds);
         }
 
 
