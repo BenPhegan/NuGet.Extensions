@@ -32,6 +32,7 @@ namespace NuGet.Extensions.Commands
         private IPackageRepository _repository;
         private IPackageResolutionManager _packageResolutionManager;
         private IPackageCache _packageCache;
+        private string _baseDirectory;
 
         [Option(typeof(GetResources), "GetCommandSourceDescription")]
         public ICollection<string> Source
@@ -73,6 +74,12 @@ namespace NuGet.Extensions.Commands
         protected IPackageRepository CacheRepository
         {
             get { return _cacheRepository; }
+        }
+
+        public string BaseDirectory
+        {
+            get { return _baseDirectory; }
+            set { _baseDirectory = value; }
         }
 
         private bool AllowMultipleVersions
@@ -128,15 +135,19 @@ namespace NuGet.Extensions.Commands
                 _packageResolutionManager = _packageResolutionManager ?? new PackageResolutionManager(Console, Latest, new MemoryBasedPackageCache(Console));
 
                 //Working on a package.config
-                if (Path.GetFileName(Arguments[0]).Equals(Constants.PackageReferenceFile, StringComparison.OrdinalIgnoreCase))
+                if (string.IsNullOrEmpty(_baseDirectory))
+                    _baseDirectory = Environment.CurrentDirectory;
+
+                var target = Arguments[0] == Path.GetFullPath(Arguments[0]) ? Arguments[0] : Path.GetFullPath(Path.Combine(_baseDirectory, Arguments[0]));
+                if (Path.GetFileName(target).Equals(Constants.PackageReferenceFile, StringComparison.OrdinalIgnoreCase))
                 {
-                    OutputFileSystem = CreateFileSystem(Path.GetPathRoot(Arguments[0]));
-                    GetByPackagesConfig(OutputFileSystem);
+                    OutputFileSystem = CreateFileSystem(Path.GetPathRoot(target));
+                    GetByPackagesConfig(OutputFileSystem, target);
                 }
                 else
                 {
-                    OutputFileSystem = CreateFileSystem(Directory.GetParent(Arguments[0]).FullName);
-                    GetByDirectoryPath(OutputFileSystem);
+                    OutputFileSystem = CreateFileSystem(Directory.GetParent(target).FullName);
+                    GetByDirectoryPath(OutputFileSystem, target);
                 }
             }
             catch (Exception e)
@@ -146,11 +157,11 @@ namespace NuGet.Extensions.Commands
             }
         }
 
-        private void GetByDirectoryPath(IFileSystem baseFileSystem)
+        private void GetByDirectoryPath(IFileSystem baseFileSystem, string target)
         {
-            if (baseFileSystem.DirectoryExists(Arguments[0]))
+            if (baseFileSystem.DirectoryExists(target))
             {
-                var repositoryGroupManager = new RepositoryGroupManager(Arguments[0], baseFileSystem);
+                var repositoryGroupManager = new RepositoryGroupManager(target, baseFileSystem);
                 var repositoryManagers = new ConcurrentBag<RepositoryManager>(repositoryGroupManager.RepositoryManagers);
 
                 var totalTime = new Stopwatch();
@@ -183,43 +194,42 @@ namespace NuGet.Extensions.Commands
                             else
                             {
                                 var tempPackageConfig = packageAggregator.Save(packagesConfigDiretory);
-                                InstallPackagesFromConfigFile(packagesConfigDiretory, GetPackageReferenceFile(baseFileSystem, tempPackageConfig.FullName));
+                                InstallPackagesFromConfigFile(packagesConfigDiretory, GetPackageReferenceFile(baseFileSystem, tempPackageConfig.FullName), target);
                             }
                         }
                     });
 
                 totalTime.Stop();
+
                 if (exitWithFailure)
                 {
-                    Console.WriteError(string.Format("Failed : {0} package directories, {1} packages in {2} seconds",
+                    var errorMessage = string.Format("Failed : {0} package directories, {1} packages in {2} seconds",
                                                      repositoryManagers.Count, totalPackageUpdates,
-                                                     totalTime.Elapsed.TotalSeconds));
-                    Environment.Exit(1);
+                                                     totalTime.Elapsed.TotalSeconds);
+                    throw new CommandLineException(errorMessage);
                 }
-                else
-                {
-                    Console.WriteLine(string.Format("Updated : {0} package directories, {1} packages in {2} seconds",
+
+                Console.WriteLine(string.Format("Updated : {0} package directories, {1} packages in {2} seconds",
                                                     repositoryManagers.Count, totalPackageUpdates,
                                                     totalTime.Elapsed.TotalSeconds));
-                }
             }
         }
 
-        private void GetByPackagesConfig(IFileSystem fileSystem)
+        private void GetByPackagesConfig(IFileSystem fileSystem, string target)
         {
-            if (fileSystem.FileExists(Arguments[0]))
+            if (fileSystem.FileExists(target))
             {
                 //Try and infer the output directory if it is null
-                OutputDirectory = OutputDirectory ?? ResolvePackagesDirectory(fileSystem, Path.GetDirectoryName(Arguments[0]));
+                OutputDirectory = OutputDirectory ?? ResolvePackagesDirectory(fileSystem, Path.GetDirectoryName(target));
 
                 if (!string.IsNullOrEmpty(OutputDirectory))
-                    InstallPackagesFromConfigFile(OutputDirectory, GetPackageReferenceFile(fileSystem, Arguments[0]));
+                    InstallPackagesFromConfigFile(OutputDirectory, GetPackageReferenceFile(fileSystem, target), target);
                 else
-                    Console.WriteError(string.Format("Could not find packages directory based on {0}", Arguments[0]));
+                    Console.WriteError(string.Format("Could not find packages directory based on {0}", target));
             }
             else
             {
-                Console.WriteError(String.Format("Could not find file : {0}", Arguments[0]));
+                Console.WriteError(String.Format("Could not find file : {0}", target));
             }
         }
 
@@ -301,7 +311,8 @@ namespace NuGet.Extensions.Commands
         /// </summary>
         /// <param name="fileSystem">The file system.</param>
         /// <param name="file">The file.</param>
-        private void InstallPackagesFromConfigFile(string packagesDirectory, PackageReferenceFile file)
+        /// <param name="target"> </param>
+        private void InstallPackagesFromConfigFile(string packagesDirectory, PackageReferenceFile file, string target)
         {
             var packageReferences = file.GetPackageReferences().ToList();
 
@@ -322,7 +333,7 @@ namespace NuGet.Extensions.Commands
                 {
                     // GetPackageReferences returns all records without validating values. We'll throw if we encounter packages
                     // with malformed ids / Versions.
-                    throw new InvalidDataException(String.Format(CultureInfo.CurrentCulture, GetResources.GetCommandInvalidPackageReference, Arguments[0]));
+                    throw new InvalidDataException(String.Format(CultureInfo.CurrentCulture, GetResources.GetCommandInvalidPackageReference, target));
                 }
                 else if (packageReference.Version == null)
                 {
