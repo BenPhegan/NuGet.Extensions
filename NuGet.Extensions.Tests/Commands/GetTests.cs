@@ -40,12 +40,15 @@ namespace NuGet.Extensions.Tests.Commands
             Assert.AreEqual(expectedCount, packageCount);
         }
 
-        [TestCase(@".\TestSolution\Project1\packages.config", 2)]
-        [TestCase(@".\TestSolution", 2)]
-        public void CanUseRelativePaths(string packageConfig, int expectedCount)
+        [TestCase(@"c:\", @".\TestSolution\Project1\packages.config", 2)]
+        [TestCase(@"c:\TestSolution", @".", 2)]
+        [TestCase(@"c:\", @".\TestSolution", 2)]
+        public void CanUseRelativePaths(string basePath, string packageConfig, int expectedCount)
         {
             GetCommand.Arguments.Add(packageConfig);
             GetCommand.ExcludeVersion = true;
+            GetCommand.Latest = true;
+            GetCommand.BaseDirectory = basePath;
             GetCommand.ExecuteCommand();
             var packageCount = FileSystem.Object.GetDirectories(@"c:\TestSolution\packages").Count();
             Assert.AreEqual(expectedCount, packageCount);
