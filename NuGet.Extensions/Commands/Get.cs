@@ -64,6 +64,9 @@ namespace NuGet.Extensions.Commands
         [Option(typeof(GetResources), "GetCommandIncludeDependenciesDescription", AltName = "r")]
         public bool IncludeDependencies { get; set; }
 
+        [Option("The output location for the computed packages.config file.", AltName = "p")]
+        public string PackageConfigOutputLocation { get; set; }
+
         public IPackageRepositoryFactory RepositoryFactory { get; private set; }
 
         public IPackageSourceProvider SourceProvider { get; private set; }
@@ -193,7 +196,12 @@ namespace NuGet.Extensions.Commands
                             }
                             else
                             {
-                                var tempPackageConfig = packageAggregator.Save(packagesConfigDiretory);
+                                var outputDirectory = GetPackageConfigOutputDirectory();
+                                //HACK Seriously, does the IFileSystem NOT have a CreateDirectory?  Seriously?  Sheesh....
+                                Console.WriteWarning("Writing temporary packages.config file to directory : {0}",PackageConfigOutputLocation);
+                                if (!OutputFileSystem.DirectoryExists(outputDirectory))
+                                    Directory.CreateDirectory(outputDirectory);
+                                var tempPackageConfig = packageAggregator.Save(outputDirectory);
                                 InstallPackagesFromConfigFile(packagesConfigDiretory, GetPackageReferenceFile(baseFileSystem, tempPackageConfig.FullName), target);
                             }
                         }
@@ -213,6 +221,15 @@ namespace NuGet.Extensions.Commands
                                                     repositoryManagers.Count, totalPackageUpdates,
                                                     totalTime.Elapsed.TotalSeconds));
             }
+        }
+
+        private string GetPackageConfigOutputDirectory()
+        {
+            PackageConfigOutputLocation = !string.IsNullOrEmpty(PackageConfigOutputLocation)
+                                              ? Path.GetFullPath(PackageConfigOutputLocation)
+                                              : Path.GetTempPath() + Guid.NewGuid().ToString();
+            var outputDirectory = new DirectoryInfo(PackageConfigOutputLocation).FullName;
+            return outputDirectory;
         }
 
         private void GetByPackagesConfig(IFileSystem fileSystem, string target)
