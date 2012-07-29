@@ -4,30 +4,239 @@
         <name>NuGet.Extras</name>
     </assembly>
     <members>
-        <member name="T:NuGet.Extras.Repositories.RepositoryGroupManager">
+        <member name="T:NuGet.Extras.Packages.PackageResolutionManager">
             <summary>
-            Provides functionality across multiple repositories.
+            Provides package resolution and caching services over PackageRepositories.
             </summary>
         </member>
-        <member name="M:NuGet.Extras.Repositories.RepositoryGroupManager.#ctor(System.String,NuGet.IFileSystem)">
+        <member name="T:NuGet.Extras.Packages.IPackageResolutionManager">
             <summary>
-            Initializes a new instance of the <see cref="T:NuGet.Extras.Repositories.RepositoryGroupManager"/> class.  Provides nested operations over RepositoryManager instances.
-            </summary>
-            <param name="repository">The repository.</param>
-            <param name="fileSystem"> </param>
-            <example>Can be a direct path to a repository.config file</example>
-              
-            <example>Can be a path to a directory, which will recursively locate all contained repository.config files</example>
-        </member>
-        <member name="M:NuGet.Extras.Repositories.RepositoryGroupManager.InstallPackages">
-            <summary>
-            Installs the packages.
+            Provides package resolution services.
             </summary>
         </member>
-        <member name="P:NuGet.Extras.Repositories.RepositoryGroupManager.RepositoryManagers">
+        <member name="M:NuGet.Extras.Packages.IPackageResolutionManager.ResolvePackage(NuGet.IPackageRepository,NuGet.IPackageRepository,System.String,NuGet.SemanticVersion,System.Boolean)">
             <summary>
-            The managed set of RepositoryManagers.
+            Resolves a package from either a local repository (typically the .\packages directory), or an AggregateRepository (if one is used).
+            If the AggregateRepository includes a DataServicePackageRepository, attempts are made to resolve packages from in-memory caches that are built based on previous requests.
+            To ensure caching across more than one PackageManager, both SourceRepository and LocalRepository need to be passed in per resolution.
             </summary>
+            <param name="localRepository">Generally reflects a .\packages directory, such as PackageManager.SourceRepository</param>
+            <param name="sourceRepository">Generally an AggregateRepository from a PackageManager.SourceRepository</param>
+            <param name="packageId">The Id to resolve.</param>
+            <param name="version">The Version to resolve</param>
+            <param name="allowPrereleaseVersions">Allow Pre-release packages.</param>
+            <returns></returns>
+        </member>
+        <member name="M:NuGet.Extras.Packages.IPackageResolutionManager.FindPackageInAllLocalSources(NuGet.IPackageRepository,NuGet.IPackageRepository,NuGet.IPackage,System.Boolean,System.Boolean)">
+            <summary>
+            Searches for a specific package on any LocalPackageRepository objects within an AggregateRepository or LocalPackageRepository.
+            </summary>
+            <param name="localRepository">Generally reflects a .\packages directory, such as PackageManager.SourceRepository</param>
+            <param name="sourceRepository">Generally an AggregateRepository from a PackageManager.SourceRepository</param>
+            <param name="package">The IPackage to check for.</param>
+            <param name="allowPrereleaseVersions">Allow pre-release.</param>
+            <param name="allowUnlisted">Allow unlisted.</param>
+            <returns>Any IPackage found first in the localRepository, failing that the LocalRepository Repositories in the sourceRepository.</returns>
+        </member>
+        <member name="M:NuGet.Extras.Packages.IPackageResolutionManager.FindPackageInRemoteSources(NuGet.IPackageRepository,System.String,NuGet.SemanticVersion)">
+            <summary>
+            Checks for a package, will only use DataServicePackageRepository objects (if provided an AggregateRepository, it will select just the remote repositories).  
+            Results in expensive network/OData calls.
+            Eventually it would be nice to replace this because we could query OData for a specific version.
+            </summary>
+            <param name="sourceRepository"></param>
+            <param name="packageId"></param>
+            <param name="version"></param>
+            <returns></returns>
+        </member>
+        <member name="M:NuGet.Extras.Packages.IPackageResolutionManager.ResolveInstallableVersion(NuGet.IPackageRepository,NuGet.PackageReference)">
+            <summary>
+            Resolves the installable version.
+            </summary>
+            <param name="remoteRepository"> </param>
+            <param name="packageReference">The package.</param>
+            <returns></returns>
+        </member>
+        <member name="M:NuGet.Extras.Packages.IPackageResolutionManager.ResolveLatestInstallablePackage(NuGet.IPackageRepository,NuGet.PackageReference)">
+            <summary>
+            Resolves the installable version.
+            </summary>
+            <param name="remoteRepository"> </param>
+            <param name="packageReference"> </param>
+            <returns></returns>
+        </member>
+        <member name="M:NuGet.Extras.Packages.PackageResolutionManager.#ctor(NuGet.ILogger,System.Boolean,NuGet.Extras.Caches.IPackageCache)">
+            <summary>
+            Creates a new PackageResolutionManager.
+            </summary>
+            <param name="console"></param>
+            <param name="latest"></param>
+            <param name="cache"> </param>
+        </member>
+        <member name="M:NuGet.Extras.Packages.PackageResolutionManager.ResolvePackage(NuGet.IPackageRepository,NuGet.IPackageRepository,System.String,NuGet.SemanticVersion,System.Boolean)">
+            <summary>
+            Resolves a package from either a local repository (typically the .\packages directory), or an AggregateRepository (if one is used).
+            If the AggregateRepository includes a DataServicePackageRepository, attempts are made to resolve packages from in-memory caches that are built based on previous requests.
+            To ensure caching across more than one PackageManager, both SourceRepository and LocalRepository need to be passed in per resolution.
+            </summary>
+            <param name="localRepository">Generally reflects a .\packages directory, such as PackageManager.SourceRepository</param>
+            <param name="sourceRepository">Generally an AggregateRepository from a PackageManager.SourceRepository</param>
+            <param name="packageId">The Id to resolve.</param>
+            <param name="version">The Version to resolve</param>
+            <param name="allowPrereleaseVersions">Allow Pre-release packages.</param>
+            <returns></returns>
+        </member>
+        <member name="M:NuGet.Extras.Packages.PackageResolutionManager.FindPackageInAllLocalSources(NuGet.IPackageRepository,NuGet.IPackageRepository,NuGet.IPackage,System.Boolean,System.Boolean)">
+            <summary>
+            Searches for a specific package on any LocalPackageRepository objects within an AggregateRepository or LocalPackageRepository.
+            </summary>
+            <param name="localRepository">Generally reflects a .\packages directory, such as PackageManager.SourceRepository</param>
+            <param name="sourceRepository">Generally an AggregateRepository from a PackageManager.SourceRepository</param>
+            <param name="package">The IPackage to check for.</param>
+            <param name="allowPrereleaseVersions">Allow pre-release.</param>
+            <param name="allowUnlisted">Allow unlisted.</param>
+            <returns>Any IPackage found first in the localRepository, failing that the LocalRepository Repositories in the sourceRepository.</returns>
+        </member>
+        <member name="M:NuGet.Extras.Packages.PackageResolutionManager.FindPackageInRemoteSources(NuGet.IPackageRepository,System.String,NuGet.SemanticVersion)">
+            <summary>
+            Checks for a package, will only use DataServicePackageRepository objects (if provided an AggregateRepository, it will select just the remote repositories).  
+            Results in expensive network/OData calls.
+            Eventually it would be nice to replace this because we could query OData for a specific version.
+            </summary>
+            <param name="sourceRepository"></param>
+            <param name="packageId"></param>
+            <param name="version"></param>
+            <returns></returns>
+        </member>
+        <member name="M:NuGet.Extras.Packages.PackageResolutionManager.FilterPackagesByConstraints(NuGet.IPackageConstraintProvider,System.Collections.Generic.IEnumerable{NuGet.IPackage},System.String,System.Boolean)">
+            <summary>
+            Stolen from NuGet
+            </summary>
+            <param name="constraintProvider"></param>
+            <param name="packages"></param>
+            <param name="packageId"></param>
+            <param name="allowPrereleaseVersions"></param>
+            <returns></returns>
+        </member>
+        <member name="M:NuGet.Extras.Packages.PackageResolutionManager.FindPackageInAggregateLocalSources(NuGet.IPackageRepository,NuGet.IPackageConstraintProvider,System.String,NuGet.SemanticVersion,System.Boolean)">
+            <summary>
+            Will try and return a specific package from all provided local sources.  Will ignore OData feeds, and will not result in network calls.
+            </summary>
+            <param name="sourceRepository"></param>
+            <param name="constraintProvider"></param>
+            <param name="packageId"></param>
+            <param name="version"></param>
+            <param name="allowPrereleaseVersions"></param>
+            <returns></returns>
+        </member>
+        <member name="M:NuGet.Extras.Packages.PackageResolutionManager.ResolveInstallableVersion(NuGet.IPackageRepository,NuGet.PackageReference)">
+            <summary>
+            Resolves the installable version.
+            </summary>
+            <param name="remoteRepository"> </param>
+            <param name="packageReference">The package.</param>
+            <returns></returns>
+        </member>
+        <member name="M:NuGet.Extras.Packages.PackageResolutionManager.ResolveLatestInstallablePackage(NuGet.IPackageRepository,NuGet.PackageReference)">
+            <summary>
+            Resolves the installable version.
+            </summary>
+            <param name="remoteRepository"> </param>
+            <param name="packageReference"> </param>
+            <returns></returns>
+        </member>
+        <member name="T:NuGet.Extras.Comparers.LambdaComparer`1">
+            <summary>
+            Allows comparers to be used via Lambdas
+            </summary>
+            <typeparam name="T"></typeparam>
+        </member>
+        <member name="M:NuGet.Extras.Comparers.LambdaComparer`1.#ctor(System.Func{`0,`0,System.Boolean},System.Func{`0,System.Int32})">
+            <summary>
+            Creates a LambdaComparer
+            </summary>
+            <param name="comparer"></param>
+            <param name="hashCodeResolver"></param>
+            <exception cref="T:System.ArgumentNullException"></exception>
+        </member>
+        <member name="M:NuGet.Extras.Comparers.LambdaComparer`1.Equals(`0,`0)">
+            <summary>
+            Determines whether the specified objects are equal.
+            </summary>
+            <returns>
+            true if the specified objects are equal; otherwise, false.
+            </returns>
+            <param name="x">The first object of type <paramref>
+                                                       <name>T</name>
+                                                     </paramref> to compare.</param><param name="y">The second object of type <paramref>
+                                                                                                                                <name>T</name>
+                                                                                                                              </paramref> to compare.</param>
+        </member>
+        <member name="M:NuGet.Extras.Comparers.LambdaComparer`1.GetHashCode(`0)">
+            <summary>
+            Returns a hash code for the specified object.
+            </summary>
+            <returns>
+            A hash code for the specified object.
+            </returns>
+            <param name="obj">The <see cref="T:System.Object"/> for which a hash code is to be returned.</param><exception cref="T:System.ArgumentNullException">The type of <paramref name="obj"/> is a reference type and <paramref name="obj"/> is null.</exception>
+        </member>
+        <member name="T:NuGet.Extras.Repositories.RepositoryEnumerator">
+            <summary>
+            Implements IRepositoryEnumerator
+            </summary>
+        </member>
+        <member name="T:NuGet.Extras.Repositories.IRepositoryEnumerator">
+            <summary>
+            Allows enumeration of PackageReferenceFiles across a repository.
+            </summary>
+        </member>
+        <member name="M:NuGet.Extras.Repositories.IRepositoryEnumerator.GetPackageReferenceFiles(System.IO.FileInfo)">
+            <summary>
+            Gets the package reference files.
+            </summary>
+            <param name="repositoryConfig">The repository config.</param>
+            <returns></returns>
+        </member>
+        <member name="M:NuGet.Extras.Repositories.RepositoryEnumerator.#ctor(NuGet.IFileSystem)">
+            <summary>
+            Creates a RepositoryEnumerator.
+            </summary>
+            <param name="fileSystem"></param>
+        </member>
+        <member name="M:NuGet.Extras.Repositories.RepositoryEnumerator.GetPackageReferenceFiles(System.IO.FileInfo)">
+            <summary>
+            Gets the package reference files.
+            </summary>
+            <param name="repositoryConfig">The repository config.</param>
+            <returns></returns>
+        </member>
+        <member name="T:NuGet.Extras.Packages.IPackageEnumerator">
+            <summary>
+            Interface for package enumeration logic. Allows for mocking of the PackageReference list.
+            </summary>
+        </member>
+        <member name="M:NuGet.Extras.Packages.IPackageEnumerator.GetPackageReferences(System.Collections.Generic.IEnumerable{NuGet.PackageReferenceFile},System.Action{System.String,System.String},NuGet.Extras.Comparers.PackageReferenceEqualityComparer)">
+            <summary>
+            Gets the package references.
+            </summary>
+            <param name="packageReferenceFiles">The package reference files.</param>
+            <param name="logCount">The log count.</param>
+            <param name="comparer">The required comparer.</param>
+            <returns></returns>
+        </member>
+        <member name="T:NuGet.Extras.NuGetExtensions">
+            <summary>
+            Mwahahahaaaahaaaaaaaaa
+            </summary>
+        </member>
+        <member name="M:NuGet.Extras.NuGetExtensions.AsPackageSourceList(System.Collections.Generic.IEnumerable{System.String},System.Boolean)">
+            <summary>
+            Filthy extension method.  Converts the given list of package sources into a list of, well, PackageSource objects.
+            </summary>
+            <param name="sources">The sources.</param>
+            <param name="useDefaultFeed">if set to <c>true</c> [use default feed].</param>
+            <returns></returns>
         </member>
         <member name="T:NuGet.Extras.ExtensionMethods.IFileSystemExtensions">
             <summary>
@@ -58,6 +267,468 @@
             <param name="fileSystem"></param>
             <param name="path"></param>
             <param name="write"></param>
+        </member>
+        <member name="T:NuGet.Extras.Repositories.RepositoryManager">
+            <summary>
+            Implements IRepositoryManager
+            </summary>
+        </member>
+        <member name="T:NuGet.Extras.Repositories.IRepositoryManager">
+            <summary>
+            Provides a few services across a Repository
+            </summary>
+        </member>
+        <member name="P:NuGet.Extras.Repositories.IRepositoryManager.PackageReferenceFiles">
+            <summary>
+            Returns the full set of PackagesReferenceFiles
+            </summary>
+        </member>
+        <member name="P:NuGet.Extras.Repositories.IRepositoryManager.RepositoryConfig">
+            <summary>
+            Provides the Repository.config file.
+            </summary>
+        </member>
+        <member name="M:NuGet.Extras.Repositories.RepositoryManager.#ctor(System.String,NuGet.Extras.Repositories.IRepositoryEnumerator,NuGet.IFileSystem)">
+            <summary>
+            Initializes a new instance of the <see cref="T:NuGet.Extras.Repositories.RepositoryManager"/> class.
+            </summary>
+            <param name="repositoryConfig">The repository.config file to parse.</param>
+            <param name="repositoryEnumerator">The repository enumerator.</param>
+            <param name="fileSystem"> </param>
+            <example>Can be a direct path to a repository.config file</example>
+              
+            <example>Can be a path to a directory, which will recursively locate all contained repository.config files</example>
+        </member>
+        <member name="P:NuGet.Extras.Repositories.RepositoryManager.RepositoryConfig">
+            <summary>
+            Gets the repository config file details.
+            </summary>
+        </member>
+        <member name="P:NuGet.Extras.Repositories.RepositoryManager.PackageReferenceFiles">
+            <summary>
+            Gets the package reference files.
+            </summary>
+        </member>
+        <member name="T:NuGet.Extras.Comparers.PackageReferenceEqualityComparer">
+            <summary>
+            Provides a set of Comparers to enable Packages comparisons to be evaluated in specific ways.
+            </summary>
+        </member>
+        <member name="F:NuGet.Extras.Comparers.PackageReferenceEqualityComparer.IdVersionAndAllowedVersions">
+            <summary>
+            Check Package equality using the PackageID, Version and VersionsConstraints
+            </summary>
+        </member>
+        <member name="F:NuGet.Extras.Comparers.PackageReferenceEqualityComparer.IdAndVersion">
+            <summary>
+            Check Package equality using the PackageID and Version only.
+            </summary>
+        </member>
+        <member name="F:NuGet.Extras.Comparers.PackageReferenceEqualityComparer.IdAndAllowedVersions">
+            <summary>
+            Check Package equality using the PackageID only.
+            </summary>
+        </member>
+        <member name="F:NuGet.Extras.Comparers.PackageReferenceEqualityComparer.Id">
+            <summary>
+            Check Package equality using the PackageID only.
+            </summary>
+        </member>
+        <member name="M:NuGet.Extras.Comparers.PackageReferenceEqualityComparer.Equals(NuGet.PackageReference,NuGet.PackageReference)">
+            <summary>
+            Determines whether the specified objects are equal.
+            </summary>
+            <returns>
+            true if the specified objects are equal; otherwise, false.
+            </returns>
+            <param name="x">The first object of type <paramref>
+                                                       <name>T</name>
+                                                     </paramref> to compare.</param><param name="y">The second object of type <paramref>
+                                                                                                                                <name>T</name>
+                                                                                                                              </paramref> to compare.</param>
+        </member>
+        <member name="M:NuGet.Extras.Comparers.PackageReferenceEqualityComparer.GetHashCode(NuGet.PackageReference)">
+            <summary>
+            Returns a hash code for the specified object.
+            </summary>
+            <returns>
+            A hash code for the specified object.
+            </returns>
+            <param name="obj">The <see cref="T:System.Object"/> for which a hash code is to be returned.</param><exception cref="T:System.ArgumentNullException">The type of <paramref name="obj"/> is a reference type and <paramref name="obj"/> is null.</exception>
+        </member>
+        <member name="T:NuGet.Extras.BaseClasses.TwoWayResources">
+            <summary>
+              A strongly-typed resource class, for looking up localized strings, etc.
+            </summary>
+        </member>
+        <member name="P:NuGet.Extras.BaseClasses.TwoWayResources.ResourceManager">
+            <summary>
+              Returns the cached ResourceManager instance used by this class.
+            </summary>
+        </member>
+        <member name="P:NuGet.Extras.BaseClasses.TwoWayResources.Culture">
+            <summary>
+              Overrides the current thread's CurrentUICulture property for all
+              resource lookups using this strongly typed resource class.
+            </summary>
+        </member>
+        <member name="P:NuGet.Extras.BaseClasses.TwoWayResources.ApiKeyDescription">
+            <summary>
+              Looks up a localized string similar to The API key for the destination (optional if already set)..
+            </summary>
+        </member>
+        <member name="P:NuGet.Extras.BaseClasses.TwoWayResources.DestinationDescription">
+            <summary>
+              Looks up a localized string similar to The location(s) to copy the package..
+            </summary>
+        </member>
+        <member name="P:NuGet.Extras.BaseClasses.TwoWayResources.SourceDescription">
+            <summary>
+              Looks up a localized string similar to A list of package sources to use for finding the package..
+            </summary>
+        </member>
+        <member name="P:NuGet.Extras.BaseClasses.TwoWayResources.VersionDescription">
+            <summary>
+              Looks up a localized string similar to The version of the package to install..
+            </summary>
+        </member>
+        <member name="P:NuGet.Extras.BaseClasses.TwoWayResources.WorkingDirectoryRootDescription">
+            <summary>
+              Looks up a localized string similar to The working directory root for the copy operation..
+            </summary>
+        </member>
+        <member name="T:NuGet.Extras.Caches.MemoryBasedPackageCache">
+            <summary>
+            Implements a simple package cache in memory.
+            </summary>
+        </member>
+        <member name="T:NuGet.Extras.Caches.IPackageCache">
+            <summary>
+            Provides package caching to reduce network round trips on package resolution and download.
+            </summary>
+        </member>
+        <member name="M:NuGet.Extras.Caches.IPackageCache.TryCacheHitByVersionConstraint(NuGet.PackageReference,NuGet.IPackage@)">
+            <summary>
+            Attempts to return an already resolved Id/VersionConstraint pair from the cache.  Attempts to prevent unecessary network calls.
+            </summary>
+            <param name="packageReference"></param>
+            <param name="package"></param>
+            <returns></returns>
+        </member>
+        <member name="M:NuGet.Extras.Caches.IPackageCache.TryCacheHitByIsLatest(System.String,NuGet.IPackage@)">
+            <summary>
+            Checks to see if we have already retrieved a Latest version for a particular Package ID.  Attempts to avoid unecessary network calls.
+            </summary>
+            <param name="packageId"></param>
+            <param name="package"></param>
+            <returns></returns>
+        </member>
+        <member name="M:NuGet.Extras.Caches.IPackageCache.TryCacheHitByVersion(System.String,NuGet.SemanticVersion,NuGet.IPackage@)">
+            <summary>
+            Tries to find a particular package Id and version combination from a cache of IPackages returned from DataServicePackageRepository queries.
+            Attempts to limit the number of OData queries that return all versions for a particular Id.
+            </summary>
+            <param name="packageId"></param>
+            <param name="version"></param>
+            <param name="package"></param>
+            <returns></returns>
+        </member>
+        <member name="M:NuGet.Extras.Caches.IPackageCache.AddCacheEntryByList(System.String,System.Collections.Generic.IEnumerable{NuGet.IPackage})">
+            <summary>
+            Adds a list of resolved packages against a single package ID.  Usually used to cache a query that is simply by ID.
+            </summary>
+            <param name="packageId"></param>
+            <param name="packages"></param>
+            <returns></returns>
+        </member>
+        <member name="M:NuGet.Extras.Caches.IPackageCache.AddCacheEntryByIsLatest(NuGet.IPackage)">
+            <summary>
+            Adds a cache entry when you are checking for the latest version of a package.  Will be cached as the latest for that specific package until the cache is thrown away.
+            </summary>
+            <param name="package"></param>
+            <returns></returns>
+        </member>
+        <member name="M:NuGet.Extras.Caches.IPackageCache.AddCacheEntryByConstraint(NuGet.IPackage,NuGet.IVersionSpec)">
+            <summary>
+            Adds a package that has been resolved as the latest within a constraint.  Saves doing the math and resolution again.
+            </summary>
+            <param name="package"></param>
+            <param name="constraint"></param>
+            <returns></returns>
+        </member>
+        <member name="M:NuGet.Extras.Caches.MemoryBasedPackageCache.#ctor(NuGet.ILogger)">
+            <summary>
+            Creates an instance of a MemoryBasedPackageCache.
+            </summary>
+            <param name="console"></param>
+        </member>
+        <member name="M:NuGet.Extras.Caches.MemoryBasedPackageCache.TryCacheHitByVersionConstraint(NuGet.PackageReference,NuGet.IPackage@)">
+            <summary>
+            Attempts to return an already resolved Id/VersionConstraint pair from the cache.  Attempts to prevent unecessary network calls.
+            </summary>
+            <param name="packageReference"></param>
+            <param name="package"></param>
+            <returns></returns>
+        </member>
+        <member name="M:NuGet.Extras.Caches.MemoryBasedPackageCache.TryCacheHitByIsLatest(System.String,NuGet.IPackage@)">
+            <summary>
+            Checks to see if we have already retrieved a Latest version for a particular Package ID.  Attempts to avoid unecessary network calls.
+            </summary>
+            <param name="packageId"></param>
+            <param name="package"></param>
+            <returns></returns>
+        </member>
+        <member name="M:NuGet.Extras.Caches.MemoryBasedPackageCache.TryCacheHitByVersion(System.String,NuGet.SemanticVersion,NuGet.IPackage@)">
+            <summary>
+            Tries to find a particular package Id and version combination from a cache of IPackages returned from DataServicePackageRepository queries.
+            Attempts to limit the number of OData queries that return all versions for a particular Id.
+            </summary>
+            <param name="packageId"></param>
+            <param name="version"></param>
+            <param name="package"></param>
+            <returns></returns>
+        </member>
+        <member name="M:NuGet.Extras.Caches.MemoryBasedPackageCache.AddCacheEntryByList(System.String,System.Collections.Generic.IEnumerable{NuGet.IPackage})">
+            <summary>
+            Adds a list of resolved packages against a single package ID.  Usually used to cache a query that is simply by ID.
+            </summary>
+            <param name="packageId"></param>
+            <param name="packages"></param>
+            <returns></returns>
+        </member>
+        <member name="M:NuGet.Extras.Caches.MemoryBasedPackageCache.AddCacheEntryByIsLatest(NuGet.IPackage)">
+            <summary>
+            Adds a cache entry when you are checking for the latest version of a package.  Will be cached as the latest for that specific package until the cache is thrown away.
+            </summary>
+            <param name="package"></param>
+            <returns></returns>
+        </member>
+        <member name="M:NuGet.Extras.Caches.MemoryBasedPackageCache.AddCacheEntryByConstraint(NuGet.IPackage,NuGet.IVersionSpec)">
+            <summary>
+            Adds a package that has been resolved as the latest within a constraint.  Saves doing the math and resolution again.
+            </summary>
+            <param name="package"></param>
+            <param name="constraint"></param>
+            <returns></returns>
+        </member>
+        <member name="T:NuGet.Extras.BlankUserSettings">
+            <summary>
+            Provides a blank set of user settings...
+            </summary>
+        </member>
+        <member name="M:NuGet.Extras.BlankUserSettings.DeleteSection(System.String)">
+            <summary>
+            Deletes a section...or not
+            </summary>
+            <param name="section"></param>
+            <returns></returns>
+        </member>
+        <member name="M:NuGet.Extras.BlankUserSettings.DeleteValue(System.String,System.String)">
+            <summary>
+            Delete a value or not.
+            </summary>
+            <param name="section"></param>
+            <param name="key"></param>
+            <returns></returns>
+        </member>
+        <member name="M:NuGet.Extras.BlankUserSettings.GetValue(System.String,System.String)">
+            <summary>
+            Doesnt really get a value.
+            </summary>
+            <param name="section"></param>
+            <param name="key"></param>
+            <returns></returns>
+        </member>
+        <member name="M:NuGet.Extras.BlankUserSettings.GetValues(System.String)">
+            <summary>
+            Seriously, more comments than sense.
+            </summary>
+            <param name="section"></param>
+            <returns></returns>
+        </member>
+        <member name="M:NuGet.Extras.BlankUserSettings.SetValue(System.String,System.String,System.String)">
+            <summary>
+            Doesnt set a value
+            </summary>
+            <param name="section"></param>
+            <param name="key"></param>
+            <param name="value"></param>
+        </member>
+        <member name="M:NuGet.Extras.BlankUserSettings.SetValues(System.String,System.Collections.Generic.IList{System.Collections.Generic.KeyValuePair{System.String,System.String}})">
+            <summary>
+            Plurally fails to set values.
+            </summary>
+            <param name="section"></param>
+            <param name="values"></param>
+        </member>
+        <member name="M:NuGet.Extras.BlankUserSettings.GetNestedValues(System.String,System.String)">
+            <summary>
+            Tweet tweet (nested...get it?)
+            </summary>
+            <param name="section"></param>
+            <param name="key"></param>
+            <returns></returns>
+        </member>
+        <member name="M:NuGet.Extras.BlankUserSettings.SetNestedValues(System.String,System.String,System.Collections.Generic.IList{System.Collections.Generic.KeyValuePair{System.String,System.String}})">
+            <summary>
+            I got nothin....
+            </summary>
+            <param name="section"></param>
+            <param name="key"></param>
+            <param name="values"></param>
+        </member>
+        <member name="T:NuGet.Extras.PackageReferences.PackageReferenceSetResolver">
+            <summary>
+            Resolves a set of packages to the smallest distinct set that provides all required constrained versions.
+            </summary>
+        </member>
+        <member name="T:NuGet.Extras.PackageReferences.IPackageReferenceSetResolver">
+            <summary>
+            Provides the ability to resolve a set of packages that will meet a set of common constraints.
+            </summary>
+        </member>
+        <member name="M:NuGet.Extras.PackageReferences.IPackageReferenceSetResolver.Resolve(System.Collections.Generic.IEnumerable{NuGet.PackageReference})">
+            <summary>
+            Resolves the specified PackageReferences into a single set that allows all required version constraints to be satisfied, or returns a list of which cant.
+            Uses a Tuple as the return type, Item1 are the succesfuly resolved PackageReferences, and Item2 are the failed ones.
+            </summary>
+            <param name="references">The references.</param>
+            <returns></returns>
+        </member>
+        <member name="M:NuGet.Extras.PackageReferences.PackageReferenceSetResolver.Resolve(System.Collections.Generic.IEnumerable{NuGet.PackageReference})">
+            <summary>
+            Resolves the set of correct PackageReferences based on the smallest set of VersionSpec per Package Id that satisfies all
+            the specific Package Ids in the same list.
+            </summary>
+            <param name="references">The list of PackageReferences.</param>
+            <returns>A Tuple where List1 are the resolved PackageReferences and List2 are the PackageReferences we failed to resolve</returns>
+        </member>
+        <member name="M:NuGet.Extras.PackageReferences.PackageReferenceSetResolver.ResolveValidVersionSpec(System.Collections.Generic.IEnumerable{NuGet.PackageReference})">
+            <summary>
+            Resolves the largest valid VersionSpec across a set of PackageReference objects.
+            </summary>
+            <param name="packageReferences">The package references.</param>
+            <returns></returns>
+        </member>
+        <member name="M:NuGet.Extras.PackageReferences.PackageReferenceSetResolver.ReturnLargestVersionSpec">
+            <summary>
+            Returns the largest version spec we can think of to start narrowing down from.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:NuGet.Extras.PackageReferences.PackageReferenceSetResolver.ResolveValidVersion(System.Collections.Generic.IEnumerable{NuGet.PackageReference})">
+            <summary>
+            Resolves a valid Version that is common across a list of PackageReference objects.
+            </summary>
+            <param name="packageReferences">The package references.</param>
+            <returns></returns>
+        </member>
+        <member name="T:NuGet.Extras.Repositories.RepositoryAssemblyResolver">
+            <summary>
+            Provides the ability to search across IQueryable package sources for a set of packages that contain a particular assembly or set of assemblies.
+            </summary>
+        </member>
+        <member name="M:NuGet.Extras.Repositories.RepositoryAssemblyResolver.#ctor(System.Collections.Generic.List{System.String},System.Linq.IQueryable{NuGet.IPackage},NuGet.IFileSystem,NuGet.Common.IConsole)">
+            <summary>
+            Initializes a new instance of the <see cref="T:NuGet.Extras.Repositories.RepositoryAssemblyResolver"/> class.
+            </summary>
+            <param name="assemblies">The assemblies to look for.</param>
+            <param name="packageSource">The package sources to search.</param>
+            <param name="fileSystem">The file system to output any packages.config files.</param>
+            <param name="console">The console to output to.</param>
+        </member>
+        <member name="M:NuGet.Extras.Repositories.RepositoryAssemblyResolver.ResolveAssemblies(System.Boolean)">
+            <summary>
+            Resolves a list of packages that contain the assemblies requested.
+            </summary>
+            <param name="exhaustive">if set to <c>true</c> [exhaustive].</param>
+            <returns></returns>
+        </member>
+        <member name="M:NuGet.Extras.Repositories.RepositoryAssemblyResolver.OutputPackageConfigFile">
+            <summary>
+            Outputs a package.config file reflecting the set of packages that provides the requested set of assemblies.
+            </summary>
+        </member>
+        <member name="T:NuGet.Extras.Caches.NuGetCacheManager">
+            <summary>
+            Provides management capability around NuGetCachePath so feed specific caches can be set.
+            </summary>
+        </member>
+        <member name="T:NuGet.Extras.Caches.INuGetCacheManager">
+            <summary>
+            Provides a management layer over the MachineCache cache location.
+            </summary>
+        </member>
+        <member name="M:NuGet.Extras.Caches.INuGetCacheManager.ResetPreviousCacheDirectory">
+            <summary>
+            Resets the %NuGetCachePath% to the previous setting.
+            </summary>
+        </member>
+        <member name="M:NuGet.Extras.Caches.INuGetCacheManager.SetFeedSpecificCacheDirectory(System.String)">
+            <summary>
+            Sets the cache subdirectory to the source string provided.  Saves any existing NuGetCachePath value so it can be reset later.
+            </summary>
+            <param name="source"></param>
+        </member>
+        <member name="M:NuGet.Extras.Caches.INuGetCacheManager.GetCurrentFeedSpecificCache">
+            <summary>
+            Provides the location of the current feed specific cache location.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:NuGet.Extras.Caches.NuGetCacheManager.#ctor(NuGet.Common.IConsole)">
+            <summary>
+            Creates a NuGetCacheManager, provided an IConsole implementation
+            </summary>
+            <param name="console"></param>
+        </member>
+        <member name="M:NuGet.Extras.Caches.NuGetCacheManager.GetLocalAppDataPath">
+            <summary>
+            Gets the LocalAppData path, firstly from the environment variable, falling back to SpecialFolder
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:NuGet.Extras.Caches.NuGetCacheManager.ResetPreviousCacheDirectory">
+            <summary>
+            Resets the %NuGetCachePath% to the previous setting.
+            </summary>
+        </member>
+        <member name="M:NuGet.Extras.Caches.NuGetCacheManager.SetFeedSpecificCacheDirectory(System.String)">
+            <summary>
+            Sets the cache subdirectory to the source string provided.  Saves any existing NuGetCachePath value so it can be reset later.
+            </summary>
+            <param name="source"></param>
+        </member>
+        <member name="M:NuGet.Extras.Caches.NuGetCacheManager.GetCurrentFeedSpecificCache">
+            <summary>
+            Provides the location of the current feed specific cache location.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="T:NuGet.Extras.Repositories.RepositoryGroupManager">
+            <summary>
+            Provides functionality across multiple repositories.
+            </summary>
+        </member>
+        <member name="M:NuGet.Extras.Repositories.RepositoryGroupManager.#ctor(System.String,NuGet.IFileSystem)">
+            <summary>
+            Initializes a new instance of the <see cref="T:NuGet.Extras.Repositories.RepositoryGroupManager"/> class.  Provides nested operations over RepositoryManager instances.
+            </summary>
+            <param name="repository">The repository.</param>
+            <param name="fileSystem"> </param>
+            <example>Can be a direct path to a repository.config file</example>
+              
+            <example>Can be a path to a directory, which will recursively locate all contained repository.config files</example>
+        </member>
+        <member name="M:NuGet.Extras.Repositories.RepositoryGroupManager.InstallPackages">
+            <summary>
+            Installs the packages.
+            </summary>
+        </member>
+        <member name="P:NuGet.Extras.Repositories.RepositoryGroupManager.RepositoryManagers">
+            <summary>
+            The managed set of RepositoryManagers.
+            </summary>
         </member>
         <member name="T:NuGet.Extras.Packages.PackageAggregator">
             <summary>
@@ -114,32 +785,76 @@
             Gets the Package resolution failures.
             </summary>
         </member>
-        <member name="T:NuGet.Extras.Repositories.IRepositoryManager">
+        <member name="T:NuGet.Extras.ExtensionMethods.IPackageManagerExtensions">
             <summary>
-            Provides a few services across a Repository
+            IPackageManager Extensions
             </summary>
         </member>
-        <member name="P:NuGet.Extras.Repositories.IRepositoryManager.PackageReferenceFiles">
+        <member name="M:NuGet.Extras.ExtensionMethods.IPackageManagerExtensions.CleanPackageFolders(NuGet.IPackageManager)">
             <summary>
-            Returns the full set of PackagesReferenceFiles
+            Cleans the package folders.  Requires that the PackageManager uses an IFileSystem that has the Root set to the packages folder.
             </summary>
         </member>
-        <member name="P:NuGet.Extras.Repositories.IRepositoryManager.RepositoryConfig">
+        <member name="M:NuGet.Extras.ExtensionMethods.IPackageManagerExtensions.IsPackageInstalled(NuGet.PackageManager,System.String,NuGet.SemanticVersion,System.Boolean)">
             <summary>
-            Provides the Repository.config file.
+            Checks whether an IPackage exists within a PackageManager.  By default, will use the UseSideBySide settings of the DefaultPackagePathProvider the PackageManager is instantiated with.
+            If passed in TRUE for exhaustive, will check both with and without UseSideBySide set.
             </summary>
-        </member>
-        <member name="T:NuGet.Extras.Repositories.IRepositoryEnumerator">
-            <summary>
-            Allows enumeration of PackageReferenceFiles across a repository.
-            </summary>
-        </member>
-        <member name="M:NuGet.Extras.Repositories.IRepositoryEnumerator.GetPackageReferenceFiles(System.IO.FileInfo)">
-            <summary>
-            Gets the package reference files.
-            </summary>
-            <param name="repositoryConfig">The repository config.</param>
+            <param name="packageManager"></param>
+            <param name="packageId"> </param>
+            <param name="version"> </param>
+            <param name="exhaustive"></param>
             <returns></returns>
+        </member>
+        <member name="M:NuGet.Extras.ExtensionMethods.IPackageManagerExtensions.IsPackageInstalled(NuGet.PackageManager,NuGet.IPackage,System.Boolean)">
+            <summary>
+            Checks whether an IPackage exists within a PackageManager.  By default, will use the UseSideBySide settings of the DefaultPackagePathProvider the PackageManager is instantiated with.
+            If passed in TRUE for exhaustive, will check both with and without UseSideBySide set.
+            </summary>
+            <param name="packageManager"></param>
+            <param name="package"></param>
+            <param name="exhaustive"></param>
+            <returns></returns>
+        </member>
+        <member name="T:NuGet.Extras.ExtensionMethods.AggregateRepositoryExtensions">
+            <summary>
+            Provides a set of extension methods that extend the AggregateRepository.
+            </summary>
+        </member>
+        <member name="M:NuGet.Extras.ExtensionMethods.AggregateRepositoryExtensions.FindLatestPackage(NuGet.AggregateRepository,System.String)">
+            <summary>
+            Finds the latest package in a repository by Package Id
+            </summary>
+            <param name="repository"></param>
+            <param name="packageId"></param>
+            <returns></returns>
+            <exception cref="T:System.ArgumentNullException"></exception>
+        </member>
+        <member name="M:NuGet.Extras.ExtensionMethods.AggregateRepositoryExtensions.GetLocalOnlyAggregateRepository(NuGet.AggregateRepository)">
+            <summary>
+            Returns a an AggregateRepository minus any DataServicePackageRepositories.  Useful if you want to use a command that will not work across these types.
+            Snappy name, I know.
+            </summary>
+            <param name="repository"></param>
+            <returns></returns>
+        </member>
+        <member name="M:NuGet.Extras.ExtensionMethods.AggregateRepositoryExtensions.GetRemoteOnlyAggregateRepository(NuGet.AggregateRepository)">
+            <summary>
+            Returns a an AggregateRepository minus any LocalPackageRepositories or MachineCache repositories.  Useful if you want to use a command that will not work across these types.
+            Snappy name, I know.
+            </summary>
+            <param name="repository"></param>
+            <returns></returns>
+        </member>
+        <member name="M:NuGet.Extras.ExtensionMethods.AggregateRepositoryExtensions.FindLatestPackage(NuGet.AggregateRepository,System.String,NuGet.IVersionSpec)">
+            <summary>
+            Finds the latest package in a repository constrained by an Id and an IVersionSpec
+            </summary>
+            <param name="repository"></param>
+            <param name="packageId"></param>
+            <param name="versionSpec"></param>
+            <returns></returns>
+            <exception cref="T:System.ArgumentNullException"></exception>
         </member>
         <member name="T:NuGet.Extras.Comparers.VersionSpecEqualityComparer">
             <summary>
@@ -170,19 +885,10 @@
             </returns>
             <filterpriority>2</filterpriority>
         </member>
-        <member name="T:NuGet.Extras.Packages.IPackageEnumerator">
+        <member name="T:NuGet.Extras.FindFilesPatternToRegex">
             <summary>
-            Interface for package enumeration logic. Allows for mocking of the PackageReference list.
+            http://stackoverflow.com/questions/652037/how-do-i-check-if-a-filename-matches-a-wildcard-pattern
             </summary>
-        </member>
-        <member name="M:NuGet.Extras.Packages.IPackageEnumerator.GetPackageReferences(System.Collections.Generic.IEnumerable{NuGet.PackageReferenceFile},System.Action{System.String,System.String},NuGet.Extras.Comparers.PackageReferenceEqualityComparer)">
-            <summary>
-            Gets the package references.
-            </summary>
-            <param name="packageReferenceFiles">The package reference files.</param>
-            <param name="logCount">The log count.</param>
-            <param name="comparer">The required comparer.</param>
-            <returns></returns>
         </member>
         <member name="T:NuGet.Extras.Commands.TwoWayCommand">
             <summary>
@@ -311,226 +1017,6 @@
             The working directory root.
             </value>
         </member>
-        <member name="T:NuGet.Extras.Packages.PackageEnumerator">
-            <summary>
-            Manages the enumeration of a list of PackageReferenceFile objects.
-            </summary>
-        </member>
-        <member name="M:NuGet.Extras.Packages.PackageEnumerator.GetPackageReferences(System.Collections.Generic.IEnumerable{NuGet.PackageReferenceFile},System.Action{System.String,System.String},NuGet.Extras.Comparers.PackageReferenceEqualityComparer)">
-            <summary>
-            Gets the package references.
-            </summary>
-            <param name="packageReferenceFiles">The package reference files.</param>
-            <param name="logCount">The log count.</param>
-            <param name="comparer"> </param>
-            <returns></returns>
-        </member>
-        <member name="T:NuGet.Extras.Repositories.RepositoryManager">
-            <summary>
-            Implements IRepositoryManager
-            </summary>
-        </member>
-        <member name="M:NuGet.Extras.Repositories.RepositoryManager.#ctor(System.String,NuGet.Extras.Repositories.IRepositoryEnumerator,NuGet.IFileSystem)">
-            <summary>
-            Initializes a new instance of the <see cref="T:NuGet.Extras.Repositories.RepositoryManager"/> class.
-            </summary>
-            <param name="repositoryConfig">The repository.config file to parse.</param>
-            <param name="repositoryEnumerator">The repository enumerator.</param>
-            <param name="fileSystem"> </param>
-            <example>Can be a direct path to a repository.config file</example>
-              
-            <example>Can be a path to a directory, which will recursively locate all contained repository.config files</example>
-        </member>
-        <member name="P:NuGet.Extras.Repositories.RepositoryManager.RepositoryConfig">
-            <summary>
-            Gets the repository config file details.
-            </summary>
-        </member>
-        <member name="P:NuGet.Extras.Repositories.RepositoryManager.PackageReferenceFiles">
-            <summary>
-            Gets the package reference files.
-            </summary>
-        </member>
-        <member name="T:NuGet.Extras.Repositories.RepositoryAssemblyResolver">
-            <summary>
-            Provides the ability to search across IQueryable package sources for a set of packages that contain a particular assembly or set of assemblies.
-            </summary>
-        </member>
-        <member name="M:NuGet.Extras.Repositories.RepositoryAssemblyResolver.#ctor(System.Collections.Generic.List{System.String},System.Linq.IQueryable{NuGet.IPackage},NuGet.IFileSystem,NuGet.Common.IConsole)">
-            <summary>
-            Initializes a new instance of the <see cref="T:NuGet.Extras.Repositories.RepositoryAssemblyResolver"/> class.
-            </summary>
-            <param name="assemblies">The assemblies to look for.</param>
-            <param name="packageSource">The package sources to search.</param>
-            <param name="fileSystem">The file system to output any packages.config files.</param>
-            <param name="console">The console to output to.</param>
-        </member>
-        <member name="M:NuGet.Extras.Repositories.RepositoryAssemblyResolver.ResolveAssemblies(System.Boolean)">
-            <summary>
-            Resolves a list of packages that contain the assemblies requested.
-            </summary>
-            <param name="exhaustive">if set to <c>true</c> [exhaustive].</param>
-            <returns></returns>
-        </member>
-        <member name="M:NuGet.Extras.Repositories.RepositoryAssemblyResolver.OutputPackageConfigFile">
-            <summary>
-            Outputs a package.config file reflecting the set of packages that provides the requested set of assemblies.
-            </summary>
-        </member>
-        <member name="T:NuGet.Extras.NuGetExtensions">
-            <summary>
-            Mwahahahaaaahaaaaaaaaa
-            </summary>
-        </member>
-        <member name="M:NuGet.Extras.NuGetExtensions.AsPackageSourceList(System.Collections.Generic.IEnumerable{System.String},System.Boolean)">
-            <summary>
-            Filthy extension method.  Converts the given list of package sources into a list of, well, PackageSource objects.
-            </summary>
-            <param name="sources">The sources.</param>
-            <param name="useDefaultFeed">if set to <c>true</c> [use default feed].</param>
-            <returns></returns>
-        </member>
-        <member name="T:NuGet.Extras.BlankUserSettings">
-            <summary>
-            Provides a blank set of user settings...
-            </summary>
-        </member>
-        <member name="M:NuGet.Extras.BlankUserSettings.DeleteSection(System.String)">
-            <summary>
-            Deletes a section...or not
-            </summary>
-            <param name="section"></param>
-            <returns></returns>
-        </member>
-        <member name="M:NuGet.Extras.BlankUserSettings.DeleteValue(System.String,System.String)">
-            <summary>
-            Delete a value or not.
-            </summary>
-            <param name="section"></param>
-            <param name="key"></param>
-            <returns></returns>
-        </member>
-        <member name="M:NuGet.Extras.BlankUserSettings.GetValue(System.String,System.String)">
-            <summary>
-            Doesnt really get a value.
-            </summary>
-            <param name="section"></param>
-            <param name="key"></param>
-            <returns></returns>
-        </member>
-        <member name="M:NuGet.Extras.BlankUserSettings.GetValues(System.String)">
-            <summary>
-            Seriously, more comments than sense.
-            </summary>
-            <param name="section"></param>
-            <returns></returns>
-        </member>
-        <member name="M:NuGet.Extras.BlankUserSettings.SetValue(System.String,System.String,System.String)">
-            <summary>
-            Doesnt set a value
-            </summary>
-            <param name="section"></param>
-            <param name="key"></param>
-            <param name="value"></param>
-        </member>
-        <member name="M:NuGet.Extras.BlankUserSettings.SetValues(System.String,System.Collections.Generic.IList{System.Collections.Generic.KeyValuePair{System.String,System.String}})">
-            <summary>
-            Plurally fails to set values.
-            </summary>
-            <param name="section"></param>
-            <param name="values"></param>
-        </member>
-        <member name="M:NuGet.Extras.BlankUserSettings.GetNestedValues(System.String,System.String)">
-            <summary>
-            Tweet tweet (nested...get it?)
-            </summary>
-            <param name="section"></param>
-            <param name="key"></param>
-            <returns></returns>
-        </member>
-        <member name="M:NuGet.Extras.BlankUserSettings.SetNestedValues(System.String,System.String,System.Collections.Generic.IList{System.Collections.Generic.KeyValuePair{System.String,System.String}})">
-            <summary>
-            I got nothin....
-            </summary>
-            <param name="section"></param>
-            <param name="key"></param>
-            <param name="values"></param>
-        </member>
-        <member name="T:NuGet.Extras.FindFilesPatternToRegex">
-            <summary>
-            http://stackoverflow.com/questions/652037/how-do-i-check-if-a-filename-matches-a-wildcard-pattern
-            </summary>
-        </member>
-        <member name="T:NuGet.Extras.ExtensionMethods.ObjectExtensions">
-            <summary>
-            Object extensions
-            </summary>
-        </member>
-        <member name="M:NuGet.Extras.ExtensionMethods.ObjectExtensions.GetPrivateField``1(System.Object,System.String)">
-            <summary>
-            Allows typed retrieveal of private fields.
-            </summary>
-            <param name="obj"></param>
-            <param name="name"></param>
-            <typeparam name="T"></typeparam>
-            <returns></returns>
-        </member>
-        <member name="M:NuGet.Extras.ExtensionMethods.ObjectExtensions.GetPrivateProperty``1(System.Object,System.String)">
-            <summary>
-            Allows typed retrieval of private properties.
-            </summary>
-            <param name="obj"></param>
-            <param name="name"></param>
-            <typeparam name="T"></typeparam>
-            <returns></returns>
-        </member>
-        <member name="T:NuGet.Extras.Comparers.PackageReferenceEqualityComparer">
-            <summary>
-            Provides a set of Comparers to enable Packages comparisons to be evaluated in specific ways.
-            </summary>
-        </member>
-        <member name="F:NuGet.Extras.Comparers.PackageReferenceEqualityComparer.IdVersionAndAllowedVersions">
-            <summary>
-            Check Package equality using the PackageID, Version and VersionsConstraints
-            </summary>
-        </member>
-        <member name="F:NuGet.Extras.Comparers.PackageReferenceEqualityComparer.IdAndVersion">
-            <summary>
-            Check Package equality using the PackageID and Version only.
-            </summary>
-        </member>
-        <member name="F:NuGet.Extras.Comparers.PackageReferenceEqualityComparer.IdAndAllowedVersions">
-            <summary>
-            Check Package equality using the PackageID only.
-            </summary>
-        </member>
-        <member name="F:NuGet.Extras.Comparers.PackageReferenceEqualityComparer.Id">
-            <summary>
-            Check Package equality using the PackageID only.
-            </summary>
-        </member>
-        <member name="M:NuGet.Extras.Comparers.PackageReferenceEqualityComparer.Equals(NuGet.PackageReference,NuGet.PackageReference)">
-            <summary>
-            Determines whether the specified objects are equal.
-            </summary>
-            <returns>
-            true if the specified objects are equal; otherwise, false.
-            </returns>
-            <param name="x">The first object of type <paramref>
-                                                       <name>T</name>
-                                                     </paramref> to compare.</param><param name="y">The second object of type <paramref>
-                                                                                                                                <name>T</name>
-                                                                                                                              </paramref> to compare.</param>
-        </member>
-        <member name="M:NuGet.Extras.Comparers.PackageReferenceEqualityComparer.GetHashCode(NuGet.PackageReference)">
-            <summary>
-            Returns a hash code for the specified object.
-            </summary>
-            <returns>
-            A hash code for the specified object.
-            </returns>
-            <param name="obj">The <see cref="T:System.Object"/> for which a hash code is to be returned.</param><exception cref="T:System.ArgumentNullException">The type of <paramref name="obj"/> is a reference type and <paramref name="obj"/> is null.</exception>
-        </member>
         <member name="T:NuGet.Extras.ExtensionMethods.IVersionExtensions">
             <summary>
             Provides extension methods on IVersionSpec
@@ -557,527 +1043,41 @@
             Determines if the specified version is within the version spec
             </summary>
         </member>
-        <member name="T:NuGet.Extras.BaseClasses.TwoWayResources">
+        <member name="T:NuGet.Extras.Packages.PackageEnumerator">
             <summary>
-              A strongly-typed resource class, for looking up localized strings, etc.
+            Manages the enumeration of a list of PackageReferenceFile objects.
             </summary>
         </member>
-        <member name="P:NuGet.Extras.BaseClasses.TwoWayResources.ResourceManager">
+        <member name="M:NuGet.Extras.Packages.PackageEnumerator.GetPackageReferences(System.Collections.Generic.IEnumerable{NuGet.PackageReferenceFile},System.Action{System.String,System.String},NuGet.Extras.Comparers.PackageReferenceEqualityComparer)">
             <summary>
-              Returns the cached ResourceManager instance used by this class.
+            Gets the package references.
             </summary>
-        </member>
-        <member name="P:NuGet.Extras.BaseClasses.TwoWayResources.Culture">
-            <summary>
-              Overrides the current thread's CurrentUICulture property for all
-              resource lookups using this strongly typed resource class.
-            </summary>
-        </member>
-        <member name="P:NuGet.Extras.BaseClasses.TwoWayResources.ApiKeyDescription">
-            <summary>
-              Looks up a localized string similar to The API key for the destination (optional if already set)..
-            </summary>
-        </member>
-        <member name="P:NuGet.Extras.BaseClasses.TwoWayResources.DestinationDescription">
-            <summary>
-              Looks up a localized string similar to The location(s) to copy the package..
-            </summary>
-        </member>
-        <member name="P:NuGet.Extras.BaseClasses.TwoWayResources.SourceDescription">
-            <summary>
-              Looks up a localized string similar to A list of package sources to use for finding the package..
-            </summary>
-        </member>
-        <member name="P:NuGet.Extras.BaseClasses.TwoWayResources.VersionDescription">
-            <summary>
-              Looks up a localized string similar to The version of the package to install..
-            </summary>
-        </member>
-        <member name="P:NuGet.Extras.BaseClasses.TwoWayResources.WorkingDirectoryRootDescription">
-            <summary>
-              Looks up a localized string similar to The working directory root for the copy operation..
-            </summary>
-        </member>
-        <member name="T:NuGet.Extras.Repositories.RepositoryEnumerator">
-            <summary>
-            Implements IRepositoryEnumerator
-            </summary>
-        </member>
-        <member name="M:NuGet.Extras.Repositories.RepositoryEnumerator.#ctor(NuGet.IFileSystem)">
-            <summary>
-            Creates a RepositoryEnumerator.
-            </summary>
-            <param name="fileSystem"></param>
-        </member>
-        <member name="M:NuGet.Extras.Repositories.RepositoryEnumerator.GetPackageReferenceFiles(System.IO.FileInfo)">
-            <summary>
-            Gets the package reference files.
-            </summary>
-            <param name="repositoryConfig">The repository config.</param>
+            <param name="packageReferenceFiles">The package reference files.</param>
+            <param name="logCount">The log count.</param>
+            <param name="comparer"> </param>
             <returns></returns>
         </member>
-        <member name="T:NuGet.Extras.Comparers.LambdaComparer`1">
+        <member name="T:NuGet.Extras.ExtensionMethods.ObjectExtensions">
             <summary>
-            Allows comparers to be used via Lambdas
+            Object extensions
             </summary>
+        </member>
+        <member name="M:NuGet.Extras.ExtensionMethods.ObjectExtensions.GetPrivateField``1(System.Object,System.String)">
+            <summary>
+            Allows typed retrieveal of private fields.
+            </summary>
+            <param name="obj"></param>
+            <param name="name"></param>
             <typeparam name="T"></typeparam>
-        </member>
-        <member name="M:NuGet.Extras.Comparers.LambdaComparer`1.#ctor(System.Func{`0,`0,System.Boolean},System.Func{`0,System.Int32})">
-            <summary>
-            Creates a LambdaComparer
-            </summary>
-            <param name="comparer"></param>
-            <param name="hashCodeResolver"></param>
-            <exception cref="T:System.ArgumentNullException"></exception>
-        </member>
-        <member name="M:NuGet.Extras.Comparers.LambdaComparer`1.Equals(`0,`0)">
-            <summary>
-            Determines whether the specified objects are equal.
-            </summary>
-            <returns>
-            true if the specified objects are equal; otherwise, false.
-            </returns>
-            <param name="x">The first object of type <paramref>
-                                                       <name>T</name>
-                                                     </paramref> to compare.</param><param name="y">The second object of type <paramref>
-                                                                                                                                <name>T</name>
-                                                                                                                              </paramref> to compare.</param>
-        </member>
-        <member name="M:NuGet.Extras.Comparers.LambdaComparer`1.GetHashCode(`0)">
-            <summary>
-            Returns a hash code for the specified object.
-            </summary>
-            <returns>
-            A hash code for the specified object.
-            </returns>
-            <param name="obj">The <see cref="T:System.Object"/> for which a hash code is to be returned.</param><exception cref="T:System.ArgumentNullException">The type of <paramref name="obj"/> is a reference type and <paramref name="obj"/> is null.</exception>
-        </member>
-        <member name="T:NuGet.Extras.ExtensionMethods.AggregateRepositoryExtensions">
-            <summary>
-            Provides a set of extension methods that extend the AggregateRepository.
-            </summary>
-        </member>
-        <member name="M:NuGet.Extras.ExtensionMethods.AggregateRepositoryExtensions.FindLatestPackage(NuGet.AggregateRepository,System.String)">
-            <summary>
-            Finds the latest package in a repository by Package Id
-            </summary>
-            <param name="repository"></param>
-            <param name="packageId"></param>
-            <returns></returns>
-            <exception cref="T:System.ArgumentNullException"></exception>
-        </member>
-        <member name="M:NuGet.Extras.ExtensionMethods.AggregateRepositoryExtensions.GetLocalOnlyAggregateRepository(NuGet.AggregateRepository)">
-            <summary>
-            Returns a an AggregateRepository minus any DataServicePackageRepositories.  Useful if you want to use a command that will not work across these types.
-            Snappy name, I know.
-            </summary>
-            <param name="repository"></param>
             <returns></returns>
         </member>
-        <member name="M:NuGet.Extras.ExtensionMethods.AggregateRepositoryExtensions.GetRemoteOnlyAggregateRepository(NuGet.AggregateRepository)">
+        <member name="M:NuGet.Extras.ExtensionMethods.ObjectExtensions.GetPrivateProperty``1(System.Object,System.String)">
             <summary>
-            Returns a an AggregateRepository minus any LocalPackageRepositories or MachineCache repositories.  Useful if you want to use a command that will not work across these types.
-            Snappy name, I know.
+            Allows typed retrieval of private properties.
             </summary>
-            <param name="repository"></param>
-            <returns></returns>
-        </member>
-        <member name="M:NuGet.Extras.ExtensionMethods.AggregateRepositoryExtensions.FindLatestPackage(NuGet.AggregateRepository,System.String,NuGet.IVersionSpec)">
-            <summary>
-            Finds the latest package in a repository constrained by an Id and an IVersionSpec
-            </summary>
-            <param name="repository"></param>
-            <param name="packageId"></param>
-            <param name="versionSpec"></param>
-            <returns></returns>
-            <exception cref="T:System.ArgumentNullException"></exception>
-        </member>
-        <member name="T:NuGet.Extras.PackageReferences.IPackageReferenceSetResolver">
-            <summary>
-            Provides the ability to resolve a set of packages that will meet a set of common constraints.
-            </summary>
-        </member>
-        <member name="M:NuGet.Extras.PackageReferences.IPackageReferenceSetResolver.Resolve(System.Collections.Generic.IEnumerable{NuGet.PackageReference})">
-            <summary>
-            Resolves the specified PackageReferences into a single set that allows all required version constraints to be satisfied, or returns a list of which cant.
-            Uses a Tuple as the return type, Item1 are the succesfuly resolved PackageReferences, and Item2 are the failed ones.
-            </summary>
-            <param name="references">The references.</param>
-            <returns></returns>
-        </member>
-        <member name="T:NuGet.Extras.ExtensionMethods.IPackageManagerExtensions">
-            <summary>
-            IPackageManager Extensions
-            </summary>
-        </member>
-        <member name="M:NuGet.Extras.ExtensionMethods.IPackageManagerExtensions.CleanPackageFolders(NuGet.IPackageManager)">
-            <summary>
-            Cleans the package folders.  Requires that the PackageManager uses an IFileSystem that has the Root set to the packages folder.
-            </summary>
-        </member>
-        <member name="M:NuGet.Extras.ExtensionMethods.IPackageManagerExtensions.IsPackageInstalled(NuGet.PackageManager,System.String,NuGet.SemanticVersion,System.Boolean)">
-            <summary>
-            Checks whether an IPackage exists within a PackageManager.  By default, will use the UseSideBySide settings of the DefaultPackagePathProvider the PackageManager is instantiated with.
-            If passed in TRUE for exhaustive, will check both with and without UseSideBySide set.
-            </summary>
-            <param name="packageManager"></param>
-            <param name="packageId"> </param>
-            <param name="version"> </param>
-            <param name="exhaustive"></param>
-            <returns></returns>
-        </member>
-        <member name="M:NuGet.Extras.ExtensionMethods.IPackageManagerExtensions.IsPackageInstalled(NuGet.PackageManager,NuGet.IPackage,System.Boolean)">
-            <summary>
-            Checks whether an IPackage exists within a PackageManager.  By default, will use the UseSideBySide settings of the DefaultPackagePathProvider the PackageManager is instantiated with.
-            If passed in TRUE for exhaustive, will check both with and without UseSideBySide set.
-            </summary>
-            <param name="packageManager"></param>
-            <param name="package"></param>
-            <param name="exhaustive"></param>
-            <returns></returns>
-        </member>
-        <member name="T:NuGet.Extras.PackageReferences.PackageReferenceSetResolver">
-            <summary>
-            Resolves a set of packages to the smallest distinct set that provides all required constrained versions.
-            </summary>
-        </member>
-        <member name="M:NuGet.Extras.PackageReferences.PackageReferenceSetResolver.Resolve(System.Collections.Generic.IEnumerable{NuGet.PackageReference})">
-            <summary>
-            Resolves the set of correct PackageReferences based on the smallest set of VersionSpec per Package Id that satisfies all
-            the specific Package Ids in the same list.
-            </summary>
-            <param name="references">The list of PackageReferences.</param>
-            <returns>A Tuple where List1 are the resolved PackageReferences and List2 are the PackageReferences we failed to resolve</returns>
-        </member>
-        <member name="M:NuGet.Extras.PackageReferences.PackageReferenceSetResolver.ResolveValidVersionSpec(System.Collections.Generic.IEnumerable{NuGet.PackageReference})">
-            <summary>
-            Resolves the largest valid VersionSpec across a set of PackageReference objects.
-            </summary>
-            <param name="packageReferences">The package references.</param>
-            <returns></returns>
-        </member>
-        <member name="M:NuGet.Extras.PackageReferences.PackageReferenceSetResolver.ReturnLargestVersionSpec">
-            <summary>
-            Returns the largest version spec we can think of to start narrowing down from.
-            </summary>
-            <returns></returns>
-        </member>
-        <member name="M:NuGet.Extras.PackageReferences.PackageReferenceSetResolver.ResolveValidVersion(System.Collections.Generic.IEnumerable{NuGet.PackageReference})">
-            <summary>
-            Resolves a valid Version that is common across a list of PackageReference objects.
-            </summary>
-            <param name="packageReferences">The package references.</param>
-            <returns></returns>
-        </member>
-        <member name="T:NuGet.Extras.Caches.IPackageCache">
-            <summary>
-            Provides package caching to reduce network round trips on package resolution and download.
-            </summary>
-        </member>
-        <member name="M:NuGet.Extras.Caches.IPackageCache.TryCacheHitByVersionConstraint(NuGet.PackageReference,NuGet.IPackage@)">
-            <summary>
-            Attempts to return an already resolved Id/VersionConstraint pair from the cache.  Attempts to prevent unecessary network calls.
-            </summary>
-            <param name="packageReference"></param>
-            <param name="package"></param>
-            <returns></returns>
-        </member>
-        <member name="M:NuGet.Extras.Caches.IPackageCache.TryCacheHitByIsLatest(System.String,NuGet.IPackage@)">
-            <summary>
-            Checks to see if we have already retrieved a Latest version for a particular Package ID.  Attempts to avoid unecessary network calls.
-            </summary>
-            <param name="packageId"></param>
-            <param name="package"></param>
-            <returns></returns>
-        </member>
-        <member name="M:NuGet.Extras.Caches.IPackageCache.TryCacheHitByVersion(System.String,NuGet.SemanticVersion,NuGet.IPackage@)">
-            <summary>
-            Tries to find a particular package Id and version combination from a cache of IPackages returned from DataServicePackageRepository queries.
-            Attempts to limit the number of OData queries that return all versions for a particular Id.
-            </summary>
-            <param name="packageId"></param>
-            <param name="version"></param>
-            <param name="package"></param>
-            <returns></returns>
-        </member>
-        <member name="M:NuGet.Extras.Caches.IPackageCache.AddCacheEntryByList(System.String,System.Collections.Generic.IEnumerable{NuGet.IPackage})">
-            <summary>
-            Adds a list of resolved packages against a single package ID.  Usually used to cache a query that is simply by ID.
-            </summary>
-            <param name="packageId"></param>
-            <param name="packages"></param>
-            <returns></returns>
-        </member>
-        <member name="M:NuGet.Extras.Caches.IPackageCache.AddCacheEntryByIsLatest(NuGet.IPackage)">
-            <summary>
-            Adds a cache entry when you are checking for the latest version of a package.  Will be cached as the latest for that specific package until the cache is thrown away.
-            </summary>
-            <param name="package"></param>
-            <returns></returns>
-        </member>
-        <member name="M:NuGet.Extras.Caches.IPackageCache.AddCacheEntryByConstraint(NuGet.IPackage,NuGet.IVersionSpec)">
-            <summary>
-            Adds a package that has been resolved as the latest within a constraint.  Saves doing the math and resolution again.
-            </summary>
-            <param name="package"></param>
-            <param name="constraint"></param>
-            <returns></returns>
-        </member>
-        <member name="T:NuGet.Extras.Caches.MemoryBasedPackageCache">
-            <summary>
-            Implements a simple package cache in memory.
-            </summary>
-        </member>
-        <member name="M:NuGet.Extras.Caches.MemoryBasedPackageCache.#ctor(NuGet.ILogger)">
-            <summary>
-            Creates an instance of a MemoryBasedPackageCache.
-            </summary>
-            <param name="console"></param>
-        </member>
-        <member name="M:NuGet.Extras.Caches.MemoryBasedPackageCache.TryCacheHitByVersionConstraint(NuGet.PackageReference,NuGet.IPackage@)">
-            <summary>
-            Attempts to return an already resolved Id/VersionConstraint pair from the cache.  Attempts to prevent unecessary network calls.
-            </summary>
-            <param name="packageReference"></param>
-            <param name="package"></param>
-            <returns></returns>
-        </member>
-        <member name="M:NuGet.Extras.Caches.MemoryBasedPackageCache.TryCacheHitByIsLatest(System.String,NuGet.IPackage@)">
-            <summary>
-            Checks to see if we have already retrieved a Latest version for a particular Package ID.  Attempts to avoid unecessary network calls.
-            </summary>
-            <param name="packageId"></param>
-            <param name="package"></param>
-            <returns></returns>
-        </member>
-        <member name="M:NuGet.Extras.Caches.MemoryBasedPackageCache.TryCacheHitByVersion(System.String,NuGet.SemanticVersion,NuGet.IPackage@)">
-            <summary>
-            Tries to find a particular package Id and version combination from a cache of IPackages returned from DataServicePackageRepository queries.
-            Attempts to limit the number of OData queries that return all versions for a particular Id.
-            </summary>
-            <param name="packageId"></param>
-            <param name="version"></param>
-            <param name="package"></param>
-            <returns></returns>
-        </member>
-        <member name="M:NuGet.Extras.Caches.MemoryBasedPackageCache.AddCacheEntryByList(System.String,System.Collections.Generic.IEnumerable{NuGet.IPackage})">
-            <summary>
-            Adds a list of resolved packages against a single package ID.  Usually used to cache a query that is simply by ID.
-            </summary>
-            <param name="packageId"></param>
-            <param name="packages"></param>
-            <returns></returns>
-        </member>
-        <member name="M:NuGet.Extras.Caches.MemoryBasedPackageCache.AddCacheEntryByIsLatest(NuGet.IPackage)">
-            <summary>
-            Adds a cache entry when you are checking for the latest version of a package.  Will be cached as the latest for that specific package until the cache is thrown away.
-            </summary>
-            <param name="package"></param>
-            <returns></returns>
-        </member>
-        <member name="M:NuGet.Extras.Caches.MemoryBasedPackageCache.AddCacheEntryByConstraint(NuGet.IPackage,NuGet.IVersionSpec)">
-            <summary>
-            Adds a package that has been resolved as the latest within a constraint.  Saves doing the math and resolution again.
-            </summary>
-            <param name="package"></param>
-            <param name="constraint"></param>
-            <returns></returns>
-        </member>
-        <member name="T:NuGet.Extras.Caches.INuGetCacheManager">
-            <summary>
-            Provides a management layer over the MachineCache cache location.
-            </summary>
-        </member>
-        <member name="M:NuGet.Extras.Caches.INuGetCacheManager.ResetPreviousCacheDirectory">
-            <summary>
-            Resets the %NuGetCachePath% to the previous setting.
-            </summary>
-        </member>
-        <member name="M:NuGet.Extras.Caches.INuGetCacheManager.SetFeedSpecificCacheDirectory(System.String)">
-            <summary>
-            Sets the cache subdirectory to the source string provided.  Saves any existing NuGetCachePath value so it can be reset later.
-            </summary>
-            <param name="source"></param>
-        </member>
-        <member name="M:NuGet.Extras.Caches.INuGetCacheManager.GetCurrentFeedSpecificCache">
-            <summary>
-            Provides the location of the current feed specific cache location.
-            </summary>
-            <returns></returns>
-        </member>
-        <member name="T:NuGet.Extras.Caches.NuGetCacheManager">
-            <summary>
-            Provides management capability around NuGetCachePath so feed specific caches can be set.
-            </summary>
-        </member>
-        <member name="M:NuGet.Extras.Caches.NuGetCacheManager.#ctor(NuGet.Common.IConsole)">
-            <summary>
-            Creates a NuGetCacheManager, provided an IConsole implementation
-            </summary>
-            <param name="console"></param>
-        </member>
-        <member name="M:NuGet.Extras.Caches.NuGetCacheManager.GetLocalAppDataPath">
-            <summary>
-            Gets the LocalAppData path, firstly from the environment variable, falling back to SpecialFolder
-            </summary>
-            <returns></returns>
-        </member>
-        <member name="M:NuGet.Extras.Caches.NuGetCacheManager.ResetPreviousCacheDirectory">
-            <summary>
-            Resets the %NuGetCachePath% to the previous setting.
-            </summary>
-        </member>
-        <member name="M:NuGet.Extras.Caches.NuGetCacheManager.SetFeedSpecificCacheDirectory(System.String)">
-            <summary>
-            Sets the cache subdirectory to the source string provided.  Saves any existing NuGetCachePath value so it can be reset later.
-            </summary>
-            <param name="source"></param>
-        </member>
-        <member name="M:NuGet.Extras.Caches.NuGetCacheManager.GetCurrentFeedSpecificCache">
-            <summary>
-            Provides the location of the current feed specific cache location.
-            </summary>
-            <returns></returns>
-        </member>
-        <member name="T:NuGet.Extras.Packages.IPackageResolutionManager">
-            <summary>
-            Provides package resolution services.
-            </summary>
-        </member>
-        <member name="M:NuGet.Extras.Packages.IPackageResolutionManager.ResolvePackage(NuGet.IPackageRepository,NuGet.IPackageRepository,System.String,NuGet.SemanticVersion,System.Boolean)">
-            <summary>
-            Resolves a package from either a local repository (typically the .\packages directory), or an AggregateRepository (if one is used).
-            If the AggregateRepository includes a DataServicePackageRepository, attempts are made to resolve packages from in-memory caches that are built based on previous requests.
-            To ensure caching across more than one PackageManager, both SourceRepository and LocalRepository need to be passed in per resolution.
-            </summary>
-            <param name="localRepository">Generally reflects a .\packages directory, such as PackageManager.SourceRepository</param>
-            <param name="sourceRepository">Generally an AggregateRepository from a PackageManager.SourceRepository</param>
-            <param name="packageId">The Id to resolve.</param>
-            <param name="version">The Version to resolve</param>
-            <param name="allowPrereleaseVersions">Allow Pre-release packages.</param>
-            <returns></returns>
-        </member>
-        <member name="M:NuGet.Extras.Packages.IPackageResolutionManager.FindPackageInAllLocalSources(NuGet.IPackageRepository,NuGet.IPackageRepository,NuGet.IPackage,System.Boolean,System.Boolean)">
-            <summary>
-            Searches for a specific package on any LocalPackageRepository objects within an AggregateRepository or LocalPackageRepository.
-            </summary>
-            <param name="localRepository">Generally reflects a .\packages directory, such as PackageManager.SourceRepository</param>
-            <param name="sourceRepository">Generally an AggregateRepository from a PackageManager.SourceRepository</param>
-            <param name="package">The IPackage to check for.</param>
-            <param name="allowPrereleaseVersions">Allow pre-release.</param>
-            <param name="allowUnlisted">Allow unlisted.</param>
-            <returns>Any IPackage found first in the localRepository, failing that the LocalRepository Repositories in the sourceRepository.</returns>
-        </member>
-        <member name="M:NuGet.Extras.Packages.IPackageResolutionManager.FindPackageInRemoteSources(NuGet.IPackageRepository,System.String,NuGet.SemanticVersion)">
-            <summary>
-            Checks for a package, will only use DataServicePackageRepository objects (if provided an AggregateRepository, it will select just the remote repositories).  
-            Results in expensive network/OData calls.
-            Eventually it would be nice to replace this because we could query OData for a specific version.
-            </summary>
-            <param name="sourceRepository"></param>
-            <param name="packageId"></param>
-            <param name="version"></param>
-            <returns></returns>
-        </member>
-        <member name="M:NuGet.Extras.Packages.IPackageResolutionManager.ResolveInstallableVersion(NuGet.IPackageRepository,NuGet.PackageReference)">
-            <summary>
-            Resolves the installable version.
-            </summary>
-            <param name="remoteRepository"> </param>
-            <param name="packageReference">The package.</param>
-            <returns></returns>
-        </member>
-        <member name="M:NuGet.Extras.Packages.IPackageResolutionManager.ResolveLatestInstallablePackage(NuGet.IPackageRepository,NuGet.PackageReference)">
-            <summary>
-            Resolves the installable version.
-            </summary>
-            <param name="remoteRepository"> </param>
-            <param name="packageReference"> </param>
-            <returns></returns>
-        </member>
-        <member name="T:NuGet.Extras.Packages.PackageResolutionManager">
-            <summary>
-            Provides package resolution and caching services over PackageRepositories.
-            </summary>
-        </member>
-        <member name="M:NuGet.Extras.Packages.PackageResolutionManager.#ctor(NuGet.ILogger,System.Boolean,NuGet.Extras.Caches.IPackageCache)">
-            <summary>
-            Creates a new PackageResolutionManager.
-            </summary>
-            <param name="console"></param>
-            <param name="latest"></param>
-            <param name="cache"> </param>
-        </member>
-        <member name="M:NuGet.Extras.Packages.PackageResolutionManager.ResolvePackage(NuGet.IPackageRepository,NuGet.IPackageRepository,System.String,NuGet.SemanticVersion,System.Boolean)">
-            <summary>
-            Resolves a package from either a local repository (typically the .\packages directory), or an AggregateRepository (if one is used).
-            If the AggregateRepository includes a DataServicePackageRepository, attempts are made to resolve packages from in-memory caches that are built based on previous requests.
-            To ensure caching across more than one PackageManager, both SourceRepository and LocalRepository need to be passed in per resolution.
-            </summary>
-            <param name="localRepository">Generally reflects a .\packages directory, such as PackageManager.SourceRepository</param>
-            <param name="sourceRepository">Generally an AggregateRepository from a PackageManager.SourceRepository</param>
-            <param name="packageId">The Id to resolve.</param>
-            <param name="version">The Version to resolve</param>
-            <param name="allowPrereleaseVersions">Allow Pre-release packages.</param>
-            <returns></returns>
-        </member>
-        <member name="M:NuGet.Extras.Packages.PackageResolutionManager.FindPackageInAllLocalSources(NuGet.IPackageRepository,NuGet.IPackageRepository,NuGet.IPackage,System.Boolean,System.Boolean)">
-            <summary>
-            Searches for a specific package on any LocalPackageRepository objects within an AggregateRepository or LocalPackageRepository.
-            </summary>
-            <param name="localRepository">Generally reflects a .\packages directory, such as PackageManager.SourceRepository</param>
-            <param name="sourceRepository">Generally an AggregateRepository from a PackageManager.SourceRepository</param>
-            <param name="package">The IPackage to check for.</param>
-            <param name="allowPrereleaseVersions">Allow pre-release.</param>
-            <param name="allowUnlisted">Allow unlisted.</param>
-            <returns>Any IPackage found first in the localRepository, failing that the LocalRepository Repositories in the sourceRepository.</returns>
-        </member>
-        <member name="M:NuGet.Extras.Packages.PackageResolutionManager.FindPackageInRemoteSources(NuGet.IPackageRepository,System.String,NuGet.SemanticVersion)">
-            <summary>
-            Checks for a package, will only use DataServicePackageRepository objects (if provided an AggregateRepository, it will select just the remote repositories).  
-            Results in expensive network/OData calls.
-            Eventually it would be nice to replace this because we could query OData for a specific version.
-            </summary>
-            <param name="sourceRepository"></param>
-            <param name="packageId"></param>
-            <param name="version"></param>
-            <returns></returns>
-        </member>
-        <member name="M:NuGet.Extras.Packages.PackageResolutionManager.FilterPackagesByConstraints(NuGet.IPackageConstraintProvider,System.Collections.Generic.IEnumerable{NuGet.IPackage},System.String,System.Boolean)">
-            <summary>
-            Stolen from NuGet
-            </summary>
-            <param name="constraintProvider"></param>
-            <param name="packages"></param>
-            <param name="packageId"></param>
-            <param name="allowPrereleaseVersions"></param>
-            <returns></returns>
-        </member>
-        <member name="M:NuGet.Extras.Packages.PackageResolutionManager.FindPackageInAggregateLocalSources(NuGet.IPackageRepository,NuGet.IPackageConstraintProvider,System.String,NuGet.SemanticVersion,System.Boolean)">
-            <summary>
-            Will try and return a specific package from all provided local sources.  Will ignore OData feeds, and will not result in network calls.
-            </summary>
-            <param name="sourceRepository"></param>
-            <param name="constraintProvider"></param>
-            <param name="packageId"></param>
-            <param name="version"></param>
-            <param name="allowPrereleaseVersions"></param>
-            <returns></returns>
-        </member>
-        <member name="M:NuGet.Extras.Packages.PackageResolutionManager.ResolveInstallableVersion(NuGet.IPackageRepository,NuGet.PackageReference)">
-            <summary>
-            Resolves the installable version.
-            </summary>
-            <param name="remoteRepository"> </param>
-            <param name="packageReference">The package.</param>
-            <returns></returns>
-        </member>
-        <member name="M:NuGet.Extras.Packages.PackageResolutionManager.ResolveLatestInstallablePackage(NuGet.IPackageRepository,NuGet.PackageReference)">
-            <summary>
-            Resolves the installable version.
-            </summary>
-            <param name="remoteRepository"> </param>
-            <param name="packageReference"> </param>
+            <param name="obj"></param>
+            <param name="name"></param>
+            <typeparam name="T"></typeparam>
             <returns></returns>
         </member>
     </members>
