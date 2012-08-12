@@ -92,13 +92,14 @@ namespace NuGet.Extensions.Commands
                     var solution = new Solution(solutionFile.FullName);
                     var simpleProjectObjects = solution.Projects;
 
-                    Console.WriteLine("Processing {0} Projects...", simpleProjectObjects.Count);
+                    Console.WriteLine("Processing {0} projects in solution {1}...", simpleProjectObjects.Count, solutionFile.Name);
                     foreach (var simpleProject in simpleProjectObjects)
                     {
                         var manifestDependencies = new List<ManifestDependency>();
                         var projectPath = Path.Combine(solutionFile.Directory.FullName, simpleProject.RelativePath);
                         if (File.Exists(projectPath))
                         {
+                            Console.WriteLine();
                             Console.WriteLine("Processing Project: {0}", simpleProject.ProjectName);
                             var projectFileInfo = new FileInfo(projectPath);
                             var project = new Project(projectPath,new Dictionary<string, string>(),null,new ProjectCollection());
@@ -108,7 +109,7 @@ namespace NuGet.Extensions.Commands
 
                             var resolvedMappings = ResolveReferenceMappings(references, projectFileInfo);
 
-                            if (resolvedMappings.Any())
+                            if (resolvedMappings != null && resolvedMappings.Any())
                             {
                                 UpdateProjectFileReferenceHintPaths(solutionRoot, project, projectPath, resolvedMappings, references);
                                 var projectReferences = ParseProjectReferences(project);
@@ -120,12 +121,15 @@ namespace NuGet.Extensions.Commands
                             {
                                 CreateAndOutputNuSpecFile(assemblyOutput, manifestDependencies);
                             }
+
+                            Console.WriteLine("Project completed!");
                         }
                         else
                         {
                             Console.WriteWarning("Project: {0} was not found on disk", simpleProject.ProjectName);
                         }
                     }
+                    Console.WriteLine("Complete!");
                 }
                 else
                 {
@@ -136,7 +140,7 @@ namespace NuGet.Extensions.Commands
 
         private List<string> ParseProjectReferences(Project project)
         {
-            Console.WriteLine("Checking Project References...");
+            Console.WriteLine("Checking for any project References for packages.config...");
             var refs = new List<string>();
             var references = project.GetItems("ProjectReference");
             foreach (var reference in references)
@@ -155,10 +159,11 @@ namespace NuGet.Extensions.Commands
                 if (referenceMatch != null)
                 {
                     var includeName = referenceMatch.EvaluatedInclude.Contains(',') ? referenceMatch.EvaluatedInclude.Split(',')[0] : referenceMatch.EvaluatedInclude;
-                    Console.WriteLine("Attempting to update hintpaths for \"{0}\" using package \"{1}\"", includeName, mapping.Value.First().Id);
-                    //Remove the old one....
-                    //project.RemoveItem(referenceMatch);
+                    var includeVersion = referenceMatch.GetMetadataValue("Version");
                     var package = mapping.Value.OrderBy(p => p.GetFiles().Count()).First();
+
+                    LogHintPathRewriteMessage(package, includeName, includeVersion);
+
                     var fileLocation = GetFileLocationFromPackage(package, mapping.Key);
                     var newHintPathFull  = Path.Combine(solutionRoot.FullName, "packages", package.Id, fileLocation);
                     var newHintPathRelative = String.Format(GetRelativePath(projectPath, newHintPathFull));
@@ -167,6 +172,24 @@ namespace NuGet.Extensions.Commands
                 }
             }
             project.Save();
+        }
+
+        private void LogHintPathRewriteMessage(IPackage package, string includeName, string includeVersion)
+        {
+            var message = string.Format("Attempting to update hintpaths for \"{0}\" {1}using package \"{2}\" version {3}",
+                                        includeName,
+                                        string.IsNullOrEmpty(includeVersion) ? "" : "version " + includeVersion + " ",
+                                        package.Id,
+                                        package.Version);
+            if (package.Id.Equals(includeName, StringComparison.OrdinalIgnoreCase))
+            {
+                if (!string.IsNullOrEmpty(includeVersion) && package.Version.Version == SemanticVersion.Parse(includeVersion).Version)
+                    Console.WriteWarning(message);
+                else
+                    Console.WriteLine(message);
+            }
+            else
+                Console.WriteWarning(message);
         }
 
         private void CreateNuGetScaffolding(SharedPackageRepository sharedPackagesRepository, List<ManifestDependency> manifestDependencies, IEnumerable<KeyValuePair<string, List<IPackage>>> resolvedMappings, FileInfo projectFileInfo, Project project, List<string> projectDependencies)
@@ -212,15 +235,22 @@ namespace NuGet.Extensions.Commands
 
         private IEnumerable<KeyValuePair<string, List<IPackage>>> ResolveReferenceMappings(ICollection<ProjectItem> references, FileInfo projectFileInfo)
         {
-            var referenceMappings = ResolveAssembliesToPackagesConfigFile(projectFileInfo, references);
-            var resolvedMappings = referenceMappings.Where(m => m.Value.Any());
-            var failedMappings = referenceMappings.Where(m => m.Value.Count == 0);
-            //next, lets rewrite the project file with the mappings to the new location...
-            //Going to have to use the mapping to assembly name that we get back from the resolve above
-            Console.WriteLine();
-            Console.WriteLine("Found {0} package to assembly mappings on feed...", resolvedMappings.Count());
-            failedMappings.ToList().ForEach(f => Console.WriteWarning("Could not match: {0}", f.Key));
-            return resolvedMappings;
+            var referenceList = GetReferencedAssemblies(references);
+            if (referenceList.Any())
+            {
+                var referenceMappings = ResolveAssembliesToPackagesConfigFile(projectFileInfo, referenceList);
+                var resolvedMappings = referenceMappings.Where(m => m.Value.Any());
+                var failedMappings = referenceMappings.Where(m => m.Value.Count == 0);
+                //next, lets rewrite the project file with the mappings to the new location...
+                //Going to have to use the mapping to assembly name that we get back from the resolve above
+                Console.WriteLine();
+                Console.WriteLine("Found {0} package to assembly mappings on feed...", resolvedMappings.Count());
+                failedMappings.ToList().ForEach(f => Console.WriteWarning("Could not match: {0}", f.Key));
+                return resolvedMappings;
+            }
+
+            Console.WriteLine("No references found to resolve (all GAC?)");
+            return null;
         }
 
         private void CreateAndOutputNuSpecFile(string assemblyOutput, List<ManifestDependency> manifestDependencies)
@@ -261,6 +291,7 @@ namespace NuGet.Extensions.Commands
 
             try
             {
+                Console.WriteLine("Saving new NuSpec: {0}", nuspecFile);
                 using (var stream = new MemoryStream())
                 {
                     manifest.Save(stream, validate: false);
@@ -306,20 +337,8 @@ namespace NuGet.Extensions.Commands
             return Regex.Replace(content, @"(xmlns:?[^=]*=[""][^""]*[""])", String.Empty, RegexOptions.IgnoreCase | RegexOptions.Multiline);
         }
 
-        private Dictionary<string, List<IPackage>> ResolveAssembliesToPackagesConfigFile(FileInfo projectFileInfo, IEnumerable<ProjectItem> references)
+        private Dictionary<string, List<IPackage>> ResolveAssembliesToPackagesConfigFile(FileInfo projectFileInfo, List<string> referenceFiles)
         {
-            var referenceFiles = new List<string>();
-
-            foreach (ProjectItem reference in references)
-            {
-                //TODO deal with GAC assemblies that we want to replace as well....
-                if (reference.HasMetadata("HintPath"))
-                {
-                    var hintPath = reference.GetMetadataValue("HintPath");
-                    referenceFiles.Add(Path.GetFileName(hintPath));
-                }
-            }
-
             var results = new Dictionary<string, List<IPackage>>();
             if (referenceFiles.Any())
             {
@@ -336,9 +355,25 @@ namespace NuGet.Extensions.Commands
             }
             else
             {
-                Console.WriteLine("No references found to resolve (all GAC?)");
+                Console.WriteWarning("No references found to resolve (all GAC?)");
             }
             return results;
+        }
+
+        private static List<string> GetReferencedAssemblies(IEnumerable<ProjectItem> references)
+        {
+            var referenceFiles = new List<string>();
+
+            foreach (ProjectItem reference in references)
+            {
+                //TODO deal with GAC assemblies that we want to replace as well....
+                if (reference.HasMetadata("HintPath"))
+                {
+                    var hintPath = reference.GetMetadataValue("HintPath");
+                    referenceFiles.Add(Path.GetFileName(hintPath));
+                }
+            }
+            return referenceFiles;
         }
 
         private bool ResolveProjectReferenceItemByAssemblyName(ProjectItem reference, string mapping)
