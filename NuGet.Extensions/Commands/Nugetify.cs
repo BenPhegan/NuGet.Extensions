@@ -159,7 +159,7 @@ namespace NuGet.Extensions.Commands
                 if (referenceMatch != null)
                 {
                     var includeName = referenceMatch.EvaluatedInclude.Contains(',') ? referenceMatch.EvaluatedInclude.Split(',')[0] : referenceMatch.EvaluatedInclude;
-                    var includeVersion = referenceMatch.GetMetadataValue("Version");
+                    var includeVersion = referenceMatch.EvaluatedInclude.Contains(',') ? referenceMatch.EvaluatedInclude.Split(',')[1].Split('=')[1] : null;
                     var package = mapping.Value.OrderBy(p => p.GetFiles().Count()).First();
 
                     LogHintPathRewriteMessage(package, includeName, includeVersion);
@@ -176,14 +176,14 @@ namespace NuGet.Extensions.Commands
 
         private void LogHintPathRewriteMessage(IPackage package, string includeName, string includeVersion)
         {
-            var message = string.Format("Attempting to update hintpaths for \"{0}\" {1}using package \"{2}\" version {3}",
+            var message = string.Format("Attempting to update hintpaths for \"{0}\" {1}using package \"{2}\" version \"{3}\"",
                                         includeName,
-                                        string.IsNullOrEmpty(includeVersion) ? "" : "version " + includeVersion + " ",
+                                        string.IsNullOrEmpty(includeVersion) ? "" : "version \"" + includeVersion + "\" ",
                                         package.Id,
                                         package.Version);
             if (package.Id.Equals(includeName, StringComparison.OrdinalIgnoreCase))
             {
-                if (!string.IsNullOrEmpty(includeVersion) && package.Version.Version == SemanticVersion.Parse(includeVersion).Version)
+                if (!string.IsNullOrEmpty(includeVersion) && package.Version.Version != SemanticVersion.Parse(includeVersion).Version)
                     Console.WriteWarning(message);
                 else
                     Console.WriteLine(message);
