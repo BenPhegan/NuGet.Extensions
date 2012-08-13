@@ -39,9 +39,9 @@
     <Reference Include="NuGet">
       <HintPath>..\packages\NuGet.CommandLine.1.7.0\tools\NuGet.exe</HintPath>
     </Reference>
-    <Reference Include="NuGet.Extras, Version=1.0.0.11, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="NuGet.Extras, Version=1.0.0.12, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\NuGet.Extras.1.0.0.11\lib\net40\NuGet.Extras.dll</HintPath>
+      <HintPath>..\packages\NuGet.Extras.1.0.0.12\lib\net40\NuGet.Extras.dll</HintPath>
     </Reference>
     <Reference Include="QuickGraph">
       <HintPath>..\packages\QuickGraph.3.6.61119.7\lib\net4\QuickGraph.dll</HintPath>
