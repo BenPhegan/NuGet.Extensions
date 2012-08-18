@@ -8,6 +8,7 @@ using NuGet.Commands;
 using NuGet.Extras;
 using NuGet.Extras.Commands;
 using NuGet.Extras.Comparers;
+using NuGet.Extras.ExtensionMethods;
 
 namespace NuGet.Extensions.Commands
 {
@@ -149,8 +150,10 @@ namespace NuGet.Extensions.Commands
             {
                 //or get the full list from the source, and go from there....
                 //REVIEW: this is a potential bottleneck - maybe split out in to batch call
-                _packageList = Refresh ? GetPackageList(false, string.Empty, DestinationProvider, _tags).Select(p => p.Id) 
-                                       : GetPackageList(false, string.Empty, SourceProvider, _tags).Select(p => p.Id);
+                var sourceList = GetPackageList(false, string.Empty, SourceProvider, _tags).Select(p => p.Id);
+                _packageList = Refresh ? GetPackageList(false, string.Empty, DestinationProvider, _tags).Select(p => p.Id) : sourceList;
+                //_packageList = Refresh ? GetPackageList(false, string.Empty, DestinationProvider, _tags).Select(p => p.Id) 
+                //                       : GetPackageList(false, string.Empty, SourceProvider, _tags).Select(p => p.Id);
             }
         }
 
@@ -260,15 +263,38 @@ namespace NuGet.Extensions.Commands
         //REVIEW Just in case we want to get away from using their list command....
         private IEnumerable<IPackage> GetInitialPackageList(bool allVersions, List<string> ids, IPackageSourceProvider sourceProvider)
         {
-            var listCommand = new ListCommand(RepositoryFactory, sourceProvider)
-            {
-                AllVersions = allVersions,
-                Console = this.Console,
-            };
+            //var listCommand = new ListCommand(RepositoryFactory, sourceProvider)
+            //{
+            //    AllVersions = allVersions,
+            //    Console = this.Console,
+            //};
 
-            if (ids != null && ids.Count != 0)
-                listCommand.Arguments.AddRange(ids);
-            var packages = listCommand.GetPackages();
+            //if (ids != null && ids.Count != 0)
+            //    listCommand.Arguments.AddRange(ids);
+            //var packages = listCommand.GetPackages();
+
+            List<IPackage> packages = new List<IPackage>();
+
+            var repo = sourceProvider.GetAggregate(RepositoryFactory);
+            if (ids != null && ids.Count != 0 && !string.IsNullOrEmpty(ids.First()))
+            {
+                foreach (var id in ids)
+                {
+                    if (allVersions)
+                    {
+                        packages.AddRange(repo.FindPackagesById(id));
+                    }
+                    else
+                    {
+                        packages.Add(repo.FindLatestPackage(id));
+                    }
+                }
+            }
+            else
+            {
+                return repo.Search("", false).Where(p => p.IsLatestVersion).ToList();
+            }
+
             return packages;
         }
 
