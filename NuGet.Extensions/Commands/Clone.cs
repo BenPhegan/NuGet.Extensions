@@ -89,7 +89,7 @@ namespace NuGet.Extensions.Commands
         {
             if (!string.IsNullOrEmpty(Tags))
             {
-                _tags = Tags.Split(',').ToList();
+                _tags = Tags.ToLowerInvariant().Split(',').ToList();
             }
 
             Console.WriteLine(AllVersions ? "Cloning packages (full history)." : "Cloning packages (latest only).");
@@ -150,10 +150,8 @@ namespace NuGet.Extensions.Commands
             {
                 //or get the full list from the source, and go from there....
                 //REVIEW: this is a potential bottleneck - maybe split out in to batch call
-                var sourceList = GetPackageList(false, string.Empty, SourceProvider, _tags).Select(p => p.Id);
-                _packageList = Refresh ? GetPackageList(false, string.Empty, DestinationProvider, _tags).Select(p => p.Id) : sourceList;
-                //_packageList = Refresh ? GetPackageList(false, string.Empty, DestinationProvider, _tags).Select(p => p.Id) 
-                //                       : GetPackageList(false, string.Empty, SourceProvider, _tags).Select(p => p.Id);
+                _packageList = Refresh ? GetPackageList(false, string.Empty, DestinationProvider, _tags).Select(p => p.Id)
+                                       : GetPackageList(false, string.Empty, SourceProvider, _tags).Select(p => p.Id);
             }
         }
 
@@ -221,7 +219,7 @@ namespace NuGet.Extensions.Commands
             }
             else
             {
-                packages = GetInitialPackageList(allVersions, new[] { id }.ToList(), sourceProvider);
+                packages = GetInitialPackageList(allVersions, id, sourceProvider);
             }
 
             //listcommand doesnt return just the matching packages, so filter here...
@@ -253,49 +251,28 @@ namespace NuGet.Extensions.Commands
         {
             IEnumerable<IPackage> packages;
             //Where we have tags on a package that include one of the tags we are looking for, include it...
-            tags.ToList().Add(id);
-            packages = GetInitialPackageList(allVersions, tags.ToList(), sourceProvider);
+            packages = GetInitialPackageList(allVersions, Tags.ToLowerInvariant().Replace(",", " "), sourceProvider);
             //Check them, as the list command adds packages regardless of where the search term occurs...
-            packages = packages.Where(p => p.Tags != null && p.Tags.Count() > 0 ? Clone.ParseTags(p.Tags).Any(t => tags.Contains(t)) : false);
+            packages = packages.Where(p => p.Tags != null && p.Tags.Count() > 0 ? Clone.ParseTags(p.Tags.ToLowerInvariant()).Any(t => tags.Contains(t)) : false);
             return packages;
         }
 
         //REVIEW Just in case we want to get away from using their list command....
-        private IEnumerable<IPackage> GetInitialPackageList(bool allVersions, List<string> ids, IPackageSourceProvider sourceProvider)
+        private IEnumerable<IPackage> GetInitialPackageList(bool allVersions, string id, IPackageSourceProvider sourceProvider)
         {
-            //var listCommand = new ListCommand(RepositoryFactory, sourceProvider)
-            //{
-            //    AllVersions = allVersions,
-            //    Console = this.Console,
-            //};
-
-            //if (ids != null && ids.Count != 0)
-            //    listCommand.Arguments.AddRange(ids);
-            //var packages = listCommand.GetPackages();
-
-            List<IPackage> packages = new List<IPackage>();
-
             var repo = sourceProvider.GetAggregate(RepositoryFactory);
-            if (ids != null && ids.Count != 0 && !string.IsNullOrEmpty(ids.First()))
+            // WTF This is so stupid, could use Search all round, but it's much slower than using Find
+            if (!string.IsNullOrEmpty(id))
             {
-                foreach (var id in ids)
-                {
-                    if (allVersions)
-                    {
-                        packages.AddRange(repo.FindPackagesById(id));
-                    }
-                    else
-                    {
-                        packages.Add(repo.FindLatestPackage(id));
-                    }
-                }
+                if (allVersions)
+                    return repo.FindPackagesById(id);
+                else
+                    return new[] { repo.FindLatestPackage(id) };
             }
+            if (allVersions)
+                return repo.Search(id, false).OrderBy(p => p.Id);
             else
-            {
-                return repo.Search("", false).Where(p => p.IsLatestVersion).ToList();
-            }
-
-            return packages;
+                return repo.Search(id, false).Where(p => p.IsLatestVersion).OrderBy(p => p.Id).AsEnumerable().AsCollapsed();
         }
 
 
