@@ -96,7 +96,7 @@ namespace NuGet.Extensions.Commands
                     Console.WriteLine();
                     Console.WriteLine("Checking package: {0}", vertex);
                     Console.WriteLine("".PadLeft(30,'-'));
-                    var package = packageSource.ToList().FirstOrDefault(p => p.Id.Equals(vertex));
+                    var package = packageSource.ToList().FirstOrDefault(p => p.Id.Equals(vertex, StringComparison.OrdinalIgnoreCase));
                     if (package == null)
                     {
                         Console.WriteWarning("Could not find package: {0}", vertex);
@@ -104,7 +104,7 @@ namespace NuGet.Extensions.Commands
                     }
                     var actualDependencies = new List<AssemblyName>();
                     var packageDependencies = new Dictionary<IPackage, List<AssemblyName>>();
-                    actualDependencies.AddRange(GetAssemblyReferenceList(package));
+                    actualDependencies.AddRange(GetAssemblyReferenceList(package, Console));
                     packageDependencies.AddRange(GetDependencyFileList(package, packageSource, Console).ToList());
 
                     var usedDependencies = new List<IPackage>();
@@ -155,15 +155,22 @@ namespace NuGet.Extensions.Commands
             return packageDependencies;
         }
 
-        private static IEnumerable<AssemblyName> GetAssemblyReferenceList(IPackage package)
+        private static IEnumerable<AssemblyName> GetAssemblyReferenceList(IPackage package, IConsole Console)
         {
             var actualDependencies = new List<AssemblyName>();
             foreach (var file in package.GetFiles().Where(f => f.Path.EndsWith(".dll")))
             {
                 using (var stream = file.GetStream())
                 {
-                    var assembly = Assembly.Load(stream.ReadAllBytes());
-                    actualDependencies.AddRange(assembly.GetReferencedAssemblies());
+                    try
+                    {
+                        var assembly = Assembly.Load(stream.ReadAllBytes());
+                        actualDependencies.AddRange(assembly.GetReferencedAssemblies());
+                    }
+                    catch(Exception e)
+                    {
+                        Console.WriteError("Could not load assembly: {0}", file.Path);
+                    }
                 }
             }
             return actualDependencies.Where(d => !d.Name.StartsWith("System.") && !d.Name.Equals("System") && !d.Name.Equals("mscorlib")).Distinct(new AssemblyNameEqualityComparer());
