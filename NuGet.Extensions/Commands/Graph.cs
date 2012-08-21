@@ -93,6 +93,7 @@ namespace NuGet.Extensions.Commands
             {
                 foreach (var vertex in _graph.Vertices)
                 {
+                    Console.WriteLine();
                     Console.WriteLine("Checking package: {0}", vertex);
                     Console.WriteLine("".PadLeft(30,'-'));
                     var package = packageSource.ToList().FirstOrDefault(p => p.Id.Equals(vertex));
@@ -109,10 +110,12 @@ namespace NuGet.Extensions.Commands
                     var usedDependencies = new List<IPackage>();
                     foreach (var actualDependency in actualDependencies)
                     {
-                        var possibles = packageDependencies.Where(d => d.Value.Any(a => a.Name == actualDependency.Name));
+                        var possibles = packageDependencies.Where(d => d.Value.Any(a => a.Name.Equals(actualDependency.Name + ".dll", StringComparison.OrdinalIgnoreCase)));
                         usedDependencies.AddRange(possibles.Select(p => p.Key));
                         if (!possibles.Any())
                             Console.WriteError("Assembly dependency not satisfied: {0}", actualDependency.Name);
+                        else
+                            Console.WriteLine("Assembly dependency met: {0}", actualDependency.Name);
                     }
 
                     foreach (var unusedDependency in packageDependencies.Where(p => !usedDependencies.Contains(p.Key)))
@@ -120,7 +123,6 @@ namespace NuGet.Extensions.Commands
                         Console.WriteWarning("Package Dependency not used: {0}", unusedDependency.Key.Id);
                     }
 
-                    Console.WriteLine();
                 }
             }
 
