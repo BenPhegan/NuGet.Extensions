@@ -55,6 +55,18 @@ namespace NuGet.Extensions.Tests.TestObjects
             return sourceProvider.Object;
         }
 
+        public static IPackageSourceProvider GetSourceProvider(string source)
+        {
+            var sourceProvider = new Mock<IPackageSourceProvider>();
+            IEnumerable<PackageSource> sources;
+            if (!string.IsNullOrEmpty(source))
+                sources = new[] { new PackageSource(source) };
+            else
+                sources = new[] { new PackageSource("Dev", "Development Feed"), new PackageSource("Release", "Release Feed") };
+            sourceProvider.Setup(c => c.LoadPackageSources()).Returns(sources);
+            return sourceProvider.Object;
+        }
+
         public static Mock<MockFileSystem> CreatePopulatedMockFileSystem()
         {
             var fileSystem = new Mock<MockFileSystem> {CallBase = true};
