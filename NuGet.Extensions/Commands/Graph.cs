@@ -166,7 +166,7 @@ namespace NuGet.Extensions.Commands
                     actualDependencies.AddRange(assembly.GetReferencedAssemblies());
                 }
             }
-            return actualDependencies.Where(d => !d.Name.StartsWith("System.") && !d.Name.Equals("System") && !d.Name.Equals("mscorlib")).Distinct();
+            return actualDependencies.Where(d => !d.Name.StartsWith("System.") && !d.Name.Equals("System") && !d.Name.Equals("mscorlib")).Distinct(new AssemblyNameEqualityComparer());
         }
 
         private void RemoveLonersFromGraph()
@@ -218,6 +218,22 @@ namespace NuGet.Extensions.Commands
             var repository = AggregateRepositoryHelper.CreateAggregateRepositoryFromSources(RepositoryFactory, SourceProvider, Source);
             repository.Logger = Console;
             return repository;
+        }
+    }
+
+    public class AssemblyNameEqualityComparer : IEqualityComparer<AssemblyName>
+    {
+        public bool Equals(AssemblyName x, AssemblyName y)
+        {
+            if (ReferenceEquals(x, y)) return true;
+            if (ReferenceEquals(x, null) || ReferenceEquals(y, null)) return false;
+            return x.FullName == y.FullName;
+        }
+
+        public int GetHashCode(AssemblyName obj)
+        {
+            if (ReferenceEquals(obj, null)) return 0;
+            return obj.FullName.GetHashCode();
         }
     }
 }
