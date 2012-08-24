@@ -63,6 +63,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="FeedAudit\FeedAuditResultsOutputManager.cs" />
+    <Compile Include="FeedAudit\AssemblyNameEqualityComparer.cs" />
+    <Compile Include="FeedAudit\FeedAuditor.cs" />
+    <Compile Include="FeedAudit\FeedAuditResult.cs" />
     <Compile Include="Commands\Graph.cs" />
     <Compile Include="CloneResources.Designer.cs">
       <AutoGen>True</AutoGen>

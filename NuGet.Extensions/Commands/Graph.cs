@@ -5,9 +5,9 @@ using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using NuGet.Commands;
 using NuGet.Common;
+using NuGet.Extensions.FeedAudit;
 using QuickGraph;
 using QuickGraph.Serialization;
 using QuickGraph.Algorithms;
@@ -91,82 +91,16 @@ namespace NuGet.Extensions.Commands
             //Here we go!
             if (Audit)
             {
-                foreach (var vertex in _graph.Vertices)
-                {
-                    Console.WriteLine();
-                    Console.WriteLine("Checking package: {0}", vertex);
-                    Console.WriteLine("".PadLeft(30,'-'));
-                    var package = packageSource.ToList().FirstOrDefault(p => p.Id.Equals(vertex));
-                    if (package == null)
-                    {
-                        Console.WriteWarning("Could not find package: {0}", vertex);
-                        continue;
-                    }
-                    var actualDependencies = new List<AssemblyName>();
-                    var packageDependencies = new Dictionary<IPackage, List<AssemblyName>>();
-                    actualDependencies.AddRange(GetAssemblyReferenceList(package));
-                    packageDependencies.AddRange(GetDependencyFileList(package, packageSource, Console).ToList());
-
-                    var usedDependencies = new List<IPackage>();
-                    foreach (var actualDependency in actualDependencies)
-                    {
-                        var possibles = packageDependencies.Where(d => d.Value.Any(a => a.Name.Equals(actualDependency.Name + ".dll", StringComparison.OrdinalIgnoreCase)));
-                        usedDependencies.AddRange(possibles.Select(p => p.Key));
-                        if (!possibles.Any())
-                            Console.WriteError("Assembly dependency not satisfied: {0}", actualDependency.Name);
-                        else
-                            Console.WriteLine("Assembly dependency met: {0}", actualDependency.Name);
-                    }
-
-                    foreach (var unusedDependency in packageDependencies.Where(p => !usedDependencies.Contains(p.Key)))
-                    {
-                        Console.WriteWarning("Package Dependency not used: {0}", unusedDependency.Key.Id);
-                    }
-
-                }
+                var feedAuditor = new FeedAuditor(packageSource);
+                feedAuditor.AuditFeed();
+                var outputer = new FeedAuditResultsOutputManager(feedAuditor.AuditResults);
+                outputer.Output(System.Console.Out);
             }
 
             Console.WriteLine();
             sw.Stop();
             OutputElapsedTime(sw);
             Environment.Exit(DAGCheck ? isDirectedAcyclicGraph ? 0 : 1 : 0);
-        }
-
-        private static Dictionary<IPackage, List<AssemblyName>> GetDependencyFileList(IPackage package, IQueryable<IPackage> packageSource, IConsole Console)
-        {
-            var packageDependencies = new Dictionary<IPackage, List<AssemblyName>>();
-            foreach (var packageDependency in package.Dependencies)
-            {
-                //var dependencyPackage = packageSource.FirstOrDefault(p => p.Id.Equals(packageDependency.Id));
-                var dependencyPackage = packageSource.ToList().Where(p => p.Id == packageDependency.Id).FirstOrDefault();
-                if (dependencyPackage == null)
-                {
-                    Console.WriteError("Could not locate dependency package on feed: {0}", packageDependency.Id);
-                    continue;
-                }
-
-                foreach (var dependentFile in dependencyPackage.GetFiles())
-                {
-                    var fileInfo = new FileInfo(dependentFile.Path);
-                }
-                packageDependencies.Add(dependencyPackage, dependencyPackage.GetFiles().Select(f => new AssemblyName(new FileInfo(f.Path).Name)).ToList());
-
-            }        
-            return packageDependencies;
-        }
-
-        private static IEnumerable<AssemblyName> GetAssemblyReferenceList(IPackage package)
-        {
-            var actualDependencies = new List<AssemblyName>();
-            foreach (var file in package.GetFiles().Where(f => f.Path.EndsWith(".dll")))
-            {
-                using (var stream = file.GetStream())
-                {
-                    var assembly = Assembly.Load(stream.ReadAllBytes());
-                    actualDependencies.AddRange(assembly.GetReferencedAssemblies());
-                }
-            }
-            return actualDependencies.Where(d => !d.Name.StartsWith("System.") && !d.Name.Equals("System") && !d.Name.Equals("mscorlib")).Distinct(new AssemblyNameEqualityComparer());
         }
 
         private void RemoveLonersFromGraph()
@@ -218,22 +152,6 @@ namespace NuGet.Extensions.Commands
             var repository = AggregateRepositoryHelper.CreateAggregateRepositoryFromSources(RepositoryFactory, SourceProvider, Source);
             repository.Logger = Console;
             return repository;
-        }
-    }
-
-    public class AssemblyNameEqualityComparer : IEqualityComparer<AssemblyName>
-    {
-        public bool Equals(AssemblyName x, AssemblyName y)
-        {
-            if (ReferenceEquals(x, y)) return true;
-            if (ReferenceEquals(x, null) || ReferenceEquals(y, null)) return false;
-            return x.FullName == y.FullName;
-        }
-
-        public int GetHashCode(AssemblyName obj)
-        {
-            if (ReferenceEquals(obj, null)) return 0;
-            return obj.FullName.GetHashCode();
         }
     }
 }
