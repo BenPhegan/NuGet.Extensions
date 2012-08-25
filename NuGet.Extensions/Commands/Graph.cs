@@ -7,7 +7,6 @@ using System.IO;
 using System.Linq;
 using NuGet.Commands;
 using NuGet.Common;
-using NuGet.Extensions.FeedAudit;
 using QuickGraph;
 using QuickGraph.Serialization;
 using QuickGraph.Algorithms;
@@ -33,9 +32,6 @@ namespace NuGet.Extensions.Commands
 
         [Option("Cull any disconnected vertices from the graph.")]
         public Boolean NoLoners { get; set; }
-
-        [Option("Audit the stated dependencies using reflection (slow!)", AltName = "a")]
-        public Boolean Audit { get; set; }
 
         private string _output = "graph.dgml";
 
@@ -86,15 +82,6 @@ namespace NuGet.Extensions.Commands
             {
                 Console.WriteLine();
                 Console.WriteLine(isDirectedAcyclicGraph ? "Graph is a DAG." : "Graph is CYCLIC");
-            }
-
-            //Here we go!
-            if (Audit)
-            {
-                var feedAuditor = new FeedAuditor(packageSource);
-                feedAuditor.AuditFeed();
-                var outputer = new FeedAuditResultsOutputManager(feedAuditor.AuditResults);
-                outputer.Output(System.Console.Out);
             }
 
             Console.WriteLine();
