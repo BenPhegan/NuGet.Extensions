@@ -22,8 +22,6 @@ namespace NuGet.Extensions.Commands
         {
             get { return _sources; }
         }
-        [Option("Verbose output", AltName = "v")]
-        public Boolean Verbose { get; set; }
 
         [Option("Semi-colon delimited set of package IDs that you do NOT want to audit.", AltName = "x")]
         public string Exceptions { get; set; }
@@ -46,10 +44,7 @@ namespace NuGet.Extensions.Commands
             var feedAuditor = new FeedAuditor(packages);
             feedAuditor.AuditFeed();
             var outputer = new FeedAuditResultsOutputManager(feedAuditor.AuditResults);
-            if (string.IsNullOrEmpty(Output))
-                outputer.Output(System.Console.Out);
-            else
-                outputer.Output(new StreamWriter(Path.GetFullPath(Output)));
+            outputer.Output(string.IsNullOrEmpty(Output) ? System.Console.Out : new StreamWriter(Path.GetFullPath(Output)));
 
             if (AuditFailed(feedAuditor))
                 throw new CommandLineException("There were audit failures, please check audit report");
