@@ -40,8 +40,7 @@ namespace NuGet.Extensions.Commands
         {
             var excludedPackageIds = GetLowerInvariantExcludedPackageIds();
             var repository = GetRepository();
-            var packages = repository.GetPackages().Where(p => !excludedPackageIds.Contains(p.Id.ToLowerInvariant()));
-            var feedAuditor = new FeedAuditor(packages);
+            var feedAuditor = new FeedAuditor(repository, excludedPackageIds);
             feedAuditor.AuditFeed();
             var outputer = new FeedAuditResultsOutputManager(feedAuditor.AuditResults);
             outputer.Output(string.IsNullOrEmpty(Output) ? System.Console.Out : new StreamWriter(Path.GetFullPath(Output)));

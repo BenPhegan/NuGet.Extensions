@@ -12,7 +12,8 @@ namespace NuGet.Extensions.FeedAudit
     /// </summary>
     public class FeedAuditor
     {
-        private readonly IQueryable<IPackage> _feed;
+        private readonly IPackageRepository _packageRepository;
+        private readonly List<string> _exceptions; 
         private List<FeedAuditResult> _results = new List<FeedAuditResult>(); 
 
         public List<FeedAuditResult> AuditResults
@@ -21,9 +22,10 @@ namespace NuGet.Extensions.FeedAudit
             set { _results = value; }
         }
 
-        public FeedAuditor(IQueryable<IPackage> feed)
+        public FeedAuditor(IPackageRepository packageRepository, IEnumerable<String> exceptions)
         {
-            _feed = feed;
+            _packageRepository = packageRepository;
+            _exceptions = exceptions.ToList();
         }
 
         /// <summary>
@@ -32,8 +34,13 @@ namespace NuGet.Extensions.FeedAudit
         /// <returns></returns>
         public void AuditFeed()
         {
-            foreach (var package in _feed)
+            foreach (var package in _packageRepository.GetPackages().OrderBy(p => p.Id))
             {
+                //Try the next one if we are using this one as an exception
+                //TODO Wildcards would be great!
+                if (_exceptions.Any(e => e.Equals(package.Id,StringComparison.OrdinalIgnoreCase)))
+                    continue;
+
                 var currentResult = new FeedAuditResult {Package = package};
                 var actualAssemblyReferences = GetPackageAssemblyReferenceList(package, currentResult);
                 var packageDependencies = GetDependencyAssemblyList(package, currentResult).ToList();
@@ -67,7 +74,7 @@ namespace NuGet.Extensions.FeedAudit
             foreach (var dependency in package.Dependencies)
             {
                 //HACK Slow and wrong and evil and I HATE ODATA.
-                var dependencyPackage = _feed.ToList().Where(p => p.Id.Equals(dependency.Id, StringComparison.OrdinalIgnoreCase)).OrderByDescending(p => p.Version).FirstOrDefault();
+                var dependencyPackage = _packageRepository.FindPackage(dependency.Id);
                 if (dependencyPackage == null)
                 {
                     result.UnresolvedDependencies.Add(dependency);
