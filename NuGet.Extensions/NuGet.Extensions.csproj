@@ -118,6 +118,7 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>if not exist $(TargetDir)Merged mkdir $(TargetDir)Merged
+ copy $(TargetDir)NuGet.Extensions.nuspec $(TargetDir)Merged\Nuget.Extensions.nuspec /y   
 $(SolutionDir)tools\ilmerge\ilmerge.exe /v4 /t:library /out:$(TargetDir)Merged\$(TargetFileName) $(TargetPath) $(TargetDir)Nuget.Extras.dll $(TargetDir)QuickGraph.dll $(TargetDir)QuickGraph.Serialization.dll $(TargetDir)RestSharp.dll</PostBuildEvent>
   </PropertyGroup>
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" />

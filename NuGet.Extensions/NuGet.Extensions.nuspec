@@ -9,6 +9,6 @@
     <description>A set of command line extensions for NuGet.exe.</description>
   </metadata>
   <files>
-    <file src=".\merged\NuGet.Extensions.dll" target="lib\net40" />
+    <file src="NuGet.Extensions.dll" target="lib\net40" />
   </files>
 </package>
