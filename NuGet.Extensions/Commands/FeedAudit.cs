@@ -67,7 +67,7 @@ namespace NuGet.Extensions.Commands
             return exceptions;
         }
 
-        private AggregateRepository GetRepository()
+        private IPackageRepository GetRepository()
         {
             var repository = AggregateRepositoryHelper.CreateAggregateRepositoryFromSources(_factory, _provider, Source);
             repository.Logger = Console;
