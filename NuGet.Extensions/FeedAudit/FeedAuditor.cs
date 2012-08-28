@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using NuGet.Extensions.Commands;
 
 namespace NuGet.Extensions.FeedAudit
 {
@@ -34,7 +33,7 @@ namespace NuGet.Extensions.FeedAudit
         /// <returns></returns>
         public void AuditFeed()
         {
-            foreach (var package in _packageRepository.GetPackages().OrderBy(p => p.Id))
+            foreach (var package in _packageRepository.GetPackages().Where(p => p.IsLatestVersion).OrderBy(p => p.Id))
             {
                 //Try the next one if we are using this one as an exception
                 //TODO Wildcards would be great!
