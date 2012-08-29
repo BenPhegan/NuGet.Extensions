@@ -51,6 +51,10 @@ namespace NuGet.Extensions.FeedAudit
 
                 var currentResult = new FeedAuditResult {Package = package};
                 var actualAssemblyReferences = GetPackageAssemblyReferenceList(package, currentResult);
+
+                //Prune dependency list based on additional assemblies included in the package...
+                actualAssemblyReferences = RemoveInternallySatisfiedDependencies(actualAssemblyReferences, package);
+
                 var packageDependencies = GetDependencyAssemblyList(package, currentResult).ToList();
 
                 var usedDependencies = new List<IPackage>();
@@ -69,6 +73,12 @@ namespace NuGet.Extensions.FeedAudit
                 AuditResults.Add(currentResult);
                 FinishedPackageAudit(this, new PackageAuditEventArgs{Package = package});
             }
+        }
+
+        private static IEnumerable<AssemblyName> RemoveInternallySatisfiedDependencies(IEnumerable<AssemblyName> actualAssemblyReferences, IPackage package)
+        {
+            var fileNames = package.GetFiles().Select(f => new FileInfo(f.Path).Name).ToList();
+            return actualAssemblyReferences.Where(a => !fileNames.Contains(a.Name + ".dll") && !fileNames.Contains(a.Name + ".exe"));
         }
 
         /// <summary>
