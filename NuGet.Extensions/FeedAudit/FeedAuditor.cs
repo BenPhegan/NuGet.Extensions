@@ -11,9 +11,13 @@ namespace NuGet.Extensions.FeedAudit
     /// </summary>
     public class FeedAuditor
     {
+        public delegate void PackageAuditEventHandler(object sender, PackageAuditEventArgs args);
         private readonly IPackageRepository _packageRepository;
         private readonly List<string> _exceptions; 
-        private List<FeedAuditResult> _results = new List<FeedAuditResult>(); 
+        private List<FeedAuditResult> _results = new List<FeedAuditResult>();
+
+        public event PackageAuditEventHandler StartPackageAudit = delegate { };
+        public event PackageAuditEventHandler FinishedPackageAudit = delegate { };
 
         public List<FeedAuditResult> AuditResults
         {
@@ -35,6 +39,11 @@ namespace NuGet.Extensions.FeedAudit
         {
             foreach (var package in _packageRepository.GetPackages().Where(p => p.IsLatestVersion).OrderBy(p => p.Id))
             {
+                //OData wont let us query this remotely (again, fuck OData).
+                if (!package.Listed) continue;
+                
+                StartPackageAudit(this, new PackageAuditEventArgs(){Package = package});
+
                 //Try the next one if we are using this one as an exception
                 //TODO Wildcards would be great!
                 if (_exceptions.Any(e => e.Equals(package.Id,StringComparison.OrdinalIgnoreCase)))
@@ -58,6 +67,7 @@ namespace NuGet.Extensions.FeedAudit
                 currentResult.UsedPackageDependencies.AddRange(packageDependencies.Where(usedDependencies.Contains).Select(l => l));
                 currentResult.UnusedPackageDependencies.AddRange(packageDependencies.Where(p => !usedDependencies.Contains(p)).Select(l => l));
                 AuditResults.Add(currentResult);
+                FinishedPackageAudit(this, new PackageAuditEventArgs{Package = package});
             }
         }
 

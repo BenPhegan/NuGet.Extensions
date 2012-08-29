@@ -41,6 +41,7 @@ namespace NuGet.Extensions.Commands
             var excludedPackageIds = GetLowerInvariantExcludedPackageIds();
             var repository = GetRepository();
             var feedAuditor = new FeedAuditor(repository, excludedPackageIds);
+            feedAuditor.StartPackageAudit += (o, e) => Console.WriteLine("Starting audit of package: {0}", e.Package.Id);
             feedAuditor.AuditFeed();
             var outputer = new FeedAuditResultsOutputManager(feedAuditor.AuditResults);
             outputer.Output(string.IsNullOrEmpty(Output) ? System.Console.Out : new StreamWriter(Path.GetFullPath(Output)));

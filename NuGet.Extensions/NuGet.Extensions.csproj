@@ -86,6 +86,7 @@
     <Compile Include="Commands\Details.cs" />
     <Compile Include="Commands\Nugetify.cs" />
     <Compile Include="Commands\TeamCity.cs" />
+    <Compile Include="FeedAudit\PackageAuditEventArgs.cs" />
     <Compile Include="GetResources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
