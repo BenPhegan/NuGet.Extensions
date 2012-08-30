@@ -29,6 +29,9 @@ namespace NuGet.Extensions.Commands
         [Option("Output filename", AltName = "o")]
         public string Output { get; set; }
 
+        [Option("Include unlisted packages", AltName = "u")]
+        public Boolean Unlisted { get; set; }
+
         [ImportingConstructor]
         public FeedAudit(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider sourceProvider)
         {
@@ -40,8 +43,11 @@ namespace NuGet.Extensions.Commands
         {
             var excludedPackageIds = GetLowerInvariantExcludedPackageIds();
             var repository = GetRepository();
-            var feedAuditor = new FeedAuditor(repository, excludedPackageIds);
+            var feedAuditor = new FeedAuditor(repository, excludedPackageIds, Unlisted);
             feedAuditor.StartPackageAudit += (o, e) => Console.WriteLine("Starting audit of package: {0}", e.Package.Id);
+            feedAuditor.StartPackageListDownload += (o, e) => Console.WriteLine("Downloading package list...");
+            feedAuditor.FinishedPackageListDownload +=
+                (o, e) => Console.WriteLine("Finished downloading package list...");
             feedAuditor.AuditFeed();
             var outputer = new FeedAuditResultsOutputManager(feedAuditor.AuditResults);
             outputer.Output(string.IsNullOrEmpty(Output) ? System.Console.Out : new StreamWriter(Path.GetFullPath(Output)));

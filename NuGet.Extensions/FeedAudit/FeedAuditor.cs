@@ -15,20 +15,25 @@ namespace NuGet.Extensions.FeedAudit
         private readonly IPackageRepository _packageRepository;
         private readonly List<string> _exceptions; 
         private List<FeedAuditResult> _results = new List<FeedAuditResult>();
+        private bool _unlisted;
+        private List<IPackage> _packages;
 
         public event PackageAuditEventHandler StartPackageAudit = delegate { };
         public event PackageAuditEventHandler FinishedPackageAudit = delegate { };
-
+        public event EventHandler StartPackageListDownload = delegate { };
+        public event EventHandler FinishedPackageListDownload = delegate { };
+ 
         public List<FeedAuditResult> AuditResults
         {
             get { return _results; }
             set { _results = value; }
         }
 
-        public FeedAuditor(IPackageRepository packageRepository, IEnumerable<String> exceptions)
+        public FeedAuditor(IPackageRepository packageRepository, IEnumerable<String> exceptions, Boolean unlisted)
         {
             _packageRepository = packageRepository;
             _exceptions = exceptions.ToList();
+            _unlisted = unlisted;
         }
 
         /// <summary>
@@ -37,10 +42,14 @@ namespace NuGet.Extensions.FeedAudit
         /// <returns></returns>
         public void AuditFeed()
         {
-            foreach (var package in _packageRepository.GetPackages().Where(p => p.IsLatestVersion).OrderBy(p => p.Id))
+            StartPackageListDownload(this, new EventArgs());
+            _packages = _packageRepository.GetPackages().Where(p => p.IsLatestVersion).OrderBy(p => p.Id).ToList();
+            FinishedPackageListDownload(this, new EventArgs());
+
+            foreach (var package in _packages)
             {
                 //OData wont let us query this remotely (again, fuck OData).
-                if (!package.Listed) continue;
+                if (_unlisted == false && package.Listed == false) continue;
                 
                 StartPackageAudit(this, new PackageAuditEventArgs(){Package = package});
 
@@ -93,7 +102,7 @@ namespace NuGet.Extensions.FeedAudit
             foreach (var dependency in package.Dependencies)
             {
                 //HACK Slow and wrong and evil and I HATE ODATA.
-                var dependencyPackage = _packageRepository.FindPackage(dependency.Id);
+                var dependencyPackage = _packages.FirstOrDefault(p => p.Id.Equals(dependency.Id, StringComparison.OrdinalIgnoreCase));
                 if (dependencyPackage == null)
                 {
                     result.UnresolvedDependencies.Add(dependency);
