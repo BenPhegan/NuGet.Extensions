@@ -1,5 +1,4 @@
 ﻿using System;
-using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
@@ -10,8 +9,8 @@ using NuGet.Extensions.FeedAudit;
 
 namespace NuGet.Extensions.Commands
 {
-    [Command("feedaudit","Checks the packages on a feed to ensure that they depend on the right packages.")]
-    public class FeedAudit : Command
+    [Command("audit","Checks a single package or all the packages on a feed to ensure that they depend on the right packages.")]
+    public class Audit : Command
     {
         private readonly IPackageRepositoryFactory _factory;
         private readonly IPackageSourceProvider _provider;
@@ -23,17 +22,23 @@ namespace NuGet.Extensions.Commands
             get { return _sources; }
         }
 
+        [Option("Fail only on possible runtime assembly bind failure (unresolved assembly dependency)", AltName = "r")]
+        public bool RunTimeFailOnly { get; set; }
+
         [Option("Semi-colon delimited set of package IDs that you do NOT want to audit.", AltName = "x")]
         public string Exceptions { get; set; }
 
         [Option("Output filename", AltName = "o")]
         public string Output { get; set; }
 
+        [Option("Package to audit (will check locally for file before checking feed)", AltName = "p")]
+        public string Package { get; set; }
+
         [Option("Include unlisted packages", AltName = "u")]
         public Boolean Unlisted { get; set; }
 
         [ImportingConstructor]
-        public FeedAudit(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider sourceProvider)
+        public Audit(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider sourceProvider)
         {
             _factory = packageRepositoryFactory;
             _provider = sourceProvider;
@@ -46,17 +51,30 @@ namespace NuGet.Extensions.Commands
             var feedAuditor = new FeedAuditor(repository, excludedPackageIds, Unlisted);
             feedAuditor.StartPackageAudit += (o, e) => Console.WriteLine("Starting audit of package: {0}", e.Package.Id);
             feedAuditor.StartPackageListDownload += (o, e) => Console.WriteLine("Downloading package list...");
-            feedAuditor.FinishedPackageListDownload +=
-                (o, e) => Console.WriteLine("Finished downloading package list...");
-            feedAuditor.AuditFeed();
+            feedAuditor.FinishedPackageListDownload += (o, e) => Console.WriteLine("Finished downloading package list...");
+            if (String.IsNullOrEmpty(Package))
+                feedAuditor.Audit();
+            else
+            {
+                var actualPackage = File.Exists(Package) ? new ZipPackage(Package) : repository.FindPackagesById(Package).FirstOrDefault();
+                if (actualPackage != null)
+                    feedAuditor.Audit(actualPackage);
+                else
+                    throw new ApplicationException(string.Format("Could not find package locally or on feed: {0}",Package));
+            }
             var outputer = new FeedAuditResultsOutputManager(feedAuditor.AuditResults);
             outputer.Output(string.IsNullOrEmpty(Output) ? System.Console.Out : new StreamWriter(Path.GetFullPath(Output)));
 
-            if (AuditFailed(feedAuditor))
+            if (RunTimeFailOnly ? CheckPossibleRuntimeFailures(feedAuditor) : CheckAllPossibleFailures(feedAuditor))
                 throw new CommandLineException("There were audit failures, please check audit report");
         }
 
-        private static bool AuditFailed(FeedAuditor feedAuditor)
+        private static bool CheckPossibleRuntimeFailures(FeedAuditor feedAuditor)
+        {
+            return feedAuditor.AuditResults.Any(r => r.UnresolvedAssemblyReferences.Any());
+        }
+
+        private static bool CheckAllPossibleFailures(FeedAuditor feedAuditor)
         {
             return feedAuditor.AuditResults.Any(r => r.UnloadablePackageFiles.Any()
                                                      || r.UnresolvedAssemblyReferences.Any()
@@ -64,7 +82,7 @@ namespace NuGet.Extensions.Commands
                                                      || r.UnusedPackageDependencies.Any());
         }
 
-        private List<string> GetLowerInvariantExcludedPackageIds()
+        private IEnumerable<string> GetLowerInvariantExcludedPackageIds()
         {
             var exceptions = new List<string>();
             if (!String.IsNullOrEmpty(Exceptions))

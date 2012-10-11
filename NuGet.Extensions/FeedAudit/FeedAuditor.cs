@@ -40,11 +40,18 @@ namespace NuGet.Extensions.FeedAudit
         /// Audits a feed and provides back a set of results
         /// </summary>
         /// <returns></returns>
-        public void AuditFeed()
+        public void Audit(IPackage packageToAudit = null)
         {
-            StartPackageListDownload(this, new EventArgs());
-            _packages = _packageRepository.GetPackages().Where(p => p.IsLatestVersion).OrderBy(p => p.Id).ToList();
-            FinishedPackageListDownload(this, new EventArgs());
+            if (packageToAudit == null)
+            {
+                StartPackageListDownload(this, new EventArgs());
+                _packages = _packageRepository.GetPackages().Where(p => p.IsLatestVersion).OrderBy(p => p.Id).ToList();
+                FinishedPackageListDownload(this, new EventArgs());
+            }
+            else
+            {
+                _packages = new List<IPackage>(new[] {packageToAudit});
+            }
 
             foreach (var package in _packages)
             {

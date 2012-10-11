@@ -63,7 +63,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Commands\FeedAudit.cs" />
+    <Compile Include="Commands\Audit.cs" />
     <Compile Include="FeedAudit\FeedAuditResultsOutputManager.cs" />
     <Compile Include="FeedAudit\AssemblyNameEqualityComparer.cs" />
     <Compile Include="FeedAudit\FeedAuditor.cs" />
