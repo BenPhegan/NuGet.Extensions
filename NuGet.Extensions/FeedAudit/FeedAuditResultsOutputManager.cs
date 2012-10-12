@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 
 namespace NuGet.Extensions.FeedAudit
 {
@@ -33,12 +34,30 @@ namespace NuGet.Extensions.FeedAudit
                     outputList.AddRange(result.UnusedPackageDependencies.Select(u => new AuditResultsOutput { PackageName = result.Package.Id, Category = "Unused Package Dependency", Item = u.Id }));
                 if (_auditEventTypes.HasFlag(AuditEventTypes.UsedPackageDependencies))
                     outputList.AddRange(result.UsedPackageDependencies.Select(u => new AuditResultsOutput { PackageName = result.Package.Id, Category = "Used Package Dependency", Item = u.Id }));
+                if (_auditEventTypes.HasFlag(AuditEventTypes.FeedResolvableReferences))
+                    outputList.AddRange(result.FeedResolvableReferences.Select(u => new AuditResultsOutput { PackageName = result.Package.Id, Category = "Feed Resolvable Assembly", Item = u.Name }));
             }
 
             foreach (var output in outputList)
                 writer.WriteLine(output.ToString());
         }
     
+        public void OutputFeedUnresolvableReferences(TextWriter writer)
+        {
+            var outputList = new List<AuditResultsOutput>();
+            foreach (var result in _results)
+            {
+                foreach (var unresolved in result.UnresolvedAssemblyReferences)
+                {
+                    if (!_results.Any(r => r.FeedResolvableReferences.Any(fr => fr.Name.Equals(unresolved.Name, StringComparison.OrdinalIgnoreCase))))
+                        outputList.AddRange(result.UnresolvedAssemblyReferences.Select(u => new AuditResultsOutput { PackageName = result.Package.Id, Category = "Feed Unresolvable Assembly", Item = unresolved.Name }));
+                }
+            }
+            foreach (var output in outputList)
+                writer.WriteLine(output.ToString());
+        }
+
+
         class AuditResultsOutput
         {
             public override string ToString()
@@ -59,6 +78,8 @@ namespace NuGet.Extensions.FeedAudit
         UnresolvedAssemblyReferences = 4,
         UnresolvedDependencies = 8,
         UnusedPackageDependencies = 16,
-        UsedPackageDependencies = 32
+        UsedPackageDependencies = 32,
+        FeedResolvableReferences = 64,
+        FeedUnresolvableReferences = 128
     }
 }

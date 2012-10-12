@@ -37,6 +37,9 @@ namespace NuGet.Extensions.Commands
         [Option("Include unlisted packages", AltName = "u")]
         public Boolean Unlisted { get; set; }
 
+        [Option("Check the feed for unresolved assemblies (expensive)", AltName = "cu")]
+        public Boolean CheckFeedForUnresolvedAssemblies { get; set; }
+
         [ImportingConstructor]
         public Audit(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider sourceProvider)
         {
@@ -48,7 +51,7 @@ namespace NuGet.Extensions.Commands
         {
             var excludedPackageIds = GetLowerInvariantExcludedPackageIds();
             var repository = GetRepository();
-            var feedAuditor = new FeedAuditor(repository, excludedPackageIds, Unlisted);
+            var feedAuditor = new FeedAuditor(repository, excludedPackageIds, Unlisted, CheckFeedForUnresolvedAssemblies);
             feedAuditor.StartPackageAudit += (o, e) => Console.WriteLine("Starting audit of package: {0}", e.Package.Id);
             feedAuditor.StartPackageListDownload += (o, e) => Console.WriteLine("Downloading package list...");
             feedAuditor.FinishedPackageListDownload += (o, e) => Console.WriteLine("Finished downloading package list...");
@@ -62,18 +65,35 @@ namespace NuGet.Extensions.Commands
                 else
                     throw new ApplicationException(string.Format("Could not find package locally or on feed: {0}",Package));
             }
-            var auditFlags = GetAuditFlags(RunTimeFailOnly);
+            var auditFlags = GetAuditFlags(RunTimeFailOnly, CheckFeedForUnresolvedAssemblies);
             var outputer = new FeedAuditResultsOutputManager(feedAuditor.AuditResults, auditFlags);
             outputer.Output(string.IsNullOrEmpty(Output) ? System.Console.Out : new StreamWriter(Path.GetFullPath(Output)));
+
+            if (CheckFeedForUnresolvedAssemblies)
+            {
+                //TODO DONT OUTPUT HERE WHEN THERE ARE NO UNRESOLVABLE!!!!
+                Console.WriteLine();
+                Console.WriteLine("Following unresolvable references could not be found on the feed...");
+                Console.WriteLine();
+                outputer.OutputFeedUnresolvableReferences(System.Console.Out);
+            }
 
             if (RunTimeFailOnly ? CheckPossibleRuntimeFailures(feedAuditor) : CheckAllPossibleFailures(feedAuditor))
                 throw new CommandLineException("There were audit failures, please check audit report");
         }
 
-        private static AuditEventTypes GetAuditFlags(bool runTimeOnly)
+        private static AuditEventTypes GetAuditFlags(bool runTimeOnly, bool checkFeedResolvable)
         {
-            return runTimeOnly ? AuditEventTypes.UnresolvedAssemblyReferences :
-                    AuditEventTypes.ResolvedAssemblyReferences
+            var events = (AuditEventTypes) 0;
+            if (runTimeOnly || checkFeedResolvable)
+            {
+                if (runTimeOnly)
+                    events |= AuditEventTypes.UnresolvedAssemblyReferences;
+                if (checkFeedResolvable)
+                    events |= AuditEventTypes.FeedResolvableReferences;
+                return events;
+            }
+            return AuditEventTypes.ResolvedAssemblyReferences
                    | AuditEventTypes.UnloadablePackageFiles
                    | AuditEventTypes.UnresolvedAssemblyReferences
                    | AuditEventTypes.UnresolvedDependencies

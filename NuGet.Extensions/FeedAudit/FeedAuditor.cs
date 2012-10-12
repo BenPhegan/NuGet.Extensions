@@ -16,7 +16,9 @@ namespace NuGet.Extensions.FeedAudit
         private readonly List<string> _exceptions; 
         private List<FeedAuditResult> _results = new List<FeedAuditResult>();
         private bool _unlisted;
-        private List<IPackage> _packages;
+        private List<IPackage> _auditPackages;
+        private List<IPackage> _feedPackages;
+        private bool _checkForFeedResolvableAssemblies;
 
         public event PackageAuditEventHandler StartPackageAudit = delegate { };
         public event PackageAuditEventHandler FinishedPackageAudit = delegate { };
@@ -29,11 +31,12 @@ namespace NuGet.Extensions.FeedAudit
             set { _results = value; }
         }
 
-        public FeedAuditor(IPackageRepository packageRepository, IEnumerable<String> exceptions, Boolean unlisted)
+        public FeedAuditor(IPackageRepository packageRepository, IEnumerable<String> exceptions, Boolean unlisted, bool checkForFeedResolvableAssemblies)
         {
             _packageRepository = packageRepository;
             _exceptions = exceptions.ToList();
             _unlisted = unlisted;
+            _checkForFeedResolvableAssemblies = checkForFeedResolvableAssemblies;
         }
 
         /// <summary>
@@ -42,18 +45,14 @@ namespace NuGet.Extensions.FeedAudit
         /// <returns></returns>
         public void Audit(IPackage packageToAudit = null)
         {
-            if (packageToAudit == null)
-            {
-                StartPackageListDownload(this, new EventArgs());
-                _packages = _packageRepository.GetPackages().Where(p => p.IsLatestVersion).OrderBy(p => p.Id).ToList();
-                FinishedPackageListDownload(this, new EventArgs());
-            }
-            else
-            {
-                _packages = new List<IPackage>(new[] {packageToAudit});
-            }
+            StartPackageListDownload(this, new EventArgs());
+            _feedPackages = _packageRepository.GetPackages().Where(p => p.IsLatestVersion).OrderBy(p => p.Id).ToList();
+            FinishedPackageListDownload(this, new EventArgs());
 
-            foreach (var package in _packages)
+            //If we are auditing the whole feed, use the whole feed as the audit package list.....
+            _auditPackages = packageToAudit == null ? _feedPackages : new List<IPackage>(new[] {packageToAudit});
+
+            foreach (var package in _auditPackages)
             {
                 //OData wont let us query this remotely (again, fuck OData).
                 if (_unlisted == false && package.Listed == false) continue;
@@ -76,10 +75,18 @@ namespace NuGet.Extensions.FeedAudit
                 var usedDependencies = new List<IPackage>();
                 foreach (var actualDependency in actualAssemblyReferences)
                 {
-                    var possibles = packageDependencies.Where(d => d.GetFiles().Any(a => new FileInfo(a.Path).Name.Equals(actualDependency.Name + ".dll", StringComparison.OrdinalIgnoreCase)));
+                    var possibles = GetPossiblePackagesForAssembly(actualDependency, packageDependencies);
                     usedDependencies.AddRange(possibles.Select(p => p));
                     if (!possibles.Any())
+                    {
                         currentResult.UnresolvedAssemblyReferences.Add(actualDependency);
+                        if (_checkForFeedResolvableAssemblies)
+                        {
+                            //May be expensive....
+                            if(GetPossiblePackagesForAssembly(actualDependency, _feedPackages).Any());
+                                currentResult.FeedResolvableReferences.Add(actualDependency);
+                        }
+                    }
                     else
                         currentResult.ResolvedAssemblyReferences.Add(actualDependency);
                 }
@@ -89,6 +96,11 @@ namespace NuGet.Extensions.FeedAudit
                 AuditResults.Add(currentResult);
                 FinishedPackageAudit(this, new PackageAuditEventArgs{Package = package});
             }
+        }
+
+        private static IEnumerable<IPackage> GetPossiblePackagesForAssembly(AssemblyName actualDependency, IEnumerable<IPackage> packageDependencies)
+        {
+            return packageDependencies.Where(d => d.GetFiles().Any(a => new FileInfo(a.Path).Name.Equals(actualDependency.Name + ".dll", StringComparison.OrdinalIgnoreCase)));
         }
 
         private static IEnumerable<AssemblyName> RemoveInternallySatisfiedDependencies(IEnumerable<AssemblyName> actualAssemblyReferences, IPackage package)
@@ -109,7 +121,7 @@ namespace NuGet.Extensions.FeedAudit
             foreach (var dependency in package.Dependencies)
             {
                 //HACK Slow and wrong and evil and I HATE ODATA.
-                var dependencyPackage = _packages.FirstOrDefault(p => p.Id.Equals(dependency.Id, StringComparison.OrdinalIgnoreCase));
+                var dependencyPackage = _feedPackages.FirstOrDefault(p => p.Id.Equals(dependency.Id, StringComparison.OrdinalIgnoreCase));
                 if (dependencyPackage == null)
                 {
                     result.UnresolvedDependencies.Add(dependency);
