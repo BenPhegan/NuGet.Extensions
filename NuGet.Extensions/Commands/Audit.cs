@@ -62,11 +62,23 @@ namespace NuGet.Extensions.Commands
                 else
                     throw new ApplicationException(string.Format("Could not find package locally or on feed: {0}",Package));
             }
-            var outputer = new FeedAuditResultsOutputManager(feedAuditor.AuditResults);
+            var auditFlags = GetAuditFlags(RunTimeFailOnly);
+            var outputer = new FeedAuditResultsOutputManager(feedAuditor.AuditResults, auditFlags);
             outputer.Output(string.IsNullOrEmpty(Output) ? System.Console.Out : new StreamWriter(Path.GetFullPath(Output)));
 
             if (RunTimeFailOnly ? CheckPossibleRuntimeFailures(feedAuditor) : CheckAllPossibleFailures(feedAuditor))
                 throw new CommandLineException("There were audit failures, please check audit report");
+        }
+
+        private static AuditEventTypes GetAuditFlags(bool runTimeOnly)
+        {
+            return runTimeOnly ? AuditEventTypes.UnresolvedAssemblyReferences :
+                    AuditEventTypes.ResolvedAssemblyReferences
+                   | AuditEventTypes.UnloadablePackageFiles
+                   | AuditEventTypes.UnresolvedAssemblyReferences
+                   | AuditEventTypes.UnresolvedDependencies
+                   | AuditEventTypes.UnusedPackageDependencies
+                   | AuditEventTypes.UsedPackageDependencies;
         }
 
         private static bool CheckPossibleRuntimeFailures(FeedAuditor feedAuditor)
