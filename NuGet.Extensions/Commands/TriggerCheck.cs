@@ -31,9 +31,8 @@ namespace NuGet.Extensions.Commands
         public string Feed { get; set; }
 
         [ImportingConstructor]
-        public TriggerCheck(ICollection<string> sources)
+        public TriggerCheck()
         {
-            _sources = sources;
         }
 
         public override void ExecuteCommand()
