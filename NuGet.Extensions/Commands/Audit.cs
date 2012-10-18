@@ -47,6 +47,9 @@ namespace NuGet.Extensions.Commands
         [Option("Output filename for feed unresolved assemblies", AltName = "uo")]
         public string UnresolvedOutput { get; set; }
 
+        [Option("Verbose output", AltName = "v")]
+        public bool Verbose { get; set; }
+
         [ImportingConstructor]
         public Audit(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider sourceProvider)
         {
@@ -63,30 +66,38 @@ namespace NuGet.Extensions.Commands
             feedAuditor.StartPackageAudit += (o, e) => Console.WriteLine("Starting audit of package: {0}", e.Package.Id);
             feedAuditor.StartPackageListDownload += (o, e) => Console.WriteLine("Downloading package list...");
             feedAuditor.FinishedPackageListDownload += (o, e) => Console.WriteLine("Finished downloading package list...");
+            feedAuditor.PackageIgnored += (o, e) => Console.WriteLine("Ignoring package: {0} based on {1}", e.IgnoredPackage.Id, e.Wildcard ? "wildcard..." : "string match...");
+            List<FeedAuditResult> results = null;
             if (String.IsNullOrEmpty(Package))
-                feedAuditor.Audit();
+                results = feedAuditor.Audit();
             else
             {
                 var actualPackage = File.Exists(Package) ? new ZipPackage(Package) : repository.FindPackagesById(Package).FirstOrDefault();
                 if (actualPackage != null)
-                    feedAuditor.Audit(actualPackage);
+                    results = feedAuditor.Audit(actualPackage);
                 else
                     throw new ApplicationException(string.Format("Could not find package locally or on feed: {0}",Package));
             }
-            var auditFlags = GetAuditFlags(RunTimeFailOnly, CheckFeedForUnresolvedAssemblies);
-            var outputer = new FeedAuditResultsOutputManager(feedAuditor.AuditResults, auditFlags);
+            var auditFlags = GetAuditFlags(RunTimeFailOnly, CheckFeedForUnresolvedAssemblies, Gac);
+            var outputer = new FeedAuditResultsOutputManager(results, auditFlags);
             outputer.Output(string.IsNullOrEmpty(Output) ? System.Console.Out : new StreamWriter(Path.GetFullPath(Output)));
 
-            if (CheckFeedForUnresolvedAssemblies)
+            if (CheckFeedForUnresolvedAssemblies && feedAuditor.UnresolvableAssemblyReferences.Count > 0)
             {
-                //TODO DONT OUTPUT HERE WHEN THERE ARE NO UNRESOLVABLE!!!!
-                Console.WriteLine();
-                Console.WriteLine("Following unresolvable references could not be found on the feed...");
-                Console.WriteLine();
-                outputer.OutputFeedUnresolvableReferences(!String.IsNullOrEmpty(UnresolvedOutput) ? new StreamWriter(Path.GetFullPath(UnresolvedOutput)) : System.Console.Out);
+                var writer = !String.IsNullOrEmpty(UnresolvedOutput) ? new StreamWriter(Path.GetFullPath(UnresolvedOutput)) : System.Console.Out;
+                writer.WriteLine("Following unresolvable references could not be found on the feed...");
+                writer.WriteLine();
+                foreach (var assembly in feedAuditor.UnresolvableAssemblyReferences)
+                {
+                    writer.WriteLine("\t{0}", assembly.FullName);
+                }
+                //TODO this is pretty ugly, perhaps need to look at what we are providing as part of the UnresolvableAssemblyReferences
+                //HACK the code below is duplicated in two places, ugly.
+                if (Verbose)
+                    outputer.OutputUnresolvableReferences(!String.IsNullOrEmpty(UnresolvedOutput) ? new StreamWriter(Path.GetFullPath(UnresolvedOutput)) : System.Console.Out);           
             }
 
-            if (RunTimeFailOnly ? CheckPossibleRuntimeFailures(feedAuditor) : CheckAllPossibleFailures(feedAuditor))
+            if (RunTimeFailOnly ? CheckFeedForUnresolvedAssemblies && Gac ? feedAuditor.UnresolvableAssemblyReferences.Count > 0 : CheckPossibleRuntimeFailures(results) : CheckAllPossibleFailures(results))
                 throw new CommandLineException("There were audit failures, please check audit report");
         }
 
@@ -96,15 +107,17 @@ namespace NuGet.Extensions.Commands
             return new List<Regex>(wildcards.Select(w => new Wildcard(w)));
         }
 
-        private static AuditEventTypes GetAuditFlags(bool runTimeOnly, bool checkFeedResolvable)
+        private static AuditEventTypes GetAuditFlags(bool runTimeOnly, bool checkFeedResolvable, bool gac)
         {
             var events = (AuditEventTypes) 0;
-            if (runTimeOnly || checkFeedResolvable)
+            if (runTimeOnly || checkFeedResolvable || gac)
             {
                 if (runTimeOnly)
                     events |= AuditEventTypes.UnresolvedAssemblyReferences;
                 if (checkFeedResolvable)
                     events |= AuditEventTypes.FeedResolvableReferences;
+                if (gac)
+                    events |= AuditEventTypes.GacResolvableReferences;
                 return events;
             }
             return AuditEventTypes.ResolvedAssemblyReferences
@@ -115,14 +128,14 @@ namespace NuGet.Extensions.Commands
                    | AuditEventTypes.UsedPackageDependencies;
         }
 
-        private static bool CheckPossibleRuntimeFailures(FeedAuditor feedAuditor)
+        private static bool CheckPossibleRuntimeFailures(IEnumerable<FeedAuditResult> results)
         {
-            return feedAuditor.AuditResults.Any(r => r.UnresolvedAssemblyReferences.Any());
+            return results.Any(r => r.UnresolvedAssemblyReferences.Any());
         }
 
-        private static bool CheckAllPossibleFailures(FeedAuditor feedAuditor)
+        private static bool CheckAllPossibleFailures(IEnumerable<FeedAuditResult> results)
         {
-            return feedAuditor.AuditResults.Any(r => r.UnloadablePackageFiles.Any()
+            return results.Any(r => r.UnloadablePackageFiles.Any()
                                                      || r.UnresolvedAssemblyReferences.Any()
                                                      || r.UnresolvedDependencies.Any()
                                                      || r.UnusedPackageDependencies.Any());

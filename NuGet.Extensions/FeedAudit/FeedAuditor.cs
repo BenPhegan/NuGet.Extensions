@@ -23,6 +23,7 @@ namespace NuGet.Extensions.FeedAudit
         private readonly bool _checkForFeedResolvableAssemblies;
         private readonly bool _checkGac;
         private readonly IEnumerable<Regex> _wildcards;
+        private List<AssemblyName> _unresolvableAssemblyReferences = new List<AssemblyName>();
 
         public event PackageAuditEventHandler StartPackageAudit = delegate { };
         public event PackageAuditEventHandler FinishedPackageAudit = delegate { };
@@ -30,10 +31,10 @@ namespace NuGet.Extensions.FeedAudit
         public event EventHandler FinishedPackageListDownload = delegate { };
         public event PackageIgnoreEventHandler PackageIgnored = delegate { }; 
  
-        public List<FeedAuditResult> AuditResults
+        public List<AssemblyName> UnresolvableAssemblyReferences
         {
-            get { return _results; }
-            set { _results = value; }
+            get { return _unresolvableAssemblyReferences; }
+            set { _unresolvableAssemblyReferences = value; }
         }
 
         public FeedAuditor(IPackageRepository packageRepository, IEnumerable<String> exceptions, IEnumerable<Regex> wildcards, Boolean unlisted, bool checkForFeedResolvableAssemblies, bool checkGac)
@@ -50,7 +51,7 @@ namespace NuGet.Extensions.FeedAudit
         /// Audits a feed and provides back a set of results
         /// </summary>
         /// <returns></returns>
-        public void Audit(IPackage packageToAudit = null)
+        public List<FeedAuditResult> Audit(IPackage packageToAudit = null)
         {
             StartPackageListDownload(this, new EventArgs());
             _feedPackages = _packageRepository.GetPackages().Where(p => p.IsLatestVersion).OrderBy(p => p.Id).ToList();
@@ -113,11 +114,26 @@ namespace NuGet.Extensions.FeedAudit
 
                 currentResult.UsedPackageDependencies.AddRange(packageDependencies.Where(usedDependencies.Contains).Select(l => l));
                 currentResult.UnusedPackageDependencies.AddRange(packageDependencies.Where(p => !usedDependencies.Contains(p)).Select(l => l));
-                AuditResults.Add(currentResult);
+                _results.Add(currentResult);
                 FinishedPackageAudit(this, new PackageAuditEventArgs{Package = package});
             }
+            UnresolvableAssemblyReferences = GetUnresolvedAssemblies(_results);
+            return _results;
         }
 
+        private static List<AssemblyName> GetUnresolvedAssemblies(List<FeedAuditResult> results)
+        {
+            var unresolvable = new List<AssemblyName>();
+            foreach (var unresolved in results.SelectMany(r => r.UnresolvedAssemblyReferences))
+            {
+                if (!results.Any(r => r.FeedResolvableReferences.Any(fr => fr.Name.Equals(unresolved.Name, StringComparison.OrdinalIgnoreCase))) &&
+                    !results.Any(r => r.GacResolvableReferences.Any(gr => gr.Name.Equals(unresolved.Name, StringComparison.OrdinalIgnoreCase))))
+                {
+                    unresolvable.Add(unresolved);
+                }
+            }
+            return unresolvable;
+        }
         private static bool CanResolveToGac(string actualDependency)
         {
             string result;

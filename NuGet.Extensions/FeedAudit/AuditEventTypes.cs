@@ -12,7 +12,7 @@ namespace NuGet.Extensions.FeedAudit
         UnusedPackageDependencies = 16,
         UsedPackageDependencies = 32,
         FeedResolvableReferences = 64,
-        FeedUnresolvableReferences = 128,
+        UnresolvableAssemblyReferences = 128,
         GacResolvableReferences = 256
     }
 }
