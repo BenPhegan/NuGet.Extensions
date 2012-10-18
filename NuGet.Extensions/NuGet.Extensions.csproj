@@ -89,6 +89,7 @@
     <Compile Include="Commands\TeamCity.cs" />
     <Compile Include="FeedAudit\GacResolver.cs" />
     <Compile Include="FeedAudit\PackageAuditEventArgs.cs" />
+    <Compile Include="FeedAudit\PackageIgnoreEventArgs.cs" />
     <Compile Include="GetResources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -97,6 +98,7 @@
     <Compile Include="MSBuild\Solution.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TeamCity\TeamCityApi.cs" />
+    <Compile Include="Wildcard.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="CloneResources.resx">

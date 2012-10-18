@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using NuGet.Commands;
 using NuGet.Common;
 using NuGet.Extensions.FeedAudit;
@@ -25,7 +26,7 @@ namespace NuGet.Extensions.Commands
         [Option("Fail only on possible runtime assembly bind failure (unresolved assembly dependency)", AltName = "r")]
         public bool RunTimeFailOnly { get; set; }
 
-        [Option("Semi-colon delimited set of package IDs that you do NOT want to audit.", AltName = "x")]
+        [Option("Semi-colon delimited set of package IDs or wildcards that you do NOT want to audit.", AltName = "x")]
         public string Exceptions { get; set; }
 
         [Option("Output filename", AltName = "o")]
@@ -56,8 +57,9 @@ namespace NuGet.Extensions.Commands
         public override void ExecuteCommand()
         {
             var excludedPackageIds = GetLowerInvariantExcludedPackageIds();
+            var excludedWildcards = GetExcludedWildcards(Exceptions);
             var repository = GetRepository();
-            var feedAuditor = new FeedAuditor(repository, excludedPackageIds, Unlisted, CheckFeedForUnresolvedAssemblies, Gac);
+            var feedAuditor = new FeedAuditor(repository, excludedPackageIds, excludedWildcards, Unlisted, CheckFeedForUnresolvedAssemblies, Gac);
             feedAuditor.StartPackageAudit += (o, e) => Console.WriteLine("Starting audit of package: {0}", e.Package.Id);
             feedAuditor.StartPackageListDownload += (o, e) => Console.WriteLine("Downloading package list...");
             feedAuditor.FinishedPackageListDownload += (o, e) => Console.WriteLine("Finished downloading package list...");
@@ -86,6 +88,12 @@ namespace NuGet.Extensions.Commands
 
             if (RunTimeFailOnly ? CheckPossibleRuntimeFailures(feedAuditor) : CheckAllPossibleFailures(feedAuditor))
                 throw new CommandLineException("There were audit failures, please check audit report");
+        }
+
+        private IEnumerable<Regex> GetExcludedWildcards(string exceptions)
+        {
+            var wildcards = exceptions.Split(';').Select(s => s.ToLowerInvariant());
+            return new List<Regex>(wildcards.Select(w => new Wildcard(w)));
         }
 
         private static AuditEventTypes GetAuditFlags(bool runTimeOnly, bool checkFeedResolvable)
@@ -127,7 +135,7 @@ namespace NuGet.Extensions.Commands
             {
                 exceptions.AddRange(Exceptions.Split(';').Select(s => s.ToLowerInvariant()));
             }
-            return exceptions;
+            return exceptions.Where(e => !e.Contains('*') && !e.Contains('?'));
         }
 
         private IPackageRepository GetRepository()

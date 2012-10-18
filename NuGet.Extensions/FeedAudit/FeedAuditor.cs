@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 
 namespace NuGet.Extensions.FeedAudit
 {
@@ -12,6 +13,7 @@ namespace NuGet.Extensions.FeedAudit
     public class FeedAuditor
     {
         public delegate void PackageAuditEventHandler(object sender, PackageAuditEventArgs args);
+        public delegate void PackageIgnoreEventHandler(object sender, PackageIgnoreEventArgs args);
         private readonly IPackageRepository _packageRepository;
         private readonly List<string> _exceptions; 
         private List<FeedAuditResult> _results = new List<FeedAuditResult>();
@@ -20,11 +22,13 @@ namespace NuGet.Extensions.FeedAudit
         private List<IPackage> _feedPackages;
         private readonly bool _checkForFeedResolvableAssemblies;
         private readonly bool _checkGac;
+        private readonly IEnumerable<Regex> _wildcards;
 
         public event PackageAuditEventHandler StartPackageAudit = delegate { };
         public event PackageAuditEventHandler FinishedPackageAudit = delegate { };
         public event EventHandler StartPackageListDownload = delegate { };
         public event EventHandler FinishedPackageListDownload = delegate { };
+        public event PackageIgnoreEventHandler PackageIgnored = delegate { }; 
  
         public List<FeedAuditResult> AuditResults
         {
@@ -32,13 +36,14 @@ namespace NuGet.Extensions.FeedAudit
             set { _results = value; }
         }
 
-        public FeedAuditor(IPackageRepository packageRepository, IEnumerable<String> exceptions, Boolean unlisted, bool checkForFeedResolvableAssemblies, bool checkGac)
+        public FeedAuditor(IPackageRepository packageRepository, IEnumerable<String> exceptions, IEnumerable<Regex> wildcards, Boolean unlisted, bool checkForFeedResolvableAssemblies, bool checkGac)
         {
             _packageRepository = packageRepository;
             _exceptions = exceptions.ToList();
             _unlisted = unlisted;
             _checkForFeedResolvableAssemblies = checkForFeedResolvableAssemblies;
             _checkGac = checkGac;
+            _wildcards = wildcards;
         }
 
         /// <summary>
@@ -59,12 +64,19 @@ namespace NuGet.Extensions.FeedAudit
                 //OData wont let us query this remotely (again, fuck OData).
                 if (_unlisted == false && package.Listed == false) continue;
                 
-                StartPackageAudit(this, new PackageAuditEventArgs(){Package = package});
+                StartPackageAudit(this, new PackageAuditEventArgs {Package = package});
 
                 //Try the next one if we are using this one as an exception
-                //TODO Wildcards would be great!
-                if (_exceptions.Any(e => e.Equals(package.Id,StringComparison.OrdinalIgnoreCase)))
+                if (_wildcards.Any(w => w.IsMatch(package.Id.ToLowerInvariant())))
+                {
+                    PackageIgnored(this, new PackageIgnoreEventArgs {IgnoredPackage = package, Wildcard = true});
                     continue;
+                }
+                if (_exceptions.Any(e => e.Equals(package.Id,StringComparison.OrdinalIgnoreCase)))
+                {
+                    PackageIgnored(this, new PackageIgnoreEventArgs { IgnoredPackage = package, StringMatch = true });
+                    continue;
+                }
 
                 var currentResult = new FeedAuditResult {Package = package};
                 var actualAssemblyReferences = GetPackageAssemblyReferenceList(package, currentResult);
