@@ -64,6 +64,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Commands\Audit.cs" />
+    <Compile Include="Commands\TriggerCheck.cs" />
+    <Compile Include="FeedAudit\AuditEventTypes.cs" />
     <Compile Include="FeedAudit\FeedAuditResultsOutputManager.cs" />
     <Compile Include="FeedAudit\AssemblyNameEqualityComparer.cs" />
     <Compile Include="FeedAudit\FeedAuditor.cs" />
@@ -86,6 +88,7 @@
     <Compile Include="Commands\Details.cs" />
     <Compile Include="Commands\Nugetify.cs" />
     <Compile Include="Commands\TeamCity.cs" />
+    <Compile Include="FeedAudit\GacResolver.cs" />
     <Compile Include="FeedAudit\PackageAuditEventArgs.cs" />
     <Compile Include="GetResources.Designer.cs">
       <AutoGen>True</AutoGen>

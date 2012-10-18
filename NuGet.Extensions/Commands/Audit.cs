@@ -37,6 +37,9 @@ namespace NuGet.Extensions.Commands
         [Option("Include unlisted packages", AltName = "u")]
         public Boolean Unlisted { get; set; }
 
+        [Option("Check GAC for unresolved assemblies", AltName = "g")]
+        public Boolean Gac { get; set; }
+
         [Option("Check the feed for unresolved assemblies (expensive)", AltName = "cu")]
         public Boolean CheckFeedForUnresolvedAssemblies { get; set; }
 
@@ -51,7 +54,7 @@ namespace NuGet.Extensions.Commands
         {
             var excludedPackageIds = GetLowerInvariantExcludedPackageIds();
             var repository = GetRepository();
-            var feedAuditor = new FeedAuditor(repository, excludedPackageIds, Unlisted, CheckFeedForUnresolvedAssemblies);
+            var feedAuditor = new FeedAuditor(repository, excludedPackageIds, Unlisted, CheckFeedForUnresolvedAssemblies, Gac);
             feedAuditor.StartPackageAudit += (o, e) => Console.WriteLine("Starting audit of package: {0}", e.Package.Id);
             feedAuditor.StartPackageListDownload += (o, e) => Console.WriteLine("Downloading package list...");
             feedAuditor.FinishedPackageListDownload += (o, e) => Console.WriteLine("Finished downloading package list...");

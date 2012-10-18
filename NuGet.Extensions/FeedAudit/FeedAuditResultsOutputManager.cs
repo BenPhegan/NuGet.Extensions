@@ -9,7 +9,7 @@ namespace NuGet.Extensions.FeedAudit
     public class FeedAuditResultsOutputManager
     {
         private readonly List<FeedAuditResult> _results;
-        private AuditEventTypes _auditEventTypes;
+        private readonly AuditEventTypes _auditEventTypes;
 
         public FeedAuditResultsOutputManager(List<FeedAuditResult> auditResults, AuditEventTypes auditEventTypes)
         {
@@ -36,6 +36,8 @@ namespace NuGet.Extensions.FeedAudit
                     outputList.AddRange(result.UsedPackageDependencies.Select(u => new AuditResultsOutput { PackageName = result.Package.Id, Category = "Used Package Dependency", Item = u.Id }));
                 if (_auditEventTypes.HasFlag(AuditEventTypes.FeedResolvableReferences))
                     outputList.AddRange(result.FeedResolvableReferences.Select(u => new AuditResultsOutput { PackageName = result.Package.Id, Category = "Feed Resolvable Assembly", Item = u.Name }));
+                if (_auditEventTypes.HasFlag(AuditEventTypes.GacResolvableReferences))
+                    outputList.AddRange(result.GacResolvableReferences.Select(u => new AuditResultsOutput { PackageName = result.Package.Id, Category = "GAC Resolvable Assembly", Item = u.Name }));
             }
 
             foreach (var output in outputList)
@@ -68,18 +70,5 @@ namespace NuGet.Extensions.FeedAudit
             public string Category;
             public string Item;
         }
-    }
-
-    [Flags]
-    public enum AuditEventTypes
-    {
-        ResolvedAssemblyReferences = 1,
-        UnloadablePackageFiles = 2,
-        UnresolvedAssemblyReferences = 4,
-        UnresolvedDependencies = 8,
-        UnusedPackageDependencies = 16,
-        UsedPackageDependencies = 32,
-        FeedResolvableReferences = 64,
-        FeedUnresolvableReferences = 128
     }
 }

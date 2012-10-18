@@ -14,5 +14,6 @@ namespace NuGet.Extensions.FeedAudit
         public List<PackageDependency> UnresolvedDependencies = new List<PackageDependency>();
         public List<AssemblyName> FeedResolvableReferences = new List<AssemblyName>();
         public List<AssemblyName> FeedUnresolvableReferences = new List<AssemblyName>();
+        public List<AssemblyName> GacResolvableReferences = new List<AssemblyName>();
     }
 }

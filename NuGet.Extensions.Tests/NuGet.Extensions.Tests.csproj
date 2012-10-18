@@ -69,6 +69,7 @@
   <ItemGroup>
     <Compile Include="Commands\FindAssemblyTests.cs" />
     <Compile Include="Configuration\FindPackageTests.cs" />
+    <Compile Include="FeedAudit\GacResolverTests.cs" />
     <Compile Include="TestObjects\GetCommandTestsBase.cs" />
     <Compile Include="Mocks\FileSystemExtensions.cs" />
     <Compile Include="Mocks\MockFileSystem.cs" />

@@ -15,10 +15,11 @@ namespace NuGet.Extensions.FeedAudit
         private readonly IPackageRepository _packageRepository;
         private readonly List<string> _exceptions; 
         private List<FeedAuditResult> _results = new List<FeedAuditResult>();
-        private bool _unlisted;
+        private readonly bool _unlisted;
         private List<IPackage> _auditPackages;
         private List<IPackage> _feedPackages;
-        private bool _checkForFeedResolvableAssemblies;
+        private readonly bool _checkForFeedResolvableAssemblies;
+        private readonly bool _checkGac;
 
         public event PackageAuditEventHandler StartPackageAudit = delegate { };
         public event PackageAuditEventHandler FinishedPackageAudit = delegate { };
@@ -31,12 +32,13 @@ namespace NuGet.Extensions.FeedAudit
             set { _results = value; }
         }
 
-        public FeedAuditor(IPackageRepository packageRepository, IEnumerable<String> exceptions, Boolean unlisted, bool checkForFeedResolvableAssemblies)
+        public FeedAuditor(IPackageRepository packageRepository, IEnumerable<String> exceptions, Boolean unlisted, bool checkForFeedResolvableAssemblies, bool checkGac)
         {
             _packageRepository = packageRepository;
             _exceptions = exceptions.ToList();
             _unlisted = unlisted;
             _checkForFeedResolvableAssemblies = checkForFeedResolvableAssemblies;
+            _checkGac = checkGac;
         }
 
         /// <summary>
@@ -86,6 +88,12 @@ namespace NuGet.Extensions.FeedAudit
                             if(GetPossiblePackagesForAssembly(actualDependency, _feedPackages).Any());
                                 currentResult.FeedResolvableReferences.Add(actualDependency);
                         }
+
+                        if (_checkGac)
+                        {
+                            if (CanResolveToGac(actualDependency.FullName) || CanResolveToGac(actualDependency.Name))
+                                currentResult.GacResolvableReferences.Add(actualDependency);
+                        }
                     }
                     else
                         currentResult.ResolvedAssemblyReferences.Add(actualDependency);
@@ -96,6 +104,12 @@ namespace NuGet.Extensions.FeedAudit
                 AuditResults.Add(currentResult);
                 FinishedPackageAudit(this, new PackageAuditEventArgs{Package = package});
             }
+        }
+
+        private static bool CanResolveToGac(string actualDependency)
+        {
+            string result;
+            return GacResolver.AssemblyExist(actualDependency, out result);
         }
 
         private static IEnumerable<IPackage> GetPossiblePackagesForAssembly(AssemblyName actualDependency, IEnumerable<IPackage> packageDependencies)
