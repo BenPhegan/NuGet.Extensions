@@ -43,6 +43,9 @@ namespace NuGet.Extensions.Commands
         [Option("Check the feed for unresolved assemblies (expensive)", AltName = "cu")]
         public Boolean CheckFeedForUnresolvedAssemblies { get; set; }
 
+        [Option("Output filename for feed unresolved assemblies", AltName = "uo")]
+        public string UnresolvedOutput { get; set; }
+
         [ImportingConstructor]
         public Audit(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider sourceProvider)
         {
@@ -78,7 +81,7 @@ namespace NuGet.Extensions.Commands
                 Console.WriteLine();
                 Console.WriteLine("Following unresolvable references could not be found on the feed...");
                 Console.WriteLine();
-                outputer.OutputFeedUnresolvableReferences(System.Console.Out);
+                outputer.OutputFeedUnresolvableReferences(!String.IsNullOrEmpty(UnresolvedOutput) ? new StreamWriter(Path.GetFullPath(UnresolvedOutput)) : System.Console.Out);
             }
 
             if (RunTimeFailOnly ? CheckPossibleRuntimeFailures(feedAuditor) : CheckAllPossibleFailures(feedAuditor))

@@ -85,7 +85,7 @@ namespace NuGet.Extensions.FeedAudit
                         if (_checkForFeedResolvableAssemblies)
                         {
                             //May be expensive....
-                            if(GetPossiblePackagesForAssembly(actualDependency, _feedPackages).Any());
+                            if (GetPossiblePackagesForAssembly(actualDependency, _feedPackages).Any())
                                 currentResult.FeedResolvableReferences.Add(actualDependency);
                         }
 

@@ -42,6 +42,7 @@ namespace NuGet.Extensions.FeedAudit
 
             foreach (var output in outputList)
                 writer.WriteLine(output.ToString());
+            writer.Close();
         }
     
         public void OutputFeedUnresolvableReferences(TextWriter writer)
@@ -55,8 +56,9 @@ namespace NuGet.Extensions.FeedAudit
                         outputList.AddRange(result.UnresolvedAssemblyReferences.Select(u => new AuditResultsOutput { PackageName = result.Package.Id, Category = "Feed Unresolvable Assembly", Item = unresolved.Name }));
                 }
             }
-            foreach (var output in outputList)
+            foreach (var output in outputList.GroupBy(a => a.Item, (key, group) => group.First()))
                 writer.WriteLine(output.ToString());
+            writer.Close();
         }
 
 

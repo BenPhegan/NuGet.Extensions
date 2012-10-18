@@ -77,6 +77,7 @@ namespace NuGet.Extensions.Commands
             Console.WriteLine("Package ID:".PadRight(_indent) + string.Format("{0}", package.Id));
             Console.WriteLine("Package Version:".PadRight(_indent) + string.Format("{0}", package.Version));
             Console.WriteLine("Package Description:".PadRight(_indent) + string.Format("{0}", package.Description));
+            if (!string.IsNullOrEmpty(package.Tags)) Console.WriteLine("Package Tags:".PadRight(_indent - 1) + string.Format("{0}", package.Tags));
             if (!NoAuthors) OutputAuthors(package);
             if (!NoFiles) OutputContent(package);
             if (!NoDependencies) OutputDependencies(package);
