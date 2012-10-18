@@ -9,11 +9,11 @@ using NuGet.Extensions.TeamCity;
 
 namespace NuGet.Extensions.Commands
 {
-    [Command("triggercheck", "Provides the ability to check TeamCity package triggers against a feed.", MinArgs = 1)]
+    [Command("triggercheck", "Provides the ability to check TeamCity package triggers against a feed.", MinArgs = 0)]
     public class TriggerCheck : Command
     {
         private readonly List<BuildPackageMapping> _mappings = new List<BuildPackageMapping>();
-        private readonly ICollection<string> _sources;
+        private readonly List<string> _sources = new List<string>();
 
         [Option("A list of sources to search")]
         public ICollection<string> Source
@@ -31,10 +31,16 @@ namespace NuGet.Extensions.Commands
         public string Feed { get; set; }
 
         [ImportingConstructor]
-        public TriggerCheck()
+        public TriggerCheck(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider sourceProvider)
         {
+            RepositoryFactory = packageRepositoryFactory;
+            SourceProvider = sourceProvider;
         }
 
+        protected IPackageSourceProvider SourceProvider{ get; set; }
+
+        protected IPackageRepositoryFactory RepositoryFactory{get; set; }
+        
         public override void ExecuteCommand()
         {
             //HACK Must be a better way to do this??
@@ -46,7 +52,7 @@ namespace NuGet.Extensions.Commands
             }
 
             //Is there a simpler way?
-            var repository = AggregateRepositoryHelper.CreateAggregateRepositoryFromSources(new PackageRepositoryFactory(), new PackageSourceProvider(new NullSettings()), _sources);
+            var repository = AggregateRepositoryHelper.CreateAggregateRepositoryFromSources(RepositoryFactory,SourceProvider, Source);
 
             var sw = new Stopwatch();
             sw.Start();
