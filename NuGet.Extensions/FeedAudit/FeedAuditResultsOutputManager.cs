@@ -40,6 +40,7 @@ namespace NuGet.Extensions.FeedAudit
 
             foreach (var output in outputList)
                 writer.WriteLine(output.ToString());
+            writer.Close();
         }
     
         public void OutputFeedUnresolvableReferences(TextWriter writer)
@@ -55,6 +56,7 @@ namespace NuGet.Extensions.FeedAudit
             }
             foreach (var output in outputList)
                 writer.WriteLine(output.ToString());
+            writer.Close();
         }
 
 
