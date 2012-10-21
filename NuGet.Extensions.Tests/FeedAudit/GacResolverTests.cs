@@ -13,6 +13,7 @@ namespace NuGet.Extensions.Tests.FeedAudit
         [TestCase("System", Result = true, Description = "Can resolve System")]
         [TestCase("Giberishshsidfasdfasdfasdf.asdfasdfas.dasdfasdf", Result = false, Description = "Cant resolve gibberish")]
         [TestCase("System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, ProcessorArchitecture=MSIL", Result = true, Description = "Using full name")]
+        [TestCase("System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=null, ProcessorArchitecture=MSIL", Result = true, Description = "Using full name")]
         public bool CanResolveSystem(string assemblyName)
         {
             string test;
