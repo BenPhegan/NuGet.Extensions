@@ -27,7 +27,7 @@ namespace NuGet.Extensions.Commands
         public bool RunTimeFailOnly { get; set; }
 
         [Option("Semi-colon delimited set of package IDs or wildcards that you do NOT want to audit.", AltName = "x")]
-        public string Exceptions { get; set; }
+        public string PackageExceptions { get; set; }
 
         [Option("Output filename", AltName = "o")]
         public string Output { get; set; }
@@ -50,6 +50,9 @@ namespace NuGet.Extensions.Commands
         [Option("Verbose output", AltName = "v")]
         public bool Verbose { get; set; }
 
+        [Option("Exclusion list of failing assemblies", AltName = "ax")]
+        public string AssemblyExceptions { get; set; }
+
         [ImportingConstructor]
         public Audit(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider sourceProvider)
         {
@@ -60,9 +63,11 @@ namespace NuGet.Extensions.Commands
         public override void ExecuteCommand()
         {
             var excludedPackageIds = GetLowerInvariantExcludedPackageIds();
-            var excludedWildcards = String.IsNullOrEmpty(Exceptions) ? new List<Regex>() : GetExcludedWildcards(Exceptions);
+            var excludedPackageWildcards = String.IsNullOrEmpty(PackageExceptions) ? new List<Regex>() : GetExcludedWildcards(PackageExceptions);
+            var excludedAssembliesIds = GetExcludedAssemblies();
+            var excludedAssemblyWildcards = String.IsNullOrEmpty(AssemblyExceptions) ? new List<Regex>() : GetExcludedWildcards(AssemblyExceptions);
             var repository = GetRepository();
-            var feedAuditor = new FeedAuditor(repository, excludedPackageIds, excludedWildcards, Unlisted, CheckFeedForUnresolvedAssemblies, Gac);
+            var feedAuditor = new FeedAuditor(repository, excludedPackageIds, excludedPackageWildcards, Unlisted, CheckFeedForUnresolvedAssemblies, Gac, excludedAssembliesIds, excludedAssemblyWildcards);
             feedAuditor.StartPackageAudit += (o, e) => Console.WriteLine("Starting audit of package: {0}", e.Package.Id);
             feedAuditor.StartPackageListDownload += (o, e) => Console.WriteLine("Downloading package list...");
             feedAuditor.FinishedPackageListDownload += (o, e) => Console.WriteLine("Finished downloading package list...");
@@ -100,6 +105,16 @@ namespace NuGet.Extensions.Commands
 
             if (RunTimeFailOnly ? CheckFeedForUnresolvedAssemblies && Gac ? feedAuditor.UnresolvableAssemblyReferences.Count > 0 : CheckPossibleRuntimeFailures(results) : CheckAllPossibleFailures(results))
                 throw new CommandLineException("There were audit failures, please check audit report");
+        }
+
+        private IEnumerable<string> GetExcludedAssemblies()
+        {
+            var exceptions = new List<string>();
+            if (!String.IsNullOrEmpty(AssemblyExceptions))
+            {
+                exceptions.AddRange(AssemblyExceptions.Split(';').Select(s => s.ToLowerInvariant()));
+            }
+            return exceptions.Where(e => !e.Contains('*') && !e.Contains('?'));
         }
 
         private IEnumerable<Regex> GetExcludedWildcards(string exceptions)
@@ -145,9 +160,9 @@ namespace NuGet.Extensions.Commands
         private IEnumerable<string> GetLowerInvariantExcludedPackageIds()
         {
             var exceptions = new List<string>();
-            if (!String.IsNullOrEmpty(Exceptions))
+            if (!String.IsNullOrEmpty(PackageExceptions))
             {
-                exceptions.AddRange(Exceptions.Split(';').Select(s => s.ToLowerInvariant()));
+                exceptions.AddRange(PackageExceptions.Split(';').Select(s => s.ToLowerInvariant()));
             }
             return exceptions.Where(e => !e.Contains('*') && !e.Contains('?'));
         }

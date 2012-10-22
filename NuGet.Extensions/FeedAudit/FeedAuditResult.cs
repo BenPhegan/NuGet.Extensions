@@ -15,5 +15,6 @@ namespace NuGet.Extensions.FeedAudit
         public List<AssemblyName> FeedResolvableReferences = new List<AssemblyName>();
         public List<AssemblyName> FeedUnresolvableReferences = new List<AssemblyName>();
         public List<AssemblyName> GacResolvableReferences = new List<AssemblyName>();
+        public List<AssemblyName> AuditExclusionReferences = new List<AssemblyName>();
     }
 }
