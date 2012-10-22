@@ -26,7 +26,7 @@ namespace NuGet.Extensions.Tests.FeedAudit
             var stringMatches = !string.IsNullOrEmpty(exceptions) ? exceptions.Split(';').ToList() : new List<string>();
             var regii = !string.IsNullOrEmpty(wildcards) ? wildcards.Split(';').Select(w => new Wildcard(w.ToLowerInvariant())).ToList() : new List<Wildcard>();
 
-            var auditor = new FeedAuditor(mockRepo, stringMatches, regii, true, false, false, null, null);
+            var auditor = new FeedAuditor(mockRepo, stringMatches, regii, true, false, false, new List<String>(), new List<Regex>());
             var ignoredCount = 0;
             auditor.PackageIgnored += (o, e) => ignoredCount++;
             auditor.Audit();
