@@ -34,6 +34,7 @@ namespace NuGet.Extensions.Tests.FeedAudit
         }
 
         [TestCase("Assembly11.dll", null, Result = 3)]
+        [Ignore]
         public int ExcludeAssemblyTest(string exceptions, string wildcards)
         {
             var mockRepo = CreateMockRepository();
