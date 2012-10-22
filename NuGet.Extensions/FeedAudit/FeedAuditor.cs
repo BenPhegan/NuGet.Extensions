@@ -24,6 +24,8 @@ namespace NuGet.Extensions.FeedAudit
         private readonly bool _checkGac;
         private readonly IEnumerable<Regex> _wildcards;
         private List<AssemblyName> _unresolvableAssemblyReferences = new List<AssemblyName>();
+        private readonly List<string> _assemblyExceptions;
+        private readonly IEnumerable<Regex> _assemblyWildcards;
 
         public event PackageAuditEventHandler StartPackageAudit = delegate { };
         public event PackageAuditEventHandler FinishedPackageAudit = delegate { };
@@ -37,7 +39,7 @@ namespace NuGet.Extensions.FeedAudit
             set { _unresolvableAssemblyReferences = value; }
         }
 
-        public FeedAuditor(IPackageRepository packageRepository, IEnumerable<String> exceptions, IEnumerable<Regex> wildcards, Boolean unlisted, bool checkForFeedResolvableAssemblies, bool checkGac)
+        public FeedAuditor(IPackageRepository packageRepository, IEnumerable<String> exceptions, IEnumerable<Regex> wildcards, Boolean unlisted, bool checkForFeedResolvableAssemblies, bool checkGac, IEnumerable<String> assemblyExceptions, IEnumerable<Regex> assemblyWildcards)
         {
             _packageRepository = packageRepository;
             _exceptions = exceptions.ToList();
@@ -45,6 +47,8 @@ namespace NuGet.Extensions.FeedAudit
             _checkForFeedResolvableAssemblies = checkForFeedResolvableAssemblies;
             _checkGac = checkGac;
             _wildcards = wildcards;
+            _assemblyExceptions = assemblyExceptions.ToList();
+            _assemblyWildcards = assemblyWildcards;
         }
 
         /// <summary>
@@ -86,6 +90,7 @@ namespace NuGet.Extensions.FeedAudit
                 actualAssemblyReferences = RemoveInternallySatisfiedDependencies(actualAssemblyReferences, package);
 
                 var packageDependencies = GetDependencyAssemblyList(package, currentResult).ToList();
+                actualAssemblyReferences = RemoveAssemblyExclusions(actualAssemblyReferences, currentResult);
 
                 var usedDependencies = new List<IPackage>();
                 foreach (var actualDependency in actualAssemblyReferences)
@@ -119,6 +124,27 @@ namespace NuGet.Extensions.FeedAudit
             }
             UnresolvableAssemblyReferences = GetUnresolvedAssemblies(_results);
             return _results;
+        }
+
+        private IEnumerable<AssemblyName> RemoveAssemblyExclusions(IEnumerable<AssemblyName> actualAssemblyReferences, FeedAuditResult currentResult)
+        {
+            var assemblyReferences = new List<AssemblyName>(actualAssemblyReferences);
+            foreach (AssemblyName assembly in actualAssemblyReferences)
+            {
+                if (_assemblyWildcards.Any(w => w.IsMatch(assembly.Name.ToLowerInvariant())))
+                {
+                    assemblyReferences.Remove(assembly);
+                    currentResult.AuditExclusionReferences.Add(assembly);
+                }
+
+                if (_assemblyExceptions.Any(e => e.Equals(assembly.Name, StringComparison.OrdinalIgnoreCase)))
+                {
+                    assemblyReferences.Remove(assembly);
+                    currentResult.AuditExclusionReferences.Add(assembly);
+                }
+            }
+
+            return assemblyReferences;
         }
 
         private static List<AssemblyName> GetUnresolvedAssemblies(List<FeedAuditResult> results)
