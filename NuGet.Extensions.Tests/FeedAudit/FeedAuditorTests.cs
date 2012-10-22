@@ -26,18 +26,31 @@ namespace NuGet.Extensions.Tests.FeedAudit
             var stringMatches = !string.IsNullOrEmpty(exceptions) ? exceptions.Split(';').ToList() : new List<string>();
             var regii = !string.IsNullOrEmpty(wildcards) ? wildcards.Split(';').Select(w => new Wildcard(w.ToLowerInvariant())).ToList() : new List<Wildcard>();
 
-            var auditor = new FeedAuditor(mockRepo, stringMatches, regii, true, false, false);
+            var auditor = new FeedAuditor(mockRepo, stringMatches, regii, true, false, false, null, null);
             var ignoredCount = 0;
             auditor.PackageIgnored += (o, e) => ignoredCount++;
             auditor.Audit();
             return ignoredCount;
         }
 
+        [TestCase("Assembly11.dll", null, Result = 3)]
+        [Ignore]
+        public int ExcludeAssemblyTest(string exceptions, string wildcards)
+        {
+            var mockRepo = CreateMockRepository();
+            var stringMatches = !string.IsNullOrEmpty(exceptions) ? exceptions.Split(';').ToList() : new List<string>();
+            var regii = !string.IsNullOrEmpty(wildcards) ? wildcards.Split(';').Select(w => new Wildcard(w.ToLowerInvariant())).ToList() : new List<Wildcard>();
+
+            var auditor = new FeedAuditor(mockRepo, new List<String>(), new List<Regex>(), true, false, false, stringMatches, regii);
+            auditor.Audit();
+            return auditor.UnresolvableAssemblyReferences.Count();
+        }
+
         private static MockPackageRepository CreateMockRepository()
         {
             var mockRepo = new MockPackageRepository();
-            mockRepo.AddPackage(PackageUtility.CreatePackage("Test1", isLatest: true, dependencies: new List<PackageDependency> {new PackageDependency("Test2")}));
-            mockRepo.AddPackage(PackageUtility.CreatePackage("Test2", isLatest: true, dependencies: new List<PackageDependency> {new PackageDependency("Test1")}));
+            mockRepo.AddPackage(PackageUtility.CreatePackage("Test1", isLatest: true, assemblyReferences: new List<string> { "Assembly11.dll", "Assembly12.dll" }, dependencies: new List<PackageDependency> { new PackageDependency("Test2") }));
+            mockRepo.AddPackage(PackageUtility.CreatePackage("Test2", isLatest: true, assemblyReferences: new List<string> { "Assembly21.dll", "Assembly22.dll" }, dependencies: new List<PackageDependency> { new PackageDependency("Test1") }));
             return mockRepo;
         }
     }
