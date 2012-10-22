@@ -60,7 +60,7 @@ namespace NuGet.Extensions.Commands
         public override void ExecuteCommand()
         {
             var excludedPackageIds = GetLowerInvariantExcludedPackageIds();
-            var excludedWildcards = GetExcludedWildcards(Exceptions);
+            var excludedWildcards = String.IsNullOrEmpty(Exceptions) ? new List<Regex>() : GetExcludedWildcards(Exceptions);
             var repository = GetRepository();
             var feedAuditor = new FeedAuditor(repository, excludedPackageIds, excludedWildcards, Unlisted, CheckFeedForUnresolvedAssemblies, Gac);
             feedAuditor.StartPackageAudit += (o, e) => Console.WriteLine("Starting audit of package: {0}", e.Package.Id);
@@ -91,6 +91,7 @@ namespace NuGet.Extensions.Commands
                 {
                     writer.WriteLine("\t{0}", assembly.FullName);
                 }
+                writer.Close();
                 //TODO this is pretty ugly, perhaps need to look at what we are providing as part of the UnresolvableAssemblyReferences
                 //HACK the code below is duplicated in two places, ugly.
                 if (Verbose)
