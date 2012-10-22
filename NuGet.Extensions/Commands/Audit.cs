@@ -62,9 +62,9 @@ namespace NuGet.Extensions.Commands
 
         public override void ExecuteCommand()
         {
-            var excludedPackageIds = GetLowerInvariantExcludedPackageIds();
+            var excludedPackageIds = GetLowerInvariantExclusions(PackageExceptions);
             var excludedPackageWildcards = String.IsNullOrEmpty(PackageExceptions) ? new List<Regex>() : GetExcludedWildcards(PackageExceptions);
-            var excludedAssembliesIds = GetExcludedAssemblies();
+            var excludedAssembliesIds = GetLowerInvariantExclusions(AssemblyExceptions);
             var excludedAssemblyWildcards = String.IsNullOrEmpty(AssemblyExceptions) ? new List<Regex>() : GetExcludedWildcards(AssemblyExceptions);
             var repository = GetRepository();
             var feedAuditor = new FeedAuditor(repository, excludedPackageIds, excludedPackageWildcards, Unlisted, CheckFeedForUnresolvedAssemblies, Gac, excludedAssembliesIds, excludedAssemblyWildcards);
@@ -107,16 +107,6 @@ namespace NuGet.Extensions.Commands
                 throw new CommandLineException("There were audit failures, please check audit report");
         }
 
-        private IEnumerable<string> GetExcludedAssemblies()
-        {
-            var exceptions = new List<string>();
-            if (!String.IsNullOrEmpty(AssemblyExceptions))
-            {
-                exceptions.AddRange(AssemblyExceptions.Split(';').Select(s => s.ToLowerInvariant()));
-            }
-            return exceptions.Where(e => !e.Contains('*') && !e.Contains('?'));
-        }
-
         private IEnumerable<Regex> GetExcludedWildcards(string exceptions)
         {
             var wildcards = exceptions.Split(';').Select(s => s.ToLowerInvariant());
@@ -157,12 +147,12 @@ namespace NuGet.Extensions.Commands
                                                      || r.UnusedPackageDependencies.Any());
         }
 
-        private IEnumerable<string> GetLowerInvariantExcludedPackageIds()
+        private IEnumerable<string> GetLowerInvariantExclusions(string exclusions)
         {
             var exceptions = new List<string>();
-            if (!String.IsNullOrEmpty(PackageExceptions))
+            if (!String.IsNullOrEmpty(exclusions))
             {
-                exceptions.AddRange(PackageExceptions.Split(';').Select(s => s.ToLowerInvariant()));
+                exceptions.AddRange(exclusions.Split(';').Select(s => s.ToLowerInvariant()));
             }
             return exceptions.Where(e => !e.Contains('*') && !e.Contains('?'));
         }
