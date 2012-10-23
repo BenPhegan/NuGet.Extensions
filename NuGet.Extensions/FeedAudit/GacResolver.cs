@@ -1,4 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
 
 namespace NuGet.Extensions.FeedAudit
@@ -13,17 +17,31 @@ namespace NuGet.Extensions.FeedAudit
             try
             {
                 response = QueryAssemblyInfo(assemblyname);
-                return true;
+                return !string.IsNullOrEmpty(response);
             }
-            catch (System.IO.FileNotFoundException e)
+            catch (FileNotFoundException e)
             {
                 response = e.Message;
                 return false;
             }
         }
 
-        // If assemblyName is not fully qualified, a random matching may be 
         public static String QueryAssemblyInfo(string assemblyName)
+        {
+            var assemblyNames = GetAllAssemblyNames(assemblyName);
+            var assemblyPath = string.Empty;
+            foreach (var assembly in assemblyNames)
+            {
+                assemblyPath = QueryAssemblyInfoInternal(assembly);
+                if (!String.IsNullOrEmpty(assemblyPath))
+                    return assemblyPath;
+            }
+
+            return assemblyPath;
+        }
+
+        // If assemblyName is not fully qualified, a random matching may be 
+        private static String QueryAssemblyInfoInternal(string assemblyName)
         {
             var assembyInfo = new AssemblyInfo {cchBuf = 512};
             assembyInfo.currentAssemblyPath = new String('\0',assembyInfo.cchBuf);
@@ -34,10 +52,17 @@ namespace NuGet.Extensions.FeedAudit
             var hr = GacApi.CreateAssemblyCache(out assemblyCache, 0);
             if (hr == IntPtr.Zero)
             {
-                hr = assemblyCache.QueryAssemblyInfo(0, assemblyName, ref assembyInfo);
-                if (hr != IntPtr.Zero)
+                try
                 {
-                    Marshal.ThrowExceptionForHR(hr.ToInt32());
+                    hr = assemblyCache.QueryAssemblyInfo(0, assemblyName, ref assembyInfo);
+                    if (hr != IntPtr.Zero)
+                    {
+                        Marshal.ThrowExceptionForHR(hr.ToInt32());
+                    }
+                }
+                catch (FileLoadException e)
+                {
+                    return string.Empty;
                 }
             }
             else
@@ -45,6 +70,20 @@ namespace NuGet.Extensions.FeedAudit
                 Marshal.ThrowExceptionForHR(hr.ToInt32());
             }
             return assembyInfo.currentAssemblyPath;
+        }
+
+        private static IEnumerable<string> GetAllAssemblyNames(string assemblyName)
+        {
+            var assemblyNameObject = new AssemblyName(assemblyName);
+            var full = assemblyNameObject.FullName;
+            assemblyNameObject.ProcessorArchitecture = ProcessorArchitecture.None;
+            var noProc = assemblyNameObject.FullName;
+            assemblyNameObject.SetPublicKeyToken(null);
+            var noPub = assemblyNameObject.FullName;
+            var justVersion = string.Format("{0}, Version={1}", assemblyNameObject.Name, assemblyNameObject.Version);
+            var list = new List<String> {assemblyName,full, noProc, noPub, justVersion, assemblyNameObject.Name};
+            return list.Distinct().ToList();
+
         }
     }
 
