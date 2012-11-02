@@ -8,10 +8,10 @@ namespace NuGet.Extensions.FeedAudit
 {
     public class FeedAuditResultsOutputManager
     {
-        private readonly List<FeedAuditResult> _results;
+        private readonly List<PackageAuditResult> _results;
         private readonly AuditEventTypes _auditEventTypes;
 
-        public FeedAuditResultsOutputManager(List<FeedAuditResult> auditResults, AuditEventTypes auditEventTypes)
+        public FeedAuditResultsOutputManager(List<PackageAuditResult> auditResults, AuditEventTypes auditEventTypes)
         {
             _results = auditResults;
             _auditEventTypes = auditEventTypes;

@@ -67,7 +67,7 @@ namespace NuGet.Extensions.Commands
             feedAuditor.StartPackageListDownload += (o, e) => Console.WriteLine("Downloading package list...");
             feedAuditor.FinishedPackageListDownload += (o, e) => Console.WriteLine("Finished downloading package list...");
             feedAuditor.PackageIgnored += (o, e) => Console.WriteLine("Ignoring package: {0} based on {1}", e.IgnoredPackage.Id, e.Wildcard ? "wildcard..." : "string match...");
-            List<FeedAuditResult> results = null;
+            List<PackageAuditResult> results = null;
             if (String.IsNullOrEmpty(Package))
                 results = feedAuditor.Audit();
             else
@@ -128,12 +128,12 @@ namespace NuGet.Extensions.Commands
                    | AuditEventTypes.UsedPackageDependencies;
         }
 
-        private static bool CheckPossibleRuntimeFailures(IEnumerable<FeedAuditResult> results)
+        private static bool CheckPossibleRuntimeFailures(IEnumerable<PackageAuditResult> results)
         {
             return results.Any(r => r.UnresolvedAssemblyReferences.Any());
         }
 
-        private static bool CheckAllPossibleFailures(IEnumerable<FeedAuditResult> results)
+        private static bool CheckAllPossibleFailures(IEnumerable<PackageAuditResult> results)
         {
             return results.Any(r => r.UnloadablePackageFiles.Any()
                                                      || r.UnresolvedAssemblyReferences.Any()
