@@ -64,6 +64,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Commands\Audit.cs" />
+    <Compile Include="Commands\SolutionAudit.cs" />
     <Compile Include="FeedAudit\AuditEventTypes.cs" />
     <Compile Include="FeedAudit\FeedAuditResultsOutputManager.cs" />
     <Compile Include="FeedAudit\AssemblyNameEqualityComparer.cs" />
