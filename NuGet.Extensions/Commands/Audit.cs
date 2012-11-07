@@ -83,7 +83,7 @@ namespace NuGet.Extensions.Commands
                 else
                     throw new ApplicationException(string.Format("Could not find package locally or on feed: {0}",Package));
             }
-            var auditFlags = GetAuditFlags(RunTimeFailOnly, CheckFeedForUnresolvedAssemblies, Gac);
+            var auditFlags = GetAuditFlags(RunTimeFailOnly, CheckFeedForUnresolvedAssemblies);
             var outputer = new FeedAuditResultsOutputManager(results, auditFlags);
             outputer.Output(string.IsNullOrEmpty(Output) ? System.Console.Out : new StreamWriter(Path.GetFullPath(Output)));
 
@@ -113,25 +113,24 @@ namespace NuGet.Extensions.Commands
             return new List<Regex>(wildcards.Select(w => new Wildcard(w)));
         }
 
-        private static AuditEventTypes GetAuditFlags(bool runTimeOnly, bool checkFeedResolvable, bool gac)
+        private static AuditEventTypes GetAuditFlags(bool runTimeOnly, bool checkFeedResolvable)
         {
             var events = (AuditEventTypes) 0;
-            if (runTimeOnly || checkFeedResolvable || gac)
+            if (runTimeOnly || checkFeedResolvable)
             {
                 if (runTimeOnly)
                     events |= AuditEventTypes.UnresolvedAssemblyReferences;
                 if (checkFeedResolvable)
                     events |= AuditEventTypes.FeedResolvableReferences;
-                if (gac)
-                    events |= AuditEventTypes.GacResolvableReferences;
                 return events;
             }
-            return AuditEventTypes.ResolvedAssemblyReferences
-                   | AuditEventTypes.UnloadablePackageFiles
-                   | AuditEventTypes.UnresolvedAssemblyReferences
-                   | AuditEventTypes.UnresolvedDependencies
-                   | AuditEventTypes.UnusedPackageDependencies
-                   | AuditEventTypes.UsedPackageDependencies;
+			return AuditEventTypes.ResolvedAssemblyReferences
+					| AuditEventTypes.UnloadablePackageFiles
+					| AuditEventTypes.UnresolvedAssemblyReferences
+					| AuditEventTypes.UnresolvedDependencies
+					| AuditEventTypes.UnusedPackageDependencies
+					| AuditEventTypes.UsedPackageDependencies
+					| AuditEventTypes.GacResolvableReferences;
         }
 
         private static bool CheckPossibleRuntimeFailures(IEnumerable<FeedAuditResult> results)
