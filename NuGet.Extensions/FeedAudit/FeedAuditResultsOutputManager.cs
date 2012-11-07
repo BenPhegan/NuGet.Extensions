@@ -38,30 +38,14 @@ namespace NuGet.Extensions.FeedAudit
                     outputList.AddRange(result.FeedResolvableReferences.Select(u => new AuditResultsOutput { PackageName = result.Package.Id, Category = "Feed Resolvable Assembly", Item = u.Name }));
                 if (_auditEventTypes.HasFlag(AuditEventTypes.GacResolvableReferences))
                     outputList.AddRange(result.GacResolvableReferences.Select(u => new AuditResultsOutput { PackageName = result.Package.Id, Category = "GAC Resolvable Assembly", Item = u.Name }));
+                if (_auditEventTypes.HasFlag(AuditEventTypes.UnresolvableAssemblyReferences))
+                    outputList.AddRange(result.UnresolvableReferences.Select(u => new AuditResultsOutput { PackageName = result.Package.Id, Category = "Unresolvable Assembly Reference (not on feed or in GAC)", Item = u.Name }));
             }
 
             foreach (var output in outputList)
                 writer.WriteLine(output.ToString());
             writer.Close();
         }
-    
-        public void OutputUnresolvableReferences(TextWriter writer)
-        {
-            var outputList = new List<AuditResultsOutput>();
-            foreach (var result in _results)
-            {
-                foreach (var unresolved in result.UnresolvedAssemblyReferences)
-                {
-                    if (!_results.Any(r => r.FeedResolvableReferences.Any(fr => fr.Name.Equals(unresolved.Name, StringComparison.OrdinalIgnoreCase))) &&
-                        !_results.Any(r => r.GacResolvableReferences.Any(gr => gr.Name.Equals(unresolved.Name, StringComparison.OrdinalIgnoreCase))))
-                        outputList.AddRange(result.UnresolvedAssemblyReferences.Select(u => new AuditResultsOutput { PackageName = result.Package.Id, Category = "Feed/GAC Unresolvable Assembly", Item = unresolved.Name }));
-                }
-            }
-            foreach (var output in outputList.GroupBy(a => a.Item, (key, group) => group.First()))
-                writer.WriteLine(output.ToString());
-            writer.Close();
-        }
-
 
         class AuditResultsOutput
         {

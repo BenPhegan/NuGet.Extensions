@@ -30,12 +30,6 @@ namespace NuGet.Extensions.FeedAudit
         public event EventHandler StartPackageListDownload = delegate { };
         public event EventHandler FinishedPackageListDownload = delegate { };
         public event PackageIgnoreEventHandler PackageIgnored = delegate { }; 
- 
-        public List<AssemblyName> UnresolvableAssemblyReferences
-        {
-            get { return _unresolvableAssemblyReferences; }
-            set { _unresolvableAssemblyReferences = value; }
-        }
 
         public FeedAuditor(IPackageRepository packageRepository, IEnumerable<String> exceptions, IEnumerable<Regex> wildcards, Boolean unlisted, bool checkForFeedResolvableAssemblies, bool checkGac)
         {
@@ -90,7 +84,7 @@ namespace NuGet.Extensions.FeedAudit
                 var usedDependencies = new List<IPackage>();
                 foreach (var actualDependency in actualAssemblyReferences)
                 {
-                    var possibles = GetPossiblePackagesForAssembly(actualDependency, packageDependencies);
+                    var possibles = GetPossiblePackagesForAssembly(actualDependency, packageDependencies).ToList();
                     usedDependencies.AddRange(possibles.Select(p => p));
                     if (!possibles.Any())
                     {
@@ -117,16 +111,17 @@ namespace NuGet.Extensions.FeedAudit
                 _results.Add(currentResult);
                 FinishedPackageAudit(this, new PackageAuditEventArgs{Package = package});
             }
-            UnresolvableAssemblyReferences = GetUnresolvedAssemblies(_results);
-            UpdateUnresolvablePackageAuditResults(_results, UnresolvableAssemblyReferences);
+            _unresolvableAssemblyReferences = GetUnresolvedAssemblies(_results);
+            UpdateUnresolvablePackageAuditResults(_results, _unresolvableAssemblyReferences);
             return _results;
         }
 
-        private void UpdateUnresolvablePackageAuditResults(List<PackageAuditResult> results, List<AssemblyName> unresolvableAssemblyReferences)
+        private void UpdateUnresolvablePackageAuditResults(IEnumerable<PackageAuditResult> results, IEnumerable<AssemblyName> unresolvableAssemblyReferences)
         {
-            foreach (var unresolvable in unresolvableAssemblyReferences)
+            var unresolvable = unresolvableAssemblyReferences as List<AssemblyName> ?? unresolvableAssemblyReferences.ToList();
+            foreach (var packageAuditResult in results)
             {
-                var result = results.Where(r => GetFileInfoListFromPackageFiles(r.Package).Any(filename => filename.StartsWith(unresolvable.Name) && filename.Length == unresolvable.Name.Length + 4)));
+                packageAuditResult.UnresolvableReferences = packageAuditResult.UnresolvedAssemblyReferences.Where(unresolvable.Contains).ToList();
             }
         }
 
