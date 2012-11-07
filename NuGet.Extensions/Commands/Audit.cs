@@ -53,6 +53,9 @@ namespace NuGet.Extensions.Commands
         [Option("Only fail the audit on completely unresolvable assemblies.", AltName = "fu")]
         public Boolean UnresolvableOnly { get; set; }
 
+        [Option("Output all audit data.", AltName = "ao")]
+        public Boolean AllOutput { get; set; }
+
         [ImportingConstructor]
         public Audit(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider sourceProvider)
         {
@@ -73,7 +76,7 @@ namespace NuGet.Extensions.Commands
             
             var results = RunAuditAndReturnResults(repository, feedAuditor);
             
-            var auditFlags = GetAuditFlags(RunTimeFailOnly, CheckFeedForUnresolvedAssemblies, Gac, UnresolvableOnly);
+            var auditFlags = GetAuditFlags(AllOutput, RunTimeFailOnly, CheckFeedForUnresolvedAssemblies, Gac, UnresolvableOnly);
             var outputer = new FeedAuditResultsOutputManager(results, auditFlags);
             outputer.Output(string.IsNullOrEmpty(Output) ? System.Console.Out : new StreamWriter(Path.GetFullPath(Output)));
 
@@ -122,13 +125,13 @@ namespace NuGet.Extensions.Commands
             return new List<Regex>(wildcards.Select(w => new Wildcard(w)));
         }
 
-        private static AuditEventTypes GetAuditFlags(bool runTimeOnly, bool checkFeedResolvable, bool gac, bool unresolvable)
+        private static AuditEventTypes GetAuditFlags(bool allOutput, bool runTimeOnly, bool checkFeedResolvable, bool gac, bool unresolvable)
         {
-            var events = (AuditEventTypes) 0;
-            if (unresolvable)
+            var events = (AuditEventTypes)0;
+            if (!allOutput && unresolvable)
                 return AuditEventTypes.UnresolvableAssemblyReferences;
 
-            if (runTimeOnly || checkFeedResolvable || gac)
+            if (!allOutput &&(runTimeOnly || checkFeedResolvable || gac))
             {
                 if (runTimeOnly)
                     events |= AuditEventTypes.UnresolvedAssemblyReferences;
