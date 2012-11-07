@@ -99,19 +99,12 @@ namespace NuGet.Extensions.FeedAudit
                     usedDependencies.AddRange(possibles.Select(p => p));
                     if (!possibles.Any())
                     {
-                        currentResult.UnresolvedAssemblyReferences.Add(actualDependency);
-                        if (_checkForFeedResolvableAssemblies)
-                        {
-                            //May be expensive....
-                            if (GetPossiblePackagesForAssembly(actualDependency, _feedPackages).Any())
-                                currentResult.FeedResolvableReferences.Add(actualDependency);
-                        }
-
-                        if (_checkGac)
-                        {
-                            if (CanResolveToGac(actualDependency.FullName) || CanResolveToGac(actualDependency.Name))
-                                currentResult.GacResolvableReferences.Add(actualDependency);
-                        }
+						if (_checkForFeedResolvableAssemblies && GetPossiblePackagesForAssembly(actualDependency, _feedPackages).Any())
+							currentResult.FeedResolvableReferences.Add(actualDependency); //May be expensive....
+						else if (_checkGac && (CanResolveToGac(actualDependency.FullName) || CanResolveToGac(actualDependency.Name)))
+							currentResult.GacResolvableReferences.Add(actualDependency);
+						else
+							currentResult.UnresolvedAssemblyReferences.Add(actualDependency);
                     }
                     else
                         currentResult.ResolvedAssemblyReferences.Add(actualDependency);
