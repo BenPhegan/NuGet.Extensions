@@ -1,9 +1,11 @@
 using System;
+using System.IO;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Linq;
+using NuGet.Common;
 using NuGet.Commands;
 using NuGet.Extras;
 using NuGet.Extras.Commands;
@@ -179,18 +181,34 @@ namespace NuGet.Extensions.Commands
 
         private void ExecuteCopyAction(IPackageSourceProvider realSourceProvider, IPackage package)
         {
-            var copyCommand = new Copy(RepositoryFactory, SourceProvider)
+            string packageId = package.Id;
+            string version = package.Version.ToString();
+
+            GetPackageLocally(packageId, version, WorkDirectory);
+
+            Console.WriteLine("Copying {0} from {1} to {2}.",
+                  string.IsNullOrEmpty(Version) ? packageId : packageId + " " + Version,
+                  string.Join(";", Sources), string.Join(";", Destinations));
+
+            foreach (string dest in Destinations)
             {
-                ApiKey = ApiKey,
-                Destinations = Destinations,
-                Sources = Sources,
-                Version = package.Version.ToString(),
-                Console = Console,
-                Recursive = false,
-                WorkingDirectoryRoot = WorkingDirectoryRoot
-            };
-            copyCommand.Arguments.Add(package.Id);
-            copyCommand.Execute();
+                PrepareApiKey(dest);
+                IList<string> packagePaths = GetPackages(WorkDirectory, GetSearchFilter(packageId, version));
+                PushToDestination(WorkDirectory, dest, packagePaths);
+            }
+
+            //var copyCommand = new Copy(RepositoryFactory, SourceProvider)
+            //{
+            //    ApiKey = ApiKey,
+            //    Destinations = Destinations,
+            //    Sources = Sources,
+            //    Version = package.Version.ToString(),
+            //    Console = Console,
+            //    Recursive = false,
+            //    WorkingDirectoryRoot = WorkingDirectoryRoot
+            //};
+            //copyCommand.Arguments.Add(package.Id);
+            //copyCommand.Execute();
 
         }
 
@@ -291,5 +309,176 @@ namespace NuGet.Extensions.Commands
             return from tag in tags.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)
                    select tag.Trim();
         }
+
+        private void GetPackageLocally(string packageId, string version, string workDirectory)
+        {
+            //Add the default source if there are none present
+            var workingFileSystem = new PhysicalFileSystem(workDirectory);
+
+            foreach (string source in Sources)
+            {
+                Uri uri;
+                if (Uri.TryCreate(source, UriKind.Absolute, out uri))
+                {
+                    AggregateRepository repository = AggregateRepositoryHelper.CreateAggregateRepositoryFromSources(PackageRepositoryFactory.Default, CreateSourceProvider(new[] { source }), new[] { source });
+
+                    IPackage package;
+                    if (repository.TryFindPackage(packageId, new SemanticVersion(version), out package))
+                    {
+                        Console.WriteLine("Attempting to download package {0}.{1} via {2}", packageId, version, uri.ToString());
+
+                        try
+                        {
+                            string filepath = Path.Combine(workDirectory, package.Id + "." + package.Version + ".nupkg");
+                            workingFileSystem.AddFile(filepath, package.GetStream());
+                            break;
+                        }
+                        catch (Exception e)
+                        {
+                            Console.WriteError(e);
+                        }
+                    }
+                }
+            }
+        }
+
+        private static string GetSearchFilter(string packageId, string version)
+        {
+            return string.Format("{0}.{1}.nupkg", packageId, version);
+        }
+
+        private void PrepareApiKey(string destination)
+        {
+            if (!IsDirectory(destination))
+            {
+                if (string.IsNullOrEmpty(ApiKey))
+                {
+                    ApiKey = GetApiKey(SourceProvider, Settings.LoadDefaultSettings(), destination, true);
+                }
+            }
+        }
+
+        private void InstallPackageLocally(string packageId, string workDirectory)
+        {
+            var install = new InstallCommand(RepositoryFactory, SourceProvider);
+            install.Arguments.Add(packageId);
+            install.OutputDirectory = workDirectory;
+            install.Console = Console;
+            foreach (string source in Sources)
+            {
+                install.Source.Add(source);
+            }
+            if (!string.IsNullOrEmpty(Version))
+            {
+                install.Version = Version;
+            }
+
+            install.ExecuteCommand();
+        }
+
+        private void PushToDestination(string workDirectory, string destination, IList<string> PackagePaths)
+        {
+            foreach (string packagePath in PackagePaths)
+            {
+                if (IsDirectory(destination))
+                {
+                    PushToDestinationDirectory(packagePath, destination);
+                }
+                else
+                {
+                    PushToDestinationRemote(packagePath, destination);
+                }
+            }
+        }
+
+        private IList<string> GetPackages(string workDirectory, string searchFilter)
+        {
+            return Directory.GetFiles(workDirectory, searchFilter, SearchOption.AllDirectories);
+        }
+
+
+        private void PushToDestinationDirectory(string packagePath, string destination)
+        {
+            File.Copy(Path.GetFullPath(packagePath), Path.Combine(destination, Path.GetFileName(packagePath)), true);
+            Console.WriteLine("Completed copying '{0}' to '{1}'", Path.GetFileName(packagePath), destination);
+        }
+
+        private void PushToDestinationRemote(string packagePath, string destination)
+        {
+            try
+            {
+                //PushCommand push = new PushCommand(_sourceProvider);
+                //push.Arguments.Add(Path.GetFullPath(packagePath));
+                //push.Source = _sourceProvider.ResolveSource(Destination);
+                //push.Console = this.Console;
+                //push.ExecuteCommand();
+
+                PushPackage(Path.GetFullPath(packagePath), destination, ApiKey);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Copy encountered an issue. Perhaps the package already exists? {0}{1}", Environment.NewLine, ex);
+            }
+        }
+
+        #region Push Command Not Working
+
+        private static readonly string ApiKeysSectionName = "apikeys";
+
+        private static string GetApiKey(IPackageSourceProvider sourceProvider, ISettings settings, string source, bool throwIfNotFound)
+        {
+            string apiKey = settings.GetDecryptedValue(ApiKeysSectionName, source);
+            //HACK no pretty source name, as they have made the call to  CommandLineUtility.GetSourceDisplayName(source) internal
+            if (string.IsNullOrEmpty(apiKey) && throwIfNotFound)
+            {
+                throw new CommandLineException(
+                    "No API Key was provided and no API Key could be found for {0}. To save an API Key for a source use the 'setApiKey' command.",
+                    new object[] { source });
+            }
+            return apiKey;
+        }
+
+        private void PushPackage(string packagePath, string source, string apiKey)
+        {
+            var packageServer = new PackageServer(source, "NuGet Command Line");
+
+            // Push the package to the server
+            var package = new ZipPackage(packagePath);
+
+            bool complete = false;
+
+            //HACK no pretty source name, as they have made the call to  CommandLineUtility.GetSourceDisplayName(source) internal
+            Console.WriteLine("Pushing {0} to {1}", package.GetFullName(), source);
+
+            try
+            {
+                using (Stream stream = package.GetStream())
+                {
+                    packageServer.PushPackage(apiKey, stream, 60000);
+                }
+            }
+            catch
+            {
+                if (!complete)
+                {
+                    Console.WriteLine();
+                }
+                throw;
+            }
+
+            // Publish the package on the server
+
+            var cmd = new PublishCommand();
+            cmd.Console = Console;
+            cmd.Source = source;
+            cmd.Arguments.AddRange(new List<string> {
+                                                 package.Id,
+                                                 package.Version.ToString(),
+                                                 apiKey
+                                             });
+            cmd.Execute();
+        }
+
+        #endregion
     }
 }

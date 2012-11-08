@@ -10,16 +10,13 @@ namespace NuGet.Extensions.Tests.TestObjects
     public abstract class CloneCommandTestsBase
     {
         protected Clone CloneCommand;
-        protected Copy CopyCommand;
 
         [SetUp]
         public void SetUp()
         {
             CloneCommand = new TestCloneCommand(Utilities.GetFactory(), Utilities.GetSourceProvider());
             CloneCommand.Console = new Mock<IConsole>().Object;
-            var copy = new Mock<Copy>(Utilities.GetFactory(), Utilities.GetSourceProvider());
-            copy.SetupGet(c => c.ApiKey).Returns("apiKey");
-            CopyCommand = copy.Object;
+            CloneCommand.ApiKey = "apiKey";
             SetUpTest();         
         }
 

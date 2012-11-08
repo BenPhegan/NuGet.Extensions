@@ -76,14 +76,8 @@
       <DependentUpon>CloneResources.resx</DependentUpon>
     </Compile>
     <Compile Include="Commands\Clone.cs" />
-    <Compile Include="Commands\Copy.cs" />
     <Compile Include="Commands\FindAssembly.cs" />
     <Compile Include="Commands\Get.cs" />
-    <Compile Include="CopyResources.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>CopyResources.resx</DependentUpon>
-    </Compile>
     <Compile Include="Commands\Details.cs" />
     <Compile Include="Commands\Nugetify.cs" />
     <Compile Include="Commands\TeamCity.cs" />
@@ -104,10 +98,6 @@
     <EmbeddedResource Include="CloneResources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>CloneResources.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
-    <EmbeddedResource Include="CopyResources.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>CopyResources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
     <EmbeddedResource Include="GetResources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
