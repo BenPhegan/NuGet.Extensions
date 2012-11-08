@@ -20,7 +20,7 @@ namespace NuGet.Extensions.Tests.Commands
             CloneCommand.AllVersions = false;
             var destinationProvider = Utilities.GetSourceProvider(destination);
             CloneCommand.ExecuteCommand();
-            var packageCount = CloneCommand.GetPackageList(true, "", destinationProvider).Count();
+            var packageCount = CloneCommand.GetPackageList(true, "", string.Empty, destinationProvider).Count();
             Assert.AreEqual(expectedCount, packageCount);
         }
     }

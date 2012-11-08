@@ -58,6 +58,9 @@ namespace NuGet.Extensions.Commands
         [Option("Gets a list of the Ids availabble on the destination, and only clones them")]
         public bool Refresh { get; set; }
 
+        [Option("Clone a specific verion", AltName = "v")]
+        public string Version { get; set; }
+
         private IQueryable<string> _packageList;
 
         /// <summary>
@@ -105,13 +108,13 @@ namespace NuGet.Extensions.Commands
             foreach (string packageName in _packageList)
             {
                 //Get the list of packages from both source and destination, and if we only have one destination then find the set difference
-                IEnumerable<IPackage> sourcePackages = GetPackageList(AllVersions, packageName, SourceProvider);
+                IEnumerable<IPackage> sourcePackages = GetPackageList(AllVersions, packageName, Version, SourceProvider);
                 IEnumerable<IPackage> packagesToCopy = sourcePackages;
 
                 Console.WriteLine("{0}", packageName);
                 if (sourcePackages.Count() == 0)
                 {
-                    Console.WriteError("Package Id: \"{0}\" not found in any sources.  Skipping.", packageName);
+                    Console.WriteError("Package Id: \"{0}\" {1}not found in any sources.  Skipping.", packageName, string.IsNullOrEmpty(Version) ? string.Empty : string.Format("with Version: {0} ", Version));
                     Console.WriteLine();
                     continue;
                 }
@@ -120,7 +123,7 @@ namespace NuGet.Extensions.Commands
                 //TODO we could probably do this down in the copy command...Rob, thoughts?
                 if (Destinations.Count == 1)
                 {
-                    IEnumerable<IPackage> destinationPackages = GetPackageList(true, packageName, DestinationProvider);
+                    IEnumerable<IPackage> destinationPackages = GetPackageList(true, packageName, Version, DestinationProvider);
 
                     packagesToCopy = sourcePackages.Except(destinationPackages, GetIPackageLambdaComparer());
                     OutputCountToConsole("Destination:", destinationPackages.Count(), destinationPackages);
@@ -150,8 +153,8 @@ namespace NuGet.Extensions.Commands
             {
                 //or get the full list from the source, and go from there....
                 //REVIEW: this is a potential bottleneck - maybe split out in to batch call
-                _packageList = Refresh ? GetPackageList(false, string.Empty, DestinationProvider, _tags).Select(p => p.Id)
-                                       : GetPackageList(false, string.Empty, SourceProvider, _tags).Select(p => p.Id);
+                _packageList = Refresh ? GetPackageList(false, string.Empty, string.Empty, DestinationProvider, _tags).Select(p => p.Id)
+                                       : GetPackageList(false, string.Empty, string.Empty, SourceProvider, _tags).Select(p => p.Id);
             }
         }
 
@@ -197,13 +200,13 @@ namespace NuGet.Extensions.Commands
             return new PackageSourceProvider(new BlankUserSettings(), sources.AsPackageSourceList(useDefaultFeed));
         }
 
-        public IEnumerable<IPackage> GetPackageList(bool allVersions, string id, IPackageSourceProvider sourceProvider)
+        public IEnumerable<IPackage> GetPackageList(bool allVersions, string id, string version, IPackageSourceProvider sourceProvider)
         {
-            return GetPackageList(allVersions, id, sourceProvider, null);
+            return GetPackageList(allVersions, id, version, sourceProvider, null);
         }
 
 
-        public IQueryable<IPackage> GetPackageList(bool allVersions, string id, IPackageSourceProvider sourceProvider, IEnumerable<string> tags)
+        public IQueryable<IPackage> GetPackageList(bool allVersions, string id, string version, IPackageSourceProvider sourceProvider, IEnumerable<string> tags)
         {
             bool singular = !string.IsNullOrEmpty(id);
 
@@ -214,17 +217,17 @@ namespace NuGet.Extensions.Commands
             //Check for tags
             if (tags != null && tags.Count() > 0)
             {
-                packages = GetPackagesByTag(allVersions, id, sourceProvider, tags);
+                packages = GetPackagesByTag(allVersions, id, version, sourceProvider, tags);
                 LogPackageList(packages, tags);
             }
             else
             {
-                packages = GetInitialPackageList(allVersions, id, sourceProvider);
+                packages = GetInitialPackageList(allVersions, id, version, sourceProvider);
             }
 
             //listcommand doesnt return just the matching packages, so filter here...
             if (singular)
-                return packages.Where(p => p.Id.ToLowerInvariant() == id.ToLowerInvariant()).AsQueryable();
+                return packages.Where(p => p != null && p.Id.ToLowerInvariant() == id.ToLowerInvariant()).AsQueryable();
             else
                 return packages.AsQueryable();
         }
@@ -247,18 +250,18 @@ namespace NuGet.Extensions.Commands
             Console.WriteLine();
         }
 
-        private IEnumerable<IPackage> GetPackagesByTag(bool allVersions, string id, IPackageSourceProvider sourceProvider, IEnumerable<string> tags)
+        private IEnumerable<IPackage> GetPackagesByTag(bool allVersions, string id, string version, IPackageSourceProvider sourceProvider, IEnumerable<string> tags)
         {
             IEnumerable<IPackage> packages;
             //Where we have tags on a package that include one of the tags we are looking for, include it...
-            packages = GetInitialPackageList(allVersions, Tags.ToLowerInvariant().Replace(",", " "), sourceProvider);
+            packages = GetInitialPackageList(allVersions, Tags.ToLowerInvariant().Replace(",", " "), version, sourceProvider);
             //Check them, as the list command adds packages regardless of where the search term occurs...
             packages = packages.Where(p => p.Tags != null && p.Tags.Count() > 0 ? Clone.ParseTags(p.Tags.ToLowerInvariant()).Any(t => tags.Contains(t)) : false);
             return packages;
         }
 
         //REVIEW Just in case we want to get away from using their list command....
-        private IEnumerable<IPackage> GetInitialPackageList(bool allVersions, string id, IPackageSourceProvider sourceProvider)
+        private IEnumerable<IPackage> GetInitialPackageList(bool allVersions, string id, string version, IPackageSourceProvider sourceProvider)
         {
             var repo = sourceProvider.GetAggregate(RepositoryFactory);
             // WTF This is so stupid, could use Search all round, but it's much slower than using Find
@@ -266,6 +269,8 @@ namespace NuGet.Extensions.Commands
             {
                 if (allVersions)
                     return repo.FindPackagesById(id);
+                else if (!string.IsNullOrEmpty(version))
+                    return new [] { repo.FindPackage(id, new SemanticVersion(version)) };
                 else
                     return new[] { repo.FindLatestPackage(id) };
             }
