@@ -53,6 +53,12 @@ namespace NuGet.Extensions.Commands
         [Option("Exclusion list of failing assemblies", AltName = "ax")]
         public string AssemblyExceptions { get; set; }
 
+        [Option("Only fail the audit on completely unresolvable assemblies.", AltName = "fu")]
+        public Boolean UnresolvableOnly { get; set; }
+
+        [Option("Output all audit data.", AltName = "ao")]
+        public Boolean AllOutput { get; set; }
+
         [ImportingConstructor]
         public Audit(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider sourceProvider)
         {
@@ -72,7 +78,40 @@ namespace NuGet.Extensions.Commands
             feedAuditor.StartPackageListDownload += (o, e) => Console.WriteLine("Downloading package list...");
             feedAuditor.FinishedPackageListDownload += (o, e) => Console.WriteLine("Finished downloading package list...");
             feedAuditor.PackageIgnored += (o, e) => Console.WriteLine("Ignoring package: {0} based on {1}", e.IgnoredPackage.Id, e.Wildcard ? "wildcard..." : "string match...");
-            List<FeedAuditResult> results = null;
+            
+            var results = RunAuditAndReturnResults(repository, feedAuditor);
+            
+            var auditFlags = GetAuditFlags(AllOutput, RunTimeFailOnly, CheckFeedForUnresolvedAssemblies, Gac, UnresolvableOnly);
+            var outputer = new FeedAuditResultsOutputManager(results, auditFlags);
+            outputer.Output(string.IsNullOrEmpty(Output) ? System.Console.Out : new StreamWriter(Path.GetFullPath(Output)));
+
+            var unresolvableReferences = results.SelectMany(r => r.UnresolvableReferences).Distinct().ToList();
+
+            if (CheckFeedForUnresolvedAssemblies && unresolvableReferences.Count > 0)
+            {
+                var writer = !String.IsNullOrEmpty(UnresolvedOutput) ? new StreamWriter(Path.GetFullPath(UnresolvedOutput)) : System.Console.Out;
+                writer.WriteLine("Following references are unresolvable:");
+                writer.WriteLine();
+                foreach (var assembly in unresolvableReferences)
+                {
+                    writer.WriteLine("\t{0}", assembly.FullName);
+                }
+                writer.Close();
+            }
+            
+            if (RunTimeFailOnly && PossibleRuntimeFailuresExist(results))
+                throw new CommandLineException("There were possible runtime failures, please check audit report");
+            
+            if (UnresolvableOnly && unresolvableReferences.Any())
+                throw new CommandLineException("There were unresolvable reference failures, please check audit report");
+            
+            if (AnyPossibleFailuresExist(results))
+                throw new CommandLineException("There were audit failures, please check audit report");
+        }
+
+        private List<PackageAuditResult> RunAuditAndReturnResults(IPackageRepository repository, FeedAuditor feedAuditor)
+        {
+            List<PackageAuditResult> results = null;
             if (String.IsNullOrEmpty(Package))
                 results = feedAuditor.Audit();
             else
@@ -81,30 +120,9 @@ namespace NuGet.Extensions.Commands
                 if (actualPackage != null)
                     results = feedAuditor.Audit(actualPackage);
                 else
-                    throw new ApplicationException(string.Format("Could not find package locally or on feed: {0}",Package));
+                    throw new ApplicationException(string.Format("Could not find package locally or on feed: {0}", Package));
             }
-            var auditFlags = GetAuditFlags(RunTimeFailOnly, CheckFeedForUnresolvedAssemblies, Gac);
-            var outputer = new FeedAuditResultsOutputManager(results, auditFlags);
-            outputer.Output(string.IsNullOrEmpty(Output) ? System.Console.Out : new StreamWriter(Path.GetFullPath(Output)));
-
-            if (CheckFeedForUnresolvedAssemblies && feedAuditor.UnresolvableAssemblyReferences.Count > 0)
-            {
-                var writer = !String.IsNullOrEmpty(UnresolvedOutput) ? new StreamWriter(Path.GetFullPath(UnresolvedOutput)) : System.Console.Out;
-                writer.WriteLine("Following unresolvable references could not be found on the feed...");
-                writer.WriteLine();
-                foreach (var assembly in feedAuditor.UnresolvableAssemblyReferences)
-                {
-                    writer.WriteLine("\t{0}", assembly.FullName);
-                }
-                writer.Close();
-                //TODO this is pretty ugly, perhaps need to look at what we are providing as part of the UnresolvableAssemblyReferences
-                //HACK the code below is duplicated in two places, ugly.
-                if (Verbose)
-                    outputer.OutputUnresolvableReferences(!String.IsNullOrEmpty(UnresolvedOutput) ? new StreamWriter(Path.GetFullPath(UnresolvedOutput)) : System.Console.Out);           
-            }
-
-            if (RunTimeFailOnly ? CheckFeedForUnresolvedAssemblies && Gac ? feedAuditor.UnresolvableAssemblyReferences.Count > 0 : CheckPossibleRuntimeFailures(results) : CheckAllPossibleFailures(results))
-                throw new CommandLineException("There were audit failures, please check audit report");
+            return results;
         }
 
         private IEnumerable<Regex> GetExcludedWildcards(string exceptions)
@@ -113,10 +131,13 @@ namespace NuGet.Extensions.Commands
             return new List<Regex>(wildcards.Select(w => new Wildcard(w)));
         }
 
-        private static AuditEventTypes GetAuditFlags(bool runTimeOnly, bool checkFeedResolvable, bool gac)
+        private static AuditEventTypes GetAuditFlags(bool allOutput, bool runTimeOnly, bool checkFeedResolvable, bool gac, bool unresolvable)
         {
-            var events = (AuditEventTypes) 0;
-            if (runTimeOnly || checkFeedResolvable || gac)
+            var events = (AuditEventTypes)0;
+            if (!allOutput && unresolvable)
+                return AuditEventTypes.UnresolvableAssemblyReferences;
+
+            if (!allOutput &&(runTimeOnly || checkFeedResolvable || gac))
             {
                 if (runTimeOnly)
                     events |= AuditEventTypes.UnresolvedAssemblyReferences;
@@ -126,20 +147,18 @@ namespace NuGet.Extensions.Commands
                     events |= AuditEventTypes.GacResolvableReferences;
                 return events;
             }
-            return AuditEventTypes.ResolvedAssemblyReferences
-                   | AuditEventTypes.UnloadablePackageFiles
-                   | AuditEventTypes.UnresolvedAssemblyReferences
-                   | AuditEventTypes.UnresolvedDependencies
-                   | AuditEventTypes.UnusedPackageDependencies
-                   | AuditEventTypes.UsedPackageDependencies;
+
+            //else we want them all!
+
+            return Enum.GetValues(typeof (AuditEventTypes)).Cast<AuditEventTypes>().Aggregate(events, (current, enumVal) => current | enumVal);
         }
 
-        private static bool CheckPossibleRuntimeFailures(IEnumerable<FeedAuditResult> results)
+        private static bool PossibleRuntimeFailuresExist(IEnumerable<PackageAuditResult> results)
         {
             return results.Any(r => r.UnresolvedAssemblyReferences.Any());
         }
 
-        private static bool CheckAllPossibleFailures(IEnumerable<FeedAuditResult> results)
+        private static bool AnyPossibleFailuresExist(IEnumerable<PackageAuditResult> results)
         {
             return results.Any(r => r.UnloadablePackageFiles.Any()
                                                      || r.UnresolvedAssemblyReferences.Any()

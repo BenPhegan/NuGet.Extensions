@@ -42,8 +42,8 @@ namespace NuGet.Extensions.Tests.FeedAudit
             var regii = !string.IsNullOrEmpty(wildcards) ? wildcards.Split(';').Select(w => new Wildcard(w.ToLowerInvariant())).ToList() : new List<Wildcard>();
 
             var auditor = new FeedAuditor(mockRepo, new List<String>(), new List<Regex>(), true, false, false, stringMatches, regii);
-            auditor.Audit();
-            return auditor.UnresolvableAssemblyReferences.Count();
+            var results = auditor.Audit();
+            return results.SelectMany(r => r.UnresolvableReferences).Count();
         }
 
         private static MockPackageRepository CreateMockRepository()

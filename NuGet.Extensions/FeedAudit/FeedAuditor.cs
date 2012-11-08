@@ -16,7 +16,7 @@ namespace NuGet.Extensions.FeedAudit
         public delegate void PackageIgnoreEventHandler(object sender, PackageIgnoreEventArgs args);
         private readonly IPackageRepository _packageRepository;
         private readonly List<string> _exceptions; 
-        private List<FeedAuditResult> _results = new List<FeedAuditResult>();
+        private List<PackageAuditResult> _results = new List<PackageAuditResult>();
         private readonly bool _unlisted;
         private List<IPackage> _auditPackages;
         private List<IPackage> _feedPackages;
@@ -32,12 +32,6 @@ namespace NuGet.Extensions.FeedAudit
         public event EventHandler StartPackageListDownload = delegate { };
         public event EventHandler FinishedPackageListDownload = delegate { };
         public event PackageIgnoreEventHandler PackageIgnored = delegate { }; 
- 
-        public List<AssemblyName> UnresolvableAssemblyReferences
-        {
-            get { return _unresolvableAssemblyReferences; }
-            set { _unresolvableAssemblyReferences = value; }
-        }
 
         public FeedAuditor(IPackageRepository packageRepository, IEnumerable<String> exceptions, IEnumerable<Regex> wildcards, Boolean unlisted, bool checkForFeedResolvableAssemblies, bool checkGac, IEnumerable<String> assemblyExceptions, IEnumerable<Regex> assemblyWildcards)
         {
@@ -55,7 +49,7 @@ namespace NuGet.Extensions.FeedAudit
         /// Audits a feed and provides back a set of results
         /// </summary>
         /// <returns></returns>
-        public List<FeedAuditResult> Audit(IPackage packageToAudit = null)
+        public List<PackageAuditResult> Audit(IPackage packageToAudit = null)
         {
             StartPackageListDownload(this, new EventArgs());
             _feedPackages = _packageRepository.GetPackages().Where(p => p.IsLatestVersion).OrderBy(p => p.Id).ToList();
@@ -83,7 +77,7 @@ namespace NuGet.Extensions.FeedAudit
                     continue;
                 }
 
-                var currentResult = new FeedAuditResult {Package = package};
+                var currentResult = new PackageAuditResult {Package = package};
                 var actualAssemblyReferences = GetPackageAssemblyReferenceList(package, currentResult);
 
                 //Prune dependency list based on additional assemblies included in the package...
@@ -95,7 +89,7 @@ namespace NuGet.Extensions.FeedAudit
                 var usedDependencies = new List<IPackage>();
                 foreach (var actualDependency in actualAssemblyReferences)
                 {
-                    var possibles = GetPossiblePackagesForAssembly(actualDependency, packageDependencies);
+                    var possibles = GetPossiblePackagesForAssembly(actualDependency, packageDependencies).ToList();
                     usedDependencies.AddRange(possibles.Select(p => p));
                     if (!possibles.Any())
                     {
@@ -122,14 +116,15 @@ namespace NuGet.Extensions.FeedAudit
                 _results.Add(currentResult);
                 FinishedPackageAudit(this, new PackageAuditEventArgs{Package = package});
             }
-            UnresolvableAssemblyReferences = GetUnresolvedAssemblies(_results);
+            _unresolvableAssemblyReferences = GetUnresolvedAssemblies(_results);
+            UpdateUnresolvablePackageAuditResults(_results, _unresolvableAssemblyReferences);
             return _results;
         }
 
-        private IEnumerable<AssemblyName> RemoveAssemblyExclusions(IEnumerable<AssemblyName> actualAssemblyReferences, FeedAuditResult currentResult)
+        private IEnumerable<AssemblyName> RemoveAssemblyExclusions(IEnumerable<AssemblyName> actualAssemblyReferences, PackageAuditResult currentResult)
         {
             var assemblyReferences = new List<AssemblyName>(actualAssemblyReferences);
-            foreach (AssemblyName assembly in actualAssemblyReferences)
+            foreach (var assembly in assemblyReferences)
             {
                 if (_assemblyWildcards.Any(w => w.IsMatch(assembly.Name.ToLowerInvariant())))
                 {
@@ -147,7 +142,17 @@ namespace NuGet.Extensions.FeedAudit
             return assemblyReferences;
         }
 
-        private static List<AssemblyName> GetUnresolvedAssemblies(List<FeedAuditResult> results)
+
+        private void UpdateUnresolvablePackageAuditResults(IEnumerable<PackageAuditResult> results, IEnumerable<AssemblyName> unresolvableAssemblyReferences)
+        {
+            var unresolvable = unresolvableAssemblyReferences as List<AssemblyName> ?? unresolvableAssemblyReferences.ToList();
+            foreach (var packageAuditResult in results)
+            {
+                packageAuditResult.UnresolvableReferences = packageAuditResult.UnresolvedAssemblyReferences.Where(unresolvable.Contains).ToList();
+            }
+        }
+
+        private static List<AssemblyName> GetUnresolvedAssemblies(List<PackageAuditResult> results)
         {
             var unresolvable = new List<AssemblyName>();
             foreach (var unresolved in results.SelectMany(r => r.UnresolvedAssemblyReferences))
@@ -173,8 +178,13 @@ namespace NuGet.Extensions.FeedAudit
 
         private static IEnumerable<AssemblyName> RemoveInternallySatisfiedDependencies(IEnumerable<AssemblyName> actualAssemblyReferences, IPackage package)
         {
-            var fileNames = package.GetFiles().Select(f => new FileInfo(f.Path).Name).ToList();
+            var fileNames = GetFileInfoListFromPackageFiles(package);
             return actualAssemblyReferences.Where(a => !fileNames.Contains(a.Name + ".dll") && !fileNames.Contains(a.Name + ".exe"));
+        }
+
+        private static List<string> GetFileInfoListFromPackageFiles(IPackage package)
+        {
+            return package.GetFiles().Select(f => new FileInfo(f.Path).Name.ToLowerInvariant()).ToList();
         }
 
         /// <summary>
@@ -183,7 +193,7 @@ namespace NuGet.Extensions.FeedAudit
         /// <param name="package"></param>
         /// <param name="result"></param>
         /// <returns></returns>
-        private IEnumerable<IPackage> GetDependencyAssemblyList(IPackage package, FeedAuditResult result)
+        private IEnumerable<IPackage> GetDependencyAssemblyList(IPackage package, PackageAuditResult result)
         {
             var packageDependencies = new List<IPackage>();
             foreach (var dependency in package.Dependencies)
@@ -206,7 +216,7 @@ namespace NuGet.Extensions.FeedAudit
         /// <param name="package">The package to check.</param>
         /// <param name="result">A result to append errors to.</param>
         /// <returns></returns>
-        private static IEnumerable<AssemblyName> GetPackageAssemblyReferenceList(IPackage package, FeedAuditResult result)
+        private static IEnumerable<AssemblyName> GetPackageAssemblyReferenceList(IPackage package, PackageAuditResult result)
         {
             var actualDependencies = new List<AssemblyName>();
             foreach (var file in package.GetFiles().Where(f => f.Path.EndsWith(".dll") || f.Path.EndsWith("*.exe")))
