@@ -3,6 +3,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.Composition;
+using System.Text.RegularExpressions;
 using System.Diagnostics;
 using System.Linq;
 using NuGet.Common;
@@ -66,6 +67,9 @@ namespace NuGet.Extensions.Commands
         [Option("Missing packages only", AltName = "m")]
         public bool Missing { get; set; }
 
+        [Option("Semi-colon delimited set of package IDs or wildcards that you do NOT want to clone.", AltName = "x")]
+        public string PackageExceptions { get; set; }
+
         private IQueryable<string> _packageList;
 
         /// <summary>
@@ -111,10 +115,18 @@ namespace NuGet.Extensions.Commands
             else
                 PopulateDifferentialPackageList(packageId);
 
+            var excludedPackageIds = GetLowerInvariantExclusions(PackageExceptions);
+            var excludedPackageWildcards = String.IsNullOrEmpty(PackageExceptions) ? new List<Regex>() : GetExcludedWildcards(PackageExceptions);
+
             //Grab each package, get the full list of versions, and then call a Copy on each.
             //TODO Copy is currently using the default InstallCommand under the covers, which means this is a bit messy on the dependencies (ie it gets them all)
             foreach (string packageName in _packageList)
             {
+                if (excludedPackageWildcards.Any(w => w.IsMatch(packageName.ToLowerInvariant())))
+                    continue;
+                if (excludedPackageIds.Any(e => e.Equals(packageName, StringComparison.OrdinalIgnoreCase)))
+                    continue;
+
                 //Get the list of packages from both source and destination, and if we only have one destination then find the set difference
                 IEnumerable<IPackage> sourcePackages = GetPackageList(AllVersions, packageName, Version, SourceProvider);
                 IEnumerable<IPackage> packagesToCopy = sourcePackages;
@@ -149,6 +161,22 @@ namespace NuGet.Extensions.Commands
                     }
                 }
             }
+        }
+
+        private IEnumerable<string> GetLowerInvariantExclusions(string exclusions)
+        {
+            var exceptions = new List<string>();
+            if (!String.IsNullOrEmpty(exclusions))
+            {
+                exceptions.AddRange(exclusions.Split(';').Select(s => s.ToLowerInvariant()));
+            }
+            return exceptions.Where(e => !e.Contains('*') && !e.Contains('?'));
+        }
+
+        private IEnumerable<Regex> GetExcludedWildcards(string exceptions)
+        {
+            var wildcards = exceptions.Split(';').Select(s => s.ToLowerInvariant());
+            return new List<Regex>(wildcards.Select(w => new Wildcard(w)));
         }
 
         private void PopulateDifferentialPackageList(string packageId)
