@@ -63,6 +63,9 @@ namespace NuGet.Extensions.Commands
         [Option("Clone a specific verion", AltName = "v")]
         public string Version { get; set; }
 
+        [Option("Missing packages only", AltName = "m")]
+        public bool Missing { get; set; }
+
         private IQueryable<string> _packageList;
 
         /// <summary>
@@ -103,7 +106,10 @@ namespace NuGet.Extensions.Commands
 
             //TODO: Move to base class?
             string packageId = base.Arguments.Count > 0 ? base.Arguments[0] : string.Empty;
-            PopulateSourcePackageList(packageId);
+            if (!Missing)
+                PopulateSourcePackageList(packageId);
+            else
+                PopulateDifferentialPackageList(packageId);
 
             //Grab each package, get the full list of versions, and then call a Copy on each.
             //TODO Copy is currently using the default InstallCommand under the covers, which means this is a bit messy on the dependencies (ie it gets them all)
@@ -142,6 +148,18 @@ namespace NuGet.Extensions.Commands
                         Console.WriteLine();
                     }
                 }
+            }
+        }
+
+        private void PopulateDifferentialPackageList(string packageId)
+        {
+            if (!string.IsNullOrEmpty(packageId))
+            {
+                _packageList = new EnumerableQuery<string>(new List<string>() { packageId });
+            }
+            else
+            {
+                _packageList = GetPackageList(false, string.Empty, string.Empty, SourceProvider, _tags).Select(p => p.Id).Except(GetPackageList(false, string.Empty, string.Empty, DestinationProvider, _tags).Select(p => p.Id));
             }
         }
 
