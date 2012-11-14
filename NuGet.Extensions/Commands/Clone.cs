@@ -131,6 +131,8 @@ namespace NuGet.Extensions.Commands
                 IEnumerable<IPackage> sourcePackages = GetPackageList(AllVersions, packageName, Version, SourceProvider);
                 IEnumerable<IPackage> packagesToCopy = sourcePackages;
 
+                Console.WriteLine();
+                Console.WriteLine();
                 Console.WriteLine("{0}", packageName);
                 if (sourcePackages.Count() == 0)
                 {
@@ -151,7 +153,14 @@ namespace NuGet.Extensions.Commands
 
                 OutputCountToConsole("Copying:", packagesToCopy.Count(), packagesToCopy);
                 //Console.WriteLine(string.Format("Found: {0} versions of {1} to copy.{2}", packagesToCopy.Count(), packageName, packagesToCopy.Count() == 0 ? " All packages synced!" : string.Empty));
-                Console.WriteLine();
+                if (packagesToCopy.Count() > 0)
+                {
+                    Console.WriteLine();
+                    Console.WriteLine("Copying {0} from {1} to {2}.",
+                          string.IsNullOrEmpty(Version) ? packageName : packageName + " " + Version,
+                          string.Join(";", Sources), string.Join(";", Destinations));
+                }
+
                 foreach (var package in packagesToCopy)
                 {
                     if (!DryRun)
@@ -195,7 +204,7 @@ namespace NuGet.Extensions.Commands
         {
             if (!string.IsNullOrEmpty(packageId))
             {
-                _packageList = new EnumerableQuery<string>(new List<string>(){packageId});
+                _packageList = new EnumerableQuery<string>(new List<string>() { packageId });
             }
             else
             {
@@ -213,7 +222,7 @@ namespace NuGet.Extensions.Commands
 
         private void OutputCountToConsole(string message, int count, IEnumerable<IPackage> list)
         {
-            var packageVersionList =  list.Count() > 0 ? string.Format( "    (" +string.Join(", ", list.Select(x => x.Version)) + ")") : string.Empty;
+            var packageVersionList = list.Count() > 0 ? string.Format("    (" + string.Join(", ", list.Select(x => x.Version)) + ")") : string.Empty;
 
             Console.WriteLine(string.Format(message.PadRight(14) + count).PadLeft(18) + packageVersionList);
         }
@@ -227,20 +236,10 @@ namespace NuGet.Extensions.Commands
 
         private void ExecuteCopyAction(IPackageSourceProvider realSourceProvider, IPackage package)
         {
-            string packageId = package.Id;
-            string version = package.Version.ToString();
-
-            GetPackageLocally(packageId, version, WorkDirectory);
-
-            Console.WriteLine("Copying {0} from {1} to {2}.",
-                  string.IsNullOrEmpty(Version) ? packageId : packageId + " " + Version,
-                  string.Join(";", Sources), string.Join(";", Destinations));
-
             foreach (string dest in Destinations)
             {
                 PrepareApiKey(dest);
-                IList<string> packagePaths = GetPackages(WorkDirectory, GetSearchFilter(packageId, version));
-                PushToDestination(WorkDirectory, dest, packagePaths);
+                PushToDestination(dest, package);
             }
 
             //var copyCommand = new Copy(RepositoryFactory, SourceProvider)
@@ -334,7 +333,7 @@ namespace NuGet.Extensions.Commands
                 if (allVersions)
                     return repo.FindPackagesById(id);
                 else if (!string.IsNullOrEmpty(version))
-                    return new [] { repo.FindPackage(id, new SemanticVersion(version)) };
+                    return new[] { repo.FindPackage(id, new SemanticVersion(version)) };
                 else
                     return new[] { repo.FindLatestPackage(id) };
             }
@@ -354,38 +353,6 @@ namespace NuGet.Extensions.Commands
             Debug.Assert(tags != null);
             return from tag in tags.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)
                    select tag.Trim();
-        }
-
-        private void GetPackageLocally(string packageId, string version, string workDirectory)
-        {
-            //Add the default source if there are none present
-            var workingFileSystem = new PhysicalFileSystem(workDirectory);
-
-            foreach (string source in Sources)
-            {
-                Uri uri;
-                if (Uri.TryCreate(source, UriKind.Absolute, out uri))
-                {
-                    AggregateRepository repository = AggregateRepositoryHelper.CreateAggregateRepositoryFromSources(PackageRepositoryFactory.Default, CreateSourceProvider(new[] { source }), new[] { source });
-
-                    IPackage package;
-                    if (repository.TryFindPackage(packageId, new SemanticVersion(version), out package))
-                    {
-                        Console.WriteLine("Attempting to download package {0}.{1} via {2}", packageId, version, uri.ToString());
-
-                        try
-                        {
-                            string filepath = Path.Combine(workDirectory, package.Id + "." + package.Version + ".nupkg");
-                            workingFileSystem.AddFile(filepath, package.GetStream());
-                            break;
-                        }
-                        catch (Exception e)
-                        {
-                            Console.WriteError(e);
-                        }
-                    }
-                }
-            }
         }
 
         private static string GetSearchFilter(string packageId, string version)
@@ -422,34 +389,28 @@ namespace NuGet.Extensions.Commands
             install.ExecuteCommand();
         }
 
-        private void PushToDestination(string workDirectory, string destination, IList<string> PackagePaths)
+        private void PushToDestination(string destination, IPackage package)
         {
-            foreach (string packagePath in PackagePaths)
+            if (IsDirectory(destination))
             {
-                if (IsDirectory(destination))
-                {
-                    PushToDestinationDirectory(packagePath, destination);
-                }
-                else
-                {
-                    PushToDestinationRemote(packagePath, destination);
-                }
+                PushToDestinationDirectory(package, destination);
+            }
+            else
+            {
+                PushToDestinationRemote(package, destination);
             }
         }
 
-        private IList<string> GetPackages(string workDirectory, string searchFilter)
+        private void PushToDestinationDirectory(IPackage package, string destination)
         {
-            return Directory.GetFiles(workDirectory, searchFilter, SearchOption.AllDirectories);
+            var packageString = String.Format("{0}.{1}.nupkg", package.Id, package.Version.ToString());
+            var outputPath = Path.Combine(destination, packageString);
+            File.WriteAllBytes(outputPath, package.GetStream().ReadAllBytes());
+            //File.Copy(Path.GetFullPath(packagePath), Path.Combine(destination, Path.GetFileName(packagePath)), true);
+            Console.Write("Completed copying {0} {1}", package.Id, package.Version.ToString());
         }
 
-
-        private void PushToDestinationDirectory(string packagePath, string destination)
-        {
-            File.Copy(Path.GetFullPath(packagePath), Path.Combine(destination, Path.GetFileName(packagePath)), true);
-            Console.WriteLine("Completed copying '{0}' to '{1}'", Path.GetFileName(packagePath), destination);
-        }
-
-        private void PushToDestinationRemote(string packagePath, string destination)
+        private void PushToDestinationRemote(IPackage package, string destination)
         {
             try
             {
@@ -459,7 +420,7 @@ namespace NuGet.Extensions.Commands
                 //push.Console = this.Console;
                 //push.ExecuteCommand();
 
-                PushPackage(Path.GetFullPath(packagePath), destination, ApiKey);
+                PushPackage(package, destination, ApiKey);
             }
             catch (Exception ex)
             {
@@ -484,12 +445,12 @@ namespace NuGet.Extensions.Commands
             return apiKey;
         }
 
-        private void PushPackage(string packagePath, string source, string apiKey)
+        private void PushPackage(IPackage package, string source, string apiKey)
         {
             var packageServer = new PackageServer(source, "NuGet Command Line");
 
             // Push the package to the server
-            var package = new ZipPackage(packagePath);
+            //var package = new ZipPackage(packagePath);
 
             bool complete = false;
 
