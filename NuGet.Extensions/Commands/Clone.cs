@@ -152,7 +152,6 @@ namespace NuGet.Extensions.Commands
                 }
 
                 OutputCountToConsole("Copying:", packagesToCopy.Count(), packagesToCopy);
-                //Console.WriteLine(string.Format("Found: {0} versions of {1} to copy.{2}", packagesToCopy.Count(), packageName, packagesToCopy.Count() == 0 ? " All packages synced!" : string.Empty));
                 if (packagesToCopy.Count() > 0)
                 {
                     Console.WriteLine();
@@ -161,11 +160,11 @@ namespace NuGet.Extensions.Commands
                           string.Join(";", Sources), string.Join(";", Destinations));
                 }
 
-                foreach (var package in packagesToCopy)
+                if (!DryRun)
                 {
-                    if (!DryRun)
+                    foreach (var package in packagesToCopy)
                     {
-                        ExecuteCopyAction(SourceProvider, package);
+                        ExecuteCopyAction(package);
                         Console.WriteLine();
                     }
                 }
@@ -234,27 +233,12 @@ namespace NuGet.Extensions.Commands
                                     (a) => a.Id.GetHashCode() + a.Version.ToString().GetHashCode());
         }
 
-        private void ExecuteCopyAction(IPackageSourceProvider realSourceProvider, IPackage package)
+        private void ExecuteCopyAction(IPackage package)
         {
             foreach (string dest in Destinations)
             {
-                PrepareApiKey(dest);
                 PushToDestination(dest, package);
             }
-
-            //var copyCommand = new Copy(RepositoryFactory, SourceProvider)
-            //{
-            //    ApiKey = ApiKey,
-            //    Destinations = Destinations,
-            //    Sources = Sources,
-            //    Version = package.Version.ToString(),
-            //    Console = Console,
-            //    Recursive = false,
-            //    WorkingDirectoryRoot = WorkingDirectoryRoot
-            //};
-            //copyCommand.Arguments.Add(package.Id);
-            //copyCommand.Execute();
-
         }
 
         //HACK Does this need to be here?
@@ -355,137 +339,45 @@ namespace NuGet.Extensions.Commands
                    select tag.Trim();
         }
 
-        private static string GetSearchFilter(string packageId, string version)
-        {
-            return string.Format("{0}.{1}.nupkg", packageId, version);
-        }
-
-        private void PrepareApiKey(string destination)
-        {
-            if (!IsDirectory(destination))
-            {
-                if (string.IsNullOrEmpty(ApiKey))
-                {
-                    ApiKey = GetApiKey(SourceProvider, Settings.LoadDefaultSettings(), destination, true);
-                }
-            }
-        }
-
-        private void InstallPackageLocally(string packageId, string workDirectory)
-        {
-            var install = new InstallCommand(RepositoryFactory, SourceProvider);
-            install.Arguments.Add(packageId);
-            install.OutputDirectory = workDirectory;
-            install.Console = Console;
-            foreach (string source in Sources)
-            {
-                install.Source.Add(source);
-            }
-            if (!string.IsNullOrEmpty(Version))
-            {
-                install.Version = Version;
-            }
-
-            install.ExecuteCommand();
-        }
-
         private void PushToDestination(string destination, IPackage package)
         {
             if (IsDirectory(destination))
             {
                 PushToDestinationDirectory(package, destination);
+                Console.Write("Completed copying {0} {1}", package.Id, package.Version.ToString());
             }
             else
             {
-                PushToDestinationRemote(package, destination);
+                PushToDestinationDirectory(package, WorkDirectory);
+                var packageString = String.Format("{0}.{1}.nupkg", package.Id, package.Version);
+                var outputPath = Path.Combine(WorkDirectory, packageString);
+                PushToDestinationRemote(outputPath, destination);
             }
         }
 
         private void PushToDestinationDirectory(IPackage package, string destination)
         {
-            var packageString = String.Format("{0}.{1}.nupkg", package.Id, package.Version.ToString());
+            var packageString = String.Format("{0}.{1}.nupkg", package.Id, package.Version);
             var outputPath = Path.Combine(destination, packageString);
             File.WriteAllBytes(outputPath, package.GetStream().ReadAllBytes());
-            //File.Copy(Path.GetFullPath(packagePath), Path.Combine(destination, Path.GetFileName(packagePath)), true);
-            Console.Write("Completed copying {0} {1}", package.Id, package.Version.ToString());
         }
 
-        private void PushToDestinationRemote(IPackage package, string destination)
+        private void PushToDestinationRemote(string packagePath, string destination)
         {
             try
             {
-                //PushCommand push = new PushCommand(_sourceProvider);
-                //push.Arguments.Add(Path.GetFullPath(packagePath));
-                //push.Source = _sourceProvider.ResolveSource(Destination);
-                //push.Console = this.Console;
-                //push.ExecuteCommand();
+                PushCommand push = new PushCommand(SourceProvider, Settings.LoadDefaultSettings());
+                push.Arguments.Add(Path.GetFullPath(packagePath));
+                push.ApiKey = ApiKey;
+                push.Source = destination;
+                push.Console = this.Console;
+                push.ExecuteCommand();
 
-                PushPackage(package, destination, ApiKey);
             }
             catch (Exception ex)
             {
                 Console.WriteLine("Copy encountered an issue. Perhaps the package already exists? {0}{1}", Environment.NewLine, ex);
             }
         }
-
-        #region Push Command Not Working
-
-        private static readonly string ApiKeysSectionName = "apikeys";
-
-        private static string GetApiKey(IPackageSourceProvider sourceProvider, ISettings settings, string source, bool throwIfNotFound)
-        {
-            string apiKey = settings.GetDecryptedValue(ApiKeysSectionName, source);
-            //HACK no pretty source name, as they have made the call to  CommandLineUtility.GetSourceDisplayName(source) internal
-            if (string.IsNullOrEmpty(apiKey) && throwIfNotFound)
-            {
-                throw new CommandLineException(
-                    "No API Key was provided and no API Key could be found for {0}. To save an API Key for a source use the 'setApiKey' command.",
-                    new object[] { source });
-            }
-            return apiKey;
-        }
-
-        private void PushPackage(IPackage package, string source, string apiKey)
-        {
-            var packageServer = new PackageServer(source, "NuGet Command Line");
-
-            // Push the package to the server
-            //var package = new ZipPackage(packagePath);
-
-            bool complete = false;
-
-            //HACK no pretty source name, as they have made the call to  CommandLineUtility.GetSourceDisplayName(source) internal
-            Console.WriteLine("Pushing {0} to {1}", package.GetFullName(), source);
-
-            try
-            {
-                using (Stream stream = package.GetStream())
-                {
-                    packageServer.PushPackage(apiKey, stream, 60000);
-                }
-            }
-            catch
-            {
-                if (!complete)
-                {
-                    Console.WriteLine();
-                }
-                throw;
-            }
-
-            // Publish the package on the server
-
-            var cmd = new PublishCommand();
-            cmd.Console = Console;
-            cmd.Source = source;
-            cmd.Arguments.AddRange(new List<string> {
-                                                 package.Id,
-                                                 package.Version.ToString(),
-                                                 apiKey
-                                             });
-            cmd.Execute();
-        }
-
-        #endregion
     }
 }
