@@ -123,8 +123,9 @@ namespace NuGet.Extensions.FeedAudit
 
         private IEnumerable<AssemblyName> RemoveAssemblyExclusions(IEnumerable<AssemblyName> actualAssemblyReferences, PackageAuditResult currentResult)
         {
-            var assemblyReferences = new List<AssemblyName>(actualAssemblyReferences);
-            foreach (var assembly in assemblyReferences)
+	        var actualAssemblyReferencesList = actualAssemblyReferences.ToList();
+			var assemblyReferences = new List<AssemblyName>(actualAssemblyReferencesList);
+			foreach (var assembly in actualAssemblyReferencesList)
             {
                 if (_assemblyWildcards.Any(w => w.IsMatch(assembly.Name.ToLowerInvariant())))
                 {
