@@ -180,7 +180,7 @@ namespace NuGet.Extensions.FeedAudit
         private static IEnumerable<AssemblyName> RemoveInternallySatisfiedDependencies(IEnumerable<AssemblyName> actualAssemblyReferences, IPackage package)
         {
             var fileNames = GetFileInfoListFromPackageFiles(package);
-            return actualAssemblyReferences.Where(a => !fileNames.Contains(a.Name + ".dll") && !fileNames.Contains(a.Name + ".exe"));
+            return actualAssemblyReferences.Where(a => !fileNames.Contains(a.Name.ToLowerInvariant() + ".dll") && !fileNames.Contains(a.Name.ToLowerInvariant() + ".exe"));
         }
 
         private static List<string> GetFileInfoListFromPackageFiles(IPackage package)
