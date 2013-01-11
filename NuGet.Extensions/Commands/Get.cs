@@ -8,6 +8,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Xml.Linq;
 using NuGet.Commands;
 using NuGet.Common;
 using NuGet.Extras.Comparers;
@@ -63,6 +64,12 @@ namespace NuGet.Extensions.Commands
 
         [Option(typeof(GetResources), "GetCommandIncludeDependenciesDescription", AltName = "r")]
         public bool IncludeDependencies { get; set; }
+
+        [Option("Output TeamCity compatible nuget.xml file for NuGet install details.", AltName = "t")]
+        public bool TeamCityNugetXml { get; set; }
+
+        [Option("Output directory for the TeamCity compatible nuget.xml file.", AltName = "to")]
+        public string TeamCityNuGetXmlOutputDirectory { get; set; }
 
         public IPackageRepositoryFactory RepositoryFactory { get; private set; }
 
@@ -194,6 +201,8 @@ namespace NuGet.Extensions.Commands
                             else
                             {
                                 var tempPackageConfig = packageAggregator.Save(packagesConfigDiretory);
+                                if (TeamCityNugetXml)
+                                    SaveNuGetXml(tempPackageConfig,TeamCityNuGetXmlOutputDirectory);
                                 InstallPackagesFromConfigFile(packagesConfigDiretory, GetPackageReferenceFile(baseFileSystem, tempPackageConfig.FullName), target);
                             }
                         }
@@ -212,6 +221,22 @@ namespace NuGet.Extensions.Commands
                 Console.WriteLine(string.Format("Updated : {0} package directories, {1} packages in {2} seconds",
                                                     repositoryManagers.Count, totalPackageUpdates,
                                                     totalTime.Elapsed.TotalSeconds));
+            }
+        }
+
+        private static void SaveNuGetXml(FileInfo packageConfig, string outputDirectory = null)
+        {
+            var packageConfigXml = XElement.Load(packageConfig.FullName);
+            var nugetXml = new XDocument(new XElement("nuget-dependencies"));
+            nugetXml.Root.Add(new XElement("sources"));
+            nugetXml.Root.Add(packageConfigXml);
+            if (string.IsNullOrEmpty(outputDirectory))
+                nugetXml.Save("nuget.xml");
+            else
+            {
+                if (!Directory.Exists(outputDirectory))
+                    Directory.CreateDirectory(outputDirectory);
+                nugetXml.Save(Path.Combine(outputDirectory, "nuget.xml"));
             }
         }
 
