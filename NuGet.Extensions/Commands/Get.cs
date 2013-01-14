@@ -201,9 +201,9 @@ namespace NuGet.Extensions.Commands
                             else
                             {
                                 var tempPackageConfig = packageAggregator.Save(packagesConfigDiretory);
-                                if (TeamCityNugetXml)
-                                    SaveNuGetXml(tempPackageConfig,TeamCityNuGetXmlOutputDirectory);
                                 InstallPackagesFromConfigFile(packagesConfigDiretory, GetPackageReferenceFile(baseFileSystem, tempPackageConfig.FullName), target);
+                                if (TeamCityNugetXml)
+                                    SaveNuGetXml(tempPackageConfig, TeamCityNuGetXmlOutputDirectory);
                             }
                         }
                     });
@@ -340,6 +340,7 @@ namespace NuGet.Extensions.Commands
         private void InstallPackagesFromConfigFile(string packagesDirectory, PackageReferenceFile file, string target)
         {
             var packageReferences = file.GetPackageReferences().ToList();
+            var installedPackages = new List<PackageReference>();
 
             //We need to create a damn filesystem at the packages directory, so that the ROOT is correct.  Ahuh...
             var fileSystem = CreateFileSystem(packagesDirectory);
@@ -370,12 +371,14 @@ namespace NuGet.Extensions.Commands
                 {
                     SemanticVersion version = _packageResolutionManager.ResolveInstallableVersion(_repository, packageReference);
                     installedAny |= InstallPackage(packageManager, fileSystem, packageReference.Id, version ?? packageReference.Version);
+                    installedPackages.Add(new PackageReference(packageReference.Id, version ?? packageReference.Version, null));
                 }
                 else
                 {
                     //We got it straight from the server, check whether we get a cache hit, else just install
                     var resolvedPackage = _packageResolutionManager.FindPackageInAllLocalSources(packageManager.LocalRepository, packageManager.SourceRepository, package);
                     packageManager.InstallPackage(resolvedPackage ?? package, !IncludeDependencies, false);
+                    installedPackages.Add(new PackageReference(package.Id, resolvedPackage != null ? resolvedPackage.Version : package.Version, null));
                 }
                 // Note that we ignore dependencies here because packages.config already contains the full closure
             }
@@ -383,6 +386,16 @@ namespace NuGet.Extensions.Commands
             if (!installedAny && packageReferences.Any())
             {
                 Console.WriteLine(GetResources.GetCommandNothingToInstall, Constants.PackageReferenceFile);
+            }
+            
+            if (packageReferences != installedPackages)
+            {
+                foreach (var reference in file.GetPackageReferences())
+                    file.DeleteEntry(reference.Id, reference.Version);
+                foreach (var installedPackage in installedPackages)
+                {
+                    file.AddEntry(installedPackage.Id,installedPackage.Version);
+                }
             }
         }
 
