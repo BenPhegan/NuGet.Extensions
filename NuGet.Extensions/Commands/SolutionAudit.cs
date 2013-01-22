@@ -3,10 +3,14 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
+using System.Reflection;
+using Microsoft.Build.Evaluation;
 using NuGet.Commands;
 using NuGet.Common;
-using NuGet.Extensions.FeedAudit;
+using NuGet.Extensions.ExtensionMethods;
+using NuGet.Extensions.GetLatest.MSBuild;
+using NuGet.Extensions.MSBuild;
+using NuGet.Extras.Repositories;
 
 namespace NuGet.Extensions.Commands
 {
@@ -35,17 +39,93 @@ namespace NuGet.Extensions.Commands
 
         public override void ExecuteCommand()
         {
-            if (String.IsNullOrEmpty(Solution))
-                throw new ArgumentException("Solution is a required argument.");
+            if (String.IsNullOrEmpty(Arguments[0])) return;
+            var solutionFile = new FileInfo(Arguments[0]);
+            if (!solutionFile.Exists || solutionFile.Extension != ".sln")
+            {
+                Console.WriteError("Could not find solution file : {0}", solutionFile);
+                return;
+            }
+            var solutionRoot = solutionFile.Directory;
+            if (solutionRoot == null)
+            {
+                Console.WriteError("Could not find solution file directory root : {0}", solutionFile);
+                return;
+            }
 
-            var repository = GetRepository();
+            var solution = new Solution(solutionFile.FullName);
+            var simpleProjectObjects = solution.Projects;
 
-            //First, check the solution output files
+            Console.WriteLine("Processing {0} projects in solution {1}...", simpleProjectObjects.Count, solutionFile.Name);
+            foreach (var simpleProject in simpleProjectObjects)
+            {
+                var projectPath = Path.Combine(solutionRoot.FullName, simpleProject.RelativePath);
+                if (!File.Exists(projectPath))
+                {
+                    Console.WriteWarning("Project: {0} was not found on disk", simpleProject.ProjectName);
+                    continue;
+                }
+                var packagesConfigFileLocation = Path.Combine(projectPath, "packages.config");
+                if (!File.Exists(packagesConfigFileLocation))
+                {
+                    Console.WriteWarning("No packages.config file, skipping...");
+                    continue;
+                }
+                var packagesConfigFile = new PackageReferenceFile(packagesConfigFileLocation);
 
-            //Then, get their metadata (runtime requirements) per project
+                Console.WriteLine();
+                Console.WriteLine("Processing Project: {0}", simpleProject.ProjectName);
+                var projectFileInfo = new FileInfo(projectPath);
+                var project = new Project(projectPath, new Dictionary<string, string>(), null, new ProjectCollection());
+                var outputFilePath = GetProjectOutputFileLocation(projectPath, project);
+                if (!File.Exists(outputFilePath))
+                {
+                    Console.WriteWarning("Could not find the output file for project, please build it first : {0}", outputFilePath);
+                }
+                var assembly = Assembly.Load(outputFilePath);
+                
+                //So, one is what we use for our output, and one we use for our build, and one ends up in the output directory...
+                var assemblyReferences = assembly.GetReferencedAssemblies();
+                var projectFileReferences = project.GetItems("Reference");
+                var filesInOutputDirectory = Directory.GetFiles(new FileInfo(outputFilePath).DirectoryName, "*.dll");
+                var packageReferences = packagesConfigFile.GetPackageReferences();
+                var projectReferences = project.GetProjectReferences();
 
-            //Then, compare against that projects packages.config.
-            
+                //And now, do the magix!
+
+
+
+                Console.WriteLine("Project completed!");
+            }
+            Console.WriteLine("Complete!");
+        }
+
+        private string GetProjectOutputFileLocation(string projectPath, Project project)
+        {
+            var assemblyOutput = project.GetPropertyValue("AssemblyName");
+            var outputType = project.GetPropertyValue("OutputType");
+            var assemblyOutputFilename = string.Format("{0}.{1}", assemblyOutput, GetAssemblyExtension(outputType));
+            var outputPath = project.GetPropertyValue("OutputPath");
+            var outputFilePath = Path.Combine(projectPath.GetRelativePath(outputPath), assemblyOutputFilename);
+            return outputFilePath;
+        }
+
+        private static string GetAssemblyExtension(string outputType)
+        {
+            switch (outputType)
+            {
+                case  "Library" :
+                    return ".dll";
+
+                case "WinExe" :
+                    return ".exe";
+
+                case "Exe" :
+                    return ".exe";
+
+                default :
+                    return string.Empty;
+            }
         }
 
         private IPackageRepository GetRepository()

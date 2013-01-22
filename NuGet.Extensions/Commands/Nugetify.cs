@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using Microsoft.Build.Evaluation;
 using NuGet.Commands;
 using NuGet.Common;
+using NuGet.Extensions.ExtensionMethods;
 using NuGet.Extensions.GetLatest.MSBuild;
 using NuGet.Extras.Repositories;
 
@@ -18,8 +19,6 @@ namespace NuGet.Extensions.Commands
     public class Nugetify : Command
     {
         private readonly List<string> _sources = new List<string>();
-        private IFileSystem _fileSystem;
-        private RepositoryAssemblyResolver _resolver;
 
         [ImportingConstructor]
         public Nugetify(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider sourceProvider)
@@ -82,80 +81,77 @@ namespace NuGet.Extensions.Commands
 
         public override void ExecuteCommand()
         {
-            if (!String.IsNullOrEmpty(Arguments[0]))
+            if (String.IsNullOrEmpty(Arguments[0])) return;
+
+            var solutionFile = new FileInfo(Arguments[0]);
+            if (!solutionFile.Exists || solutionFile.Extension != ".sln")
             {
-                var solutionFile = new FileInfo(Arguments[0]);
-                if (solutionFile.Exists && solutionFile.Extension == ".sln")
+                Console.WriteError("Could not find solution file : {0}", solutionFile);
+                return;
+            }
+
+            var solutionRoot = solutionFile.Directory;
+            if (solutionRoot == null)
+            {
+                Console.WriteError("Could not find solution file directory root : {0}", solutionFile);
+                return;
+            }
+
+            var sharedPackagesRepository = new SharedPackageRepository(Path.Combine(solutionRoot.FullName, "packages"));
+            var solution = new Solution(solutionFile.FullName);
+            var simpleProjectObjects = solution.Projects;
+
+            Console.WriteLine("Processing {0} projects in solution {1}...", simpleProjectObjects.Count, solutionFile.Name);
+            foreach (var simpleProject in simpleProjectObjects)
+            {
+                var manifestDependencies = new List<ManifestDependency>();
+                var projectPath = Path.Combine(solutionRoot.FullName, simpleProject.RelativePath);
+                if (File.Exists(projectPath))
                 {
-                    var solutionRoot = solutionFile.Directory;
-                    var sharedPackagesRepository = new SharedPackageRepository(Path.Combine(solutionRoot.FullName, "packages"));
-                    var solution = new Solution(solutionFile.FullName);
-                    var simpleProjectObjects = solution.Projects;
+                    Console.WriteLine();
+                    Console.WriteLine("Processing Project: {0}", simpleProject.ProjectName);
+                    var projectFileInfo = new FileInfo(projectPath);
+                    var project = new Project(projectPath, new Dictionary<string, string>(), null, new ProjectCollection());
+                    var assemblyOutput = project.GetPropertyValue("AssemblyName");
 
-                    Console.WriteLine("Processing {0} projects in solution {1}...", simpleProjectObjects.Count, solutionFile.Name);
-                    foreach (var simpleProject in simpleProjectObjects)
+                    var references = project.GetItems("Reference");
+
+                    IQueryable<IPackage> packageSource = GetRepository().GetPackages().OrderBy(p => p.Id);
+                    var referenceList = references.GetReferencedAssemblies();
+                    if (referenceList.Any())
                     {
-                        var manifestDependencies = new List<ManifestDependency>();
-                        var projectPath = Path.Combine(solutionFile.Directory.FullName, simpleProject.RelativePath);
-                        if (File.Exists(projectPath))
+                        var resolvedAssemblies = ResolveAssembliesToPackagesConfigFile(projectFileInfo.Directory.ToString(), referenceList, packageSource, Console);
+                        var resolvedMappings = ResolveReferenceMappings(resolvedAssemblies, Console);
+
+                        if (resolvedMappings != null && resolvedMappings.Any())
                         {
-                            Console.WriteLine();
-                            Console.WriteLine("Processing Project: {0}", simpleProject.ProjectName);
-                            var projectFileInfo = new FileInfo(projectPath);
-                            var project = new Project(projectPath,new Dictionary<string, string>(),null,new ProjectCollection());
-                            var assemblyOutput = project.GetPropertyValue("AssemblyName");
-
-                            var references = project.GetItems("Reference");
-
-                            var resolvedMappings = ResolveReferenceMappings(references, projectFileInfo);
-
-                            if (resolvedMappings != null && resolvedMappings.Any())
-                            {
-                                UpdateProjectFileReferenceHintPaths(solutionRoot, project, projectPath, resolvedMappings, references);
-                                var projectReferences = ParseProjectReferences(project);
-                                CreateNuGetScaffolding(sharedPackagesRepository, manifestDependencies, resolvedMappings, projectFileInfo, project, projectReferences);
-                            }
-
-                            //Create nuspec regardless of whether we have added dependencies
-                            if (NuSpec)
-                            {
-                                CreateAndOutputNuSpecFile(assemblyOutput, manifestDependencies);
-                            }
-
-                            Console.WriteLine("Project completed!");
+                            UpdateProjectFileReferenceHintPaths(solutionRoot, project, projectPath, resolvedMappings, references);
+                            Console.WriteLine("Checking for any project References for packages.config...");
+                            var projectReferences = project.GetProjectReferences();
+                            CreateNuGetScaffolding(sharedPackagesRepository, manifestDependencies, resolvedMappings, projectFileInfo, project, projectReferences);
                         }
-                        else
+
+                        //Create nuspec regardless of whether we have added dependencies
+                        if (NuSpec)
                         {
-                            Console.WriteWarning("Project: {0} was not found on disk", simpleProject.ProjectName);
+                            CreateAndOutputNuSpecFile(assemblyOutput, manifestDependencies);
                         }
                     }
-                    Console.WriteLine("Complete!");
+                    Console.WriteLine("Project completed!");
                 }
                 else
                 {
-                    Console.WriteError("Could not find solution file : {0}", solutionFile);
+                    Console.WriteWarning("Project: {0} was not found on disk", simpleProject.ProjectName);
                 }
             }
-        }
-
-        private List<string> ParseProjectReferences(Project project)
-        {
-            Console.WriteLine("Checking for any project References for packages.config...");
-            var refs = new List<string>();
-            var references = project.GetItems("ProjectReference");
-            foreach (var reference in references)
-            {
-                var refProject = new Project(Path.Combine(project.DirectoryPath, reference.UnevaluatedInclude),new Dictionary<string, string>(),null,new ProjectCollection());
-                refs.Add(refProject.GetPropertyValue("AssemblyName"));
-            }
-            return refs;
+            Console.WriteLine("Complete!");
         }
 
         private void UpdateProjectFileReferenceHintPaths(DirectoryInfo solutionRoot, Project project, string projectPath, IEnumerable<KeyValuePair<string, List<IPackage>>> resolvedMappings, ICollection<ProjectItem> references)
         {
             foreach (var mapping in resolvedMappings)
             {
-                var referenceMatch = references.FirstOrDefault(r => ResolveProjectReferenceItemByAssemblyName(r, mapping.Key));
+                var referenceMatch = references.FirstOrDefault(r => r.HintPathFileNameMatches(mapping.Key));
                 if (referenceMatch != null)
                 {
                     var includeName = referenceMatch.EvaluatedInclude.Contains(',') ? referenceMatch.EvaluatedInclude.Split(',')[0] : referenceMatch.EvaluatedInclude;
@@ -164,9 +160,9 @@ namespace NuGet.Extensions.Commands
 
                     LogHintPathRewriteMessage(package, includeName, includeVersion);
 
-                    var fileLocation = GetFileLocationFromPackage(package, mapping.Key);
+                    var fileLocation = package.GetFileLocationFromPackage(mapping.Key);
                     var newHintPathFull  = Path.Combine(solutionRoot.FullName, "packages", package.Id, fileLocation);
-                    var newHintPathRelative = String.Format(GetRelativePath(projectPath, newHintPathFull));
+                    var newHintPathRelative = String.Format(projectPath.GetRelativePath(newHintPathFull));
                     //TODO make version available, currently only works for non versioned package directories...
                     referenceMatch.SetMetadataValue("HintPath", newHintPathRelative);
                 }
@@ -192,7 +188,7 @@ namespace NuGet.Extensions.Commands
                 Console.WriteWarning(message);
         }
 
-        private void CreateNuGetScaffolding(SharedPackageRepository sharedPackagesRepository, List<ManifestDependency> manifestDependencies, IEnumerable<KeyValuePair<string, List<IPackage>>> resolvedMappings, FileInfo projectFileInfo, Project project, List<string> projectDependencies)
+        private void CreateNuGetScaffolding(SharedPackageRepository sharedPackagesRepository, ICollection<ManifestDependency> manifestDependencies, IEnumerable<KeyValuePair<string, List<IPackage>>> resolvedMappings, FileInfo projectFileInfo, Project project, List<string> projectDependencies)
         {
             //Now, create the packages.config for the resolved packages, and update the repositories.config
             Console.WriteLine("Creating packages.config");
@@ -233,24 +229,14 @@ namespace NuGet.Extensions.Commands
             }
         }
 
-        private IEnumerable<KeyValuePair<string, List<IPackage>>> ResolveReferenceMappings(ICollection<ProjectItem> references, FileInfo projectFileInfo)
+        private static IEnumerable<KeyValuePair<string, List<IPackage>>> ResolveReferenceMappings(Dictionary<string, List<IPackage>> referenceMappings, IConsole console)
         {
-            var referenceList = GetReferencedAssemblies(references);
-            if (referenceList.Any())
-            {
-                var referenceMappings = ResolveAssembliesToPackagesConfigFile(projectFileInfo, referenceList);
-                var resolvedMappings = referenceMappings.Where(m => m.Value.Any());
-                var failedMappings = referenceMappings.Where(m => m.Value.Count == 0);
-                //next, lets rewrite the project file with the mappings to the new location...
-                //Going to have to use the mapping to assembly name that we get back from the resolve above
-                Console.WriteLine();
-                Console.WriteLine("Found {0} package to assembly mappings on feed...", resolvedMappings.Count());
-                failedMappings.ToList().ForEach(f => Console.WriteWarning("Could not match: {0}", f.Key));
-                return resolvedMappings;
-            }
-
-            Console.WriteLine("No references found to resolve (all GAC?)");
-            return null;
+            var resolvedMappings = referenceMappings.Where(m => m.Value.Any());
+            var failedMappings = referenceMappings.Where(m => m.Value.Count == 0);
+            console.WriteLine();
+            console.WriteLine("Found {0} package to assembly mappings on feed...", resolvedMappings.Count());
+            failedMappings.ToList().ForEach(f => console.WriteWarning("Could not match: {0}", f.Key));
+            return resolvedMappings;
         }
 
         private void CreateAndOutputNuSpecFile(string assemblyOutput, List<ManifestDependency> manifestDependencies)
@@ -297,7 +283,7 @@ namespace NuGet.Extensions.Commands
                     manifest.Save(stream, validate: false);
                     stream.Seek(0, SeekOrigin.Begin);
                     var content = stream.ReadToEnd();
-                    File.WriteAllText(nuspecFile, RemoveSchemaNamespace(content));
+                    File.WriteAllText(nuspecFile, content.RemoveSchemaNamespace());
                 }
             }
             catch (Exception)
@@ -307,85 +293,25 @@ namespace NuGet.Extensions.Commands
             }
         }
 
-        private string GetFileLocationFromPackage(IPackage package, string key)
-        {
-            return (from fileLocation in package.GetFiles()
-                    where fileLocation.Path.ToLowerInvariant().EndsWith(key, StringComparison.OrdinalIgnoreCase)
-                    select fileLocation.Path).FirstOrDefault();
-        }
-
-        private static String GetRelativePath(string root, string child)
-        {
-            // Validate paths.
-            Contract.Assert(!String.IsNullOrEmpty(root));
-            Contract.Assert(!String.IsNullOrEmpty(child));
-
-            // Create Uris
-            var rootUri = new Uri(root);
-            var childUri = new Uri(child);
-
-            // Get relative path.
-            var relativeUri = rootUri.MakeRelativeUri(childUri);
-
-            // Clean path and return.
-            return Uri.UnescapeDataString(relativeUri.ToString()).Replace('/', Path.DirectorySeparatorChar);
-        }
-
-        private static string RemoveSchemaNamespace(string content)
-        {
-            // This seems to be the only way to clear out xml namespaces.
-            return Regex.Replace(content, @"(xmlns:?[^=]*=[""][^""]*[""])", String.Empty, RegexOptions.IgnoreCase | RegexOptions.Multiline);
-        }
-
-        private Dictionary<string, List<IPackage>> ResolveAssembliesToPackagesConfigFile(FileInfo projectFileInfo, List<string> referenceFiles)
+        private static Dictionary<string, List<IPackage>> ResolveAssembliesToPackagesConfigFile(string fileSystemRoot, List<string> referenceFiles, IQueryable<IPackage> packageSource, IConsole console)
         {
             var results = new Dictionary<string, List<IPackage>>();
             if (referenceFiles.Any())
             {
-                Console.WriteLine("Checking feed for {0} references...", referenceFiles.Count);
-
-                IQueryable<IPackage> packageSource = GetRepository().GetPackages().OrderBy(p => p.Id);
+                console.WriteLine("Checking feed for {0} references...", referenceFiles.Count);
 
                 var assemblyResolver = new RepositoryAssemblyResolver(referenceFiles,
                                                                       packageSource,
-                                                                      new PhysicalFileSystem(projectFileInfo.Directory.ToString()),
-                                                                      Console);
+                                                                      new PhysicalFileSystem(fileSystemRoot),
+                                                                      console);
                 results = assemblyResolver.ResolveAssemblies(false);
                 assemblyResolver.OutputPackageConfigFile();
             }
             else
             {
-                Console.WriteWarning("No references found to resolve (all GAC?)");
+                console.WriteWarning("No references found to resolve (all GAC?)");
             }
             return results;
-        }
-
-        private static List<string> GetReferencedAssemblies(IEnumerable<ProjectItem> references)
-        {
-            var referenceFiles = new List<string>();
-
-            foreach (ProjectItem reference in references)
-            {
-                //TODO deal with GAC assemblies that we want to replace as well....
-                if (reference.HasMetadata("HintPath"))
-                {
-                    var hintPath = reference.GetMetadataValue("HintPath");
-                    referenceFiles.Add(Path.GetFileName(hintPath));
-                }
-            }
-            return referenceFiles;
-        }
-
-        private bool ResolveProjectReferenceItemByAssemblyName(ProjectItem reference, string mapping)
-        {
-            if (reference.HasMetadata("HintPath"))
-            {
-                var hintpath = reference.GetMetadataValue("HintPath");
-                var fileInfo = new FileInfo(hintpath);
-                return fileInfo.Name.Equals(mapping, StringComparison.OrdinalIgnoreCase);
-            }
-
-            return false;
         }
 
         private IPackageRepository GetRepository()
