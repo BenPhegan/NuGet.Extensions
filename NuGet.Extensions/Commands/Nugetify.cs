@@ -117,7 +117,7 @@ namespace NuGet.Extensions.Commands
                     var references = project.GetItems("Reference");
 
                     IQueryable<IPackage> packageSource = GetRepository().GetPackages().OrderBy(p => p.Id);
-                    var referenceList = references.GetReferencedAssemblies();
+                    var referenceList = references.GetReferencedAssembliesAsStrings();
                     if (referenceList.Any())
                     {
                         var resolvedAssemblies = ResolveAssembliesToPackagesConfigFile(projectFileInfo.Directory.ToString(), referenceList, packageSource, Console);

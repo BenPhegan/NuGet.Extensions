@@ -86,13 +86,30 @@ namespace NuGet.Extensions.Commands
                 
                 //So, one is what we use for our output, and one we use for our build, and one ends up in the output directory...
                 var assemblyReferences = assembly.GetReferencedAssemblies();
-                var projectFileReferences = project.GetItems("Reference");
+                var projectFileReferences = project.GetItems("Reference").GetReferencedAssembliesAsStrings();
                 var filesInOutputDirectory = Directory.GetFiles(new FileInfo(outputFilePath).DirectoryName, "*.dll");
                 var packageReferences = packagesConfigFile.GetPackageReferences();
                 var projectReferences = project.GetProjectReferences();
 
                 //And now, do the magix!
+                var distinctAssemblyManifestReferences = assemblyReferences.Select(a => a.Name).Distinct().ToList();
+                //Remove any project references, as they should be found locally and not on the feed.
+                var filteredDistinctAssemblyManifestReferences = distinctAssemblyManifestReferences.Where(a => !projectReferences.Any(b => b.StartsWith(a))).ToList();
+                var assemblyResolver = new RepositoryAssemblyResolver(filteredDistinctAssemblyManifestReferences,
+                                                      GetRepository().GetPackages(),
+                                                      new PhysicalFileSystem(projectPath),
+                                                      Console);
+                var manifestReferencePackageMappings = assemblyResolver.ResolveAssemblies(false);
+                //Get the smallest package for each key in the returned matches
+                var smallestPackageSet = manifestReferencePackageMappings.Select(mapping => mapping.Value.OrderBy(p => p.GetFiles().Count()).First()).ToList();
 
+                //Compare against our package set...
+                var unusedReferences = new List<PackageReference>();
+                foreach (var reference in packageReferences)
+                {
+                    if (!smallestPackageSet.Any(p => p.Id.Equals(reference.Id,StringComparison.InvariantCultureIgnoreCase)))
+                        unusedReferences.Add(reference);
+                }
 
 
                 Console.WriteLine("Project completed!");

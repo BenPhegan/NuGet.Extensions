@@ -21,7 +21,7 @@ namespace NuGet.Extensions.ExtensionMethods
             return false;
         }
 
-        public static List<string> GetReferencedAssemblies(this IEnumerable<ProjectItem> references)
+        public static List<string> GetReferencedAssembliesAsStrings(this IEnumerable<ProjectItem> references)
         {
             var referenceFiles = new List<string>();
 
