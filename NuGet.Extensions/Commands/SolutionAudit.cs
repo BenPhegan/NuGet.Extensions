@@ -26,10 +26,6 @@ namespace NuGet.Extensions.Commands
         {
             get { return _sources; }
         }
-
-        [Option("Solution to audit", AltName = "p")]
-        public string Solution { get; set; }
-
         [ImportingConstructor]
         public SolutionAudit(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider sourceProvider)
         {
@@ -39,7 +35,7 @@ namespace NuGet.Extensions.Commands
 
         public override void ExecuteCommand()
         {
-            if (String.IsNullOrEmpty(Arguments[0])) return;
+            if (Arguments.Count == 0 || String.IsNullOrEmpty(Arguments[0])) return;
             var solutionFile = new FileInfo(Arguments[0]);
             if (!solutionFile.Exists || solutionFile.Extension != ".sln")
             {
@@ -57,6 +53,9 @@ namespace NuGet.Extensions.Commands
             var simpleProjectObjects = solution.Projects;
 
             Console.WriteLine("Processing {0} projects in solution {1}...", simpleProjectObjects.Count, solutionFile.Name);
+            Console.WriteLine("Caching package information from feed...");
+            var packages = GetRepository().GetPackages().Where(p => p.IsLatestVersion).OrderBy(p => p.Id).ToList().AsQueryable();
+
             foreach (var simpleProject in simpleProjectObjects)
             {
                 var projectPath = Path.Combine(solutionRoot.FullName, simpleProject.RelativePath);
@@ -65,7 +64,10 @@ namespace NuGet.Extensions.Commands
                     Console.WriteWarning("Project: {0} was not found on disk", simpleProject.ProjectName);
                     continue;
                 }
-                var packagesConfigFileLocation = Path.Combine(projectPath, "packages.config");
+                var projectFileInfo = new FileInfo(projectPath);
+                var projectDirectory = projectFileInfo.Directory.FullName;
+
+                var packagesConfigFileLocation = Path.Combine(projectDirectory, "packages.config");
                 if (!File.Exists(packagesConfigFileLocation))
                 {
                     Console.WriteWarning("No packages.config file, skipping...");
@@ -75,14 +77,13 @@ namespace NuGet.Extensions.Commands
 
                 Console.WriteLine();
                 Console.WriteLine("Processing Project: {0}", simpleProject.ProjectName);
-                var projectFileInfo = new FileInfo(projectPath);
                 var project = new Project(projectPath, new Dictionary<string, string>(), null, new ProjectCollection());
-                var outputFilePath = GetProjectOutputFileLocation(projectPath, project);
+                var outputFilePath = GetProjectOutputFileLocation(projectDirectory, project);
                 if (!File.Exists(outputFilePath))
                 {
                     Console.WriteWarning("Could not find the output file for project, please build it first : {0}", outputFilePath);
                 }
-                var assembly = Assembly.Load(outputFilePath);
+                var assembly = Assembly.LoadFile(outputFilePath);
                 
                 //So, one is what we use for our output, and one we use for our build, and one ends up in the output directory...
                 var assemblyReferences = assembly.GetReferencedAssemblies();
@@ -95,13 +96,18 @@ namespace NuGet.Extensions.Commands
                 var distinctAssemblyManifestReferences = assemblyReferences.Select(a => a.Name).Distinct().ToList();
                 //Remove any project references, as they should be found locally and not on the feed.
                 var filteredDistinctAssemblyManifestReferences = distinctAssemblyManifestReferences.Where(a => !projectReferences.Any(b => b.StartsWith(a))).ToList();
-                var assemblyResolver = new RepositoryAssemblyResolver(filteredDistinctAssemblyManifestReferences,
-                                                      GetRepository().GetPackages(),
+                var assemblyResolver = new RepositoryAssemblyResolver(filteredDistinctAssemblyManifestReferences.Select(a => String.Format("{0}.dll", a)).ToList(),
+                                                      packages,
                                                       new PhysicalFileSystem(projectPath),
                                                       Console);
                 var manifestReferencePackageMappings = assemblyResolver.ResolveAssemblies(false);
                 //Get the smallest package for each key in the returned matches
-                var smallestPackageSet = manifestReferencePackageMappings.Select(mapping => mapping.Value.OrderBy(p => p.GetFiles().Count()).First()).ToList();
+                var smallestPackageSet = manifestReferencePackageMappings
+                    .Where(m => m.Value.Any())
+                    .Select(mapping => mapping.Value.OrderBy(p => p.GetFiles()
+                        .Count())
+                        .First())
+                        .ToList();
 
                 //Compare against our package set...
                 var unusedReferences = new List<PackageReference>();
@@ -111,6 +117,7 @@ namespace NuGet.Extensions.Commands
                         unusedReferences.Add(reference);
                 }
 
+                 unusedReferences.ForEach(a => Console.WriteLine("{0} - {1} : Appears to be unused.", a.Id, a.Version));
 
                 Console.WriteLine("Project completed!");
             }
@@ -121,9 +128,9 @@ namespace NuGet.Extensions.Commands
         {
             var assemblyOutput = project.GetPropertyValue("AssemblyName");
             var outputType = project.GetPropertyValue("OutputType");
-            var assemblyOutputFilename = string.Format("{0}.{1}", assemblyOutput, GetAssemblyExtension(outputType));
+            var assemblyOutputFilename = string.Format("{0}{1}", assemblyOutput, GetAssemblyExtension(outputType));
             var outputPath = project.GetPropertyValue("OutputPath");
-            var outputFilePath = Path.Combine(projectPath.GetRelativePath(outputPath), assemblyOutputFilename);
+            var outputFilePath = Path.Combine(Path.Combine(projectPath, outputPath), assemblyOutputFilename);
             return outputFilePath;
         }
 
