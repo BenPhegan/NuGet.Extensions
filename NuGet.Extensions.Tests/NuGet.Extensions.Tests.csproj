@@ -41,9 +41,9 @@
     <Reference Include="NuGet">
       <HintPath>..\packages\NuGet.CommandLine.1.7.0\tools\NuGet.exe</HintPath>
     </Reference>
-    <Reference Include="NuGet.Extras, Version=1.0.0.12, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="NuGet.Extras, Version=1.0.0.14, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\NuGet.Extras.1.0.0.12\lib\net40\NuGet.Extras.dll</HintPath>
+      <HintPath>..\packages\NuGet.Extras.1.0.0.14\lib\net40\NuGet.Extras.dll</HintPath>
     </Reference>
     <Reference Include="nunit.framework">
       <HintPath>..\packages\NUnit.2.5.10.11092\lib\nunit.framework.dll</HintPath>
@@ -103,7 +103,7 @@
     </PreBuildEvent>
   </PropertyGroup>
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
   </Target>

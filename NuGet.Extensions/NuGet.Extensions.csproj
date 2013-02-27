@@ -39,9 +39,9 @@
     <Reference Include="NuGet">
       <HintPath>..\packages\NuGet.CommandLine.1.7.0\tools\NuGet.exe</HintPath>
     </Reference>
-    <Reference Include="NuGet.Extras, Version=1.0.0.12, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="NuGet.Extras, Version=1.0.0.14, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\NuGet.Extras.1.0.0.12\lib\net40\NuGet.Extras.dll</HintPath>
+      <HintPath>..\packages\NuGet.Extras.1.0.0.14\lib\net40\NuGet.Extras.dll</HintPath>
     </Reference>
     <Reference Include="QuickGraph">
       <HintPath>..\packages\QuickGraph.3.6.61119.7\lib\net4\QuickGraph.dll</HintPath>
@@ -123,11 +123,11 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>if not exist $(TargetDir)Merged mkdir $(TargetDir)Merged
- copy $(TargetDir)NuGet.Extensions.nuspec $(TargetDir)Merged\Nuget.Extensions.nuspec /y   
+ copy $(TargetDir)NuGet.Extensions.nuspec $(TargetDir)Merged\Nuget.Extensions.nuspec /y
 $(SolutionDir)tools\ilmerge\ilmerge.exe /v4 /t:library /out:$(TargetDir)Merged\$(TargetFileName) $(TargetPath) $(TargetDir)Nuget.Extras.dll $(TargetDir)QuickGraph.dll $(TargetDir)QuickGraph.Serialization.dll $(TargetDir)RestSharp.dll</PostBuildEvent>
   </PropertyGroup>
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
   </Target>
