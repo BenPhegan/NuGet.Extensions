@@ -247,8 +247,21 @@ namespace NuGet.Extensions.Commands
                 //Try and infer the output directory if it is null
                 OutputDirectory = OutputDirectory ?? ResolvePackagesDirectory(fileSystem, Path.GetDirectoryName(target));
 
+                FileInfo tempPackageConfig = new FileInfo(target);
+                if (IncludeDependencies)
+                {
+                    var packageReferences = GetPackageReferenceFile(fileSystem, target).GetPackageReferences().ToList();
+                    var resolvedPackages = new List<PackageReference>();
+                    resolvedPackages.ResolvePackages(packageReferences, _packageResolutionManager, _repository);
+                    tempPackageConfig = resolvedPackages.Save(OutputDirectory);
+                }
+
                 if (!string.IsNullOrEmpty(OutputDirectory))
-                    InstallPackagesFromConfigFile(OutputDirectory, GetPackageReferenceFile(fileSystem, target), target);
+                {
+                    InstallPackagesFromConfigFile(OutputDirectory, GetPackageReferenceFile(fileSystem, tempPackageConfig.FullName), target);
+                    if (TeamCityNugetXml)
+                        SaveNuGetXml(tempPackageConfig, TeamCityNuGetXmlOutputDirectory);
+                }
                 else
                     Console.WriteError(string.Format("Could not find packages directory based on {0}", target));
             }
