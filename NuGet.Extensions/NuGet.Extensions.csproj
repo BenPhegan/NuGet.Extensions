@@ -90,7 +90,6 @@
     <Compile Include="FeedAudit\GacResolver.cs" />
     <Compile Include="FeedAudit\PackageAuditEventArgs.cs" />
     <Compile Include="FeedAudit\PackageIgnoreEventArgs.cs" />
-    <Compile Include="GetExtensions\GetExtensions.cs" />
     <Compile Include="GetResources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
