@@ -249,8 +249,8 @@ namespace NuGet.Extensions.Commands
             if (File.Exists(outputFile))
             {
                 nugetXml = XDocument.Load(outputFile);
-                foreach (var packageReference in packageReferences.Descendants())
-                    nugetXml.Root.Element("packages").Add(packageReference);
+                var diffPackages = packageReferences.Nodes().Except(nugetXml.Root.Element("packages").Nodes(), new XNodeEqualityComparer());
+                nugetXml.Root.Element("packages").Add(diffPackages);
             }
             else
             {
