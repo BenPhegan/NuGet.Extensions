@@ -242,17 +242,26 @@ namespace NuGet.Extensions.Commands
 
         private static void SaveNuGetXml(XElement packageReferences, string outputDirectory = null)
         {
-            var nugetXml = new XDocument(new XElement("nuget-dependencies"));
-            nugetXml.Root.Add(new XElement("sources"));
-            nugetXml.Root.Add(packageReferences);
-            if (string.IsNullOrEmpty(outputDirectory))
-                nugetXml.Save("nuget.xml");
+            var workingDirectory = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), outputDirectory));
+            var outputFile = Path.Combine(workingDirectory, "nuget.xml");
+
+            XDocument nugetXml;
+            if (File.Exists(outputFile))
+            {
+                nugetXml = XDocument.Load(outputFile);
+                foreach (var packageReference in packageReferences.Descendants())
+                    nugetXml.Root.Element("packages").Add(packageReference);
+            }
             else
             {
-                if (!Directory.Exists(outputDirectory))
-                    Directory.CreateDirectory(outputDirectory);
-                nugetXml.Save(Path.Combine(outputDirectory, "nuget.xml"));
+                nugetXml = new XDocument(new XElement("nuget-dependencies"));
+                nugetXml.Root.Add(new XElement("sources"));
+                nugetXml.Root.Add(packageReferences);
             }
+
+            if (!Directory.Exists(workingDirectory))
+                Directory.CreateDirectory(workingDirectory);
+            nugetXml.Save(outputFile);
         }
 
         private static void SaveNuGetXml(FileInfo packageConfig, string outputDirectory = null)
