@@ -201,9 +201,9 @@ namespace NuGet.Extensions.Commands
                             else
                             {
                                 var tempPackageConfig = packageAggregator.Save(packagesConfigDiretory);
-                                InstallPackagesFromConfigFile(packagesConfigDiretory, GetPackageReferenceFile(baseFileSystem, tempPackageConfig.FullName), target);
+                                var installedPackagesList = InstallPackagesFromConfigFile(packagesConfigDiretory, GetPackageReferenceFile(baseFileSystem, tempPackageConfig.FullName), target);
                                 if (TeamCityNugetXml)
-                                    SaveNuGetXml(tempPackageConfig, TeamCityNuGetXmlOutputDirectory);
+                                    SaveNuGetXml(CreatePackagesConfigXml(installedPackagesList), TeamCityNuGetXmlOutputDirectory);
                             }
                         }
                     });
