@@ -201,9 +201,9 @@ namespace NuGet.Extensions.Commands
                             else
                             {
                                 var tempPackageConfig = packageAggregator.Save(packagesConfigDiretory);
-                                InstallPackagesFromConfigFile(packagesConfigDiretory, GetPackageReferenceFile(baseFileSystem, tempPackageConfig.FullName), target);
+                                var installedPackagesList = InstallPackagesFromConfigFile(packagesConfigDiretory, GetPackageReferenceFile(baseFileSystem, tempPackageConfig.FullName), target);
                                 if (TeamCityNugetXml)
-                                    SaveNuGetXml(tempPackageConfig, TeamCityNuGetXmlOutputDirectory);
+                                    SaveNuGetXml(CreatePackagesConfigXml(installedPackagesList), TeamCityNuGetXmlOutputDirectory);
                             }
                         }
                     });
@@ -224,20 +224,50 @@ namespace NuGet.Extensions.Commands
             }
         }
 
+        private static XElement CreatePackagesConfigXml(IEnumerable<PackageReference> packages)
+        {
+            var packagesElement = new XElement("packages");
+
+            foreach (PackageReference p in packages)
+            {
+                var packageXml = new XElement("package");
+                packageXml.SetAttributeValue("id", p.Id);
+                packageXml.SetAttributeValue("version", p.Version);
+                if (p.VersionConstraint != null)
+                    packageXml.SetAttributeValue("allowedVersions", p.VersionConstraint.ToString());
+                packagesElement.Add(packageXml);
+            }
+            return packagesElement;
+        }
+
+        private static void SaveNuGetXml(XElement packageReferences, string outputDirectory = null)
+        {
+            var workingDirectory = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), outputDirectory));
+            var outputFile = Path.Combine(workingDirectory, "nuget.xml");
+
+            XDocument nugetXml;
+            if (File.Exists(outputFile))
+            {
+                nugetXml = XDocument.Load(outputFile);
+                var diffPackages = packageReferences.Nodes().Except(nugetXml.Root.Element("packages").Nodes(), new XNodeEqualityComparer());
+                nugetXml.Root.Element("packages").Add(diffPackages);
+            }
+            else
+            {
+                nugetXml = new XDocument(new XElement("nuget-dependencies"));
+                nugetXml.Root.Add(new XElement("sources"));
+                nugetXml.Root.Add(packageReferences);
+            }
+
+            if (!Directory.Exists(workingDirectory))
+                Directory.CreateDirectory(workingDirectory);
+            nugetXml.Save(outputFile);
+        }
+
         private static void SaveNuGetXml(FileInfo packageConfig, string outputDirectory = null)
         {
             var packageConfigXml = XElement.Load(packageConfig.FullName);
-            var nugetXml = new XDocument(new XElement("nuget-dependencies"));
-            nugetXml.Root.Add(new XElement("sources"));
-            nugetXml.Root.Add(packageConfigXml);
-            if (string.IsNullOrEmpty(outputDirectory))
-                nugetXml.Save("nuget.xml");
-            else
-            {
-                if (!Directory.Exists(outputDirectory))
-                    Directory.CreateDirectory(outputDirectory);
-                nugetXml.Save(Path.Combine(outputDirectory, "nuget.xml"));
-            }
+            SaveNuGetXml(packageConfigXml, outputDirectory);
         }
 
         private void GetByPackagesConfig(IFileSystem fileSystem, string target)
@@ -246,9 +276,13 @@ namespace NuGet.Extensions.Commands
             {
                 //Try and infer the output directory if it is null
                 OutputDirectory = OutputDirectory ?? ResolvePackagesDirectory(fileSystem, Path.GetDirectoryName(target));
-
+                
                 if (!string.IsNullOrEmpty(OutputDirectory))
-                    InstallPackagesFromConfigFile(OutputDirectory, GetPackageReferenceFile(fileSystem, target), target);
+                {
+                    var installedPackages = InstallPackagesFromConfigFile(OutputDirectory, GetPackageReferenceFile(fileSystem, target), target);
+                    if (TeamCityNugetXml)
+                        SaveNuGetXml(CreatePackagesConfigXml(installedPackages), TeamCityNuGetXmlOutputDirectory);
+                }
                 else
                     Console.WriteError(string.Format("Could not find packages directory based on {0}", target));
             }
@@ -337,10 +371,11 @@ namespace NuGet.Extensions.Commands
         /// <param name="fileSystem">The file system.</param>
         /// <param name="file">The file.</param>
         /// <param name="target"> </param>
-        private void InstallPackagesFromConfigFile(string packagesDirectory, PackageReferenceFile file, string target)
+        private IEnumerable<PackageReference> InstallPackagesFromConfigFile(string packagesDirectory, PackageReferenceFile file, string target)
         {
             var packageReferences = file.GetPackageReferences().ToList();
             var installedPackages = new List<PackageReference>();
+            var allInstalled = new List<PackageReference>();
 
             //We need to create a damn filesystem at the packages directory, so that the ROOT is correct.  Ahuh...
             var fileSystem = CreateFileSystem(packagesDirectory);
@@ -366,6 +401,12 @@ namespace NuGet.Extensions.Commands
                     throw new InvalidDataException(String.Format(CultureInfo.CurrentCulture, GetResources.GetCommandPackageReferenceInvalidVersion, packageReference.Id));
                 }
 
+                packageManager.PackageInstalled += (sender, e) => 
+                    { 
+                        var installedPackage = new PackageReference(e.Package.Id, e.Package.Version, null);
+                        if (!allInstalled.Contains(installedPackage))
+                            allInstalled.Add(installedPackage);
+                    };
                 IPackage package = _packageResolutionManager.ResolveLatestInstallablePackage(_repository, packageReference);
                 if (package == null)
                 {
@@ -397,6 +438,8 @@ namespace NuGet.Extensions.Commands
                     file.AddEntry(installedPackage.Id,installedPackage.Version);
                 }
             }
+
+            return allInstalled;
         }
 
 
