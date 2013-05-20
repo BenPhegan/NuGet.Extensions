@@ -53,7 +53,7 @@ namespace NuGet.Extensions.GetLatest.Commands
             if (!string.IsNullOrEmpty(Arguments[0]))
             {
                 List<string> assemblies = new List<string>();
-                if (Arguments[0].EndsWith(".dll"))
+                if (!Arguments[0].EndsWith(".dll"))
                 {
                     fileSystem = CreateFileSystem(Directory.GetCurrentDirectory());
                     assemblies.AddRange(GetAssemblyListFromDirectory());

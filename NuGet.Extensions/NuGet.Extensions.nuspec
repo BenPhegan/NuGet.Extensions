@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>NuGet.Extensions</id>
+    <version>$version$</version>
+    <authors>Ben Phegan</authors>
+    <owners>Ben Phegan</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>A set of command line extensions for NuGet.exe.</description>
+  </metadata>
+  <files>
+    <file src="NuGet.Extensions.dll" target="lib\net40" />
+  </files>
+</package>

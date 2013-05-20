@@ -21,7 +21,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>..\Build.$(Configuration)</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -29,7 +29,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
+    <OutputPath>..\Build.$(Configuration)</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -41,8 +41,9 @@
     <Reference Include="NuGet">
       <HintPath>..\packages\NuGet.CommandLine.1.7.0\tools\NuGet.exe</HintPath>
     </Reference>
-    <Reference Include="NuGet.Extras">
-      <HintPath>..\packages\NuGet.Extras.1.0\lib\net40\NuGet.Extras.dll</HintPath>
+    <Reference Include="NuGet.Extras, Version=1.0.0.14, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\NuGet.Extras.1.0.0.14\lib\net40\NuGet.Extras.dll</HintPath>
     </Reference>
     <Reference Include="nunit.framework">
       <HintPath>..\packages\NUnit.2.5.10.11092\lib\nunit.framework.dll</HintPath>
@@ -68,6 +69,8 @@
   <ItemGroup>
     <Compile Include="Commands\FindAssemblyTests.cs" />
     <Compile Include="Configuration\FindPackageTests.cs" />
+    <Compile Include="FeedAudit\FeedAuditorTests.cs" />
+    <Compile Include="FeedAudit\GacResolverTests.cs" />
     <Compile Include="TestObjects\GetCommandTestsBase.cs" />
     <Compile Include="Mocks\FileSystemExtensions.cs" />
     <Compile Include="Mocks\MockFileSystem.cs" />
@@ -100,7 +103,7 @@
     </PreBuildEvent>
   </PropertyGroup>
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
   </Target>

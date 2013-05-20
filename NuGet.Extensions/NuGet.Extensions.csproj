@@ -19,7 +19,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>..\Build.$(Configuration)</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -27,7 +27,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
+    <OutputPath>..\Build.$(Configuration)</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -39,11 +39,22 @@
     <Reference Include="NuGet">
       <HintPath>..\packages\NuGet.CommandLine.1.7.0\tools\NuGet.exe</HintPath>
     </Reference>
-    <Reference Include="NuGet.Extras">
-      <HintPath>..\packages\NuGet.Extras.1.0\lib\net40\NuGet.Extras.dll</HintPath>
+    <Reference Include="NuGet.Extras, Version=1.0.0.14, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\NuGet.Extras.1.0.0.14\lib\net40\NuGet.Extras.dll</HintPath>
+    </Reference>
+    <Reference Include="QuickGraph">
+      <HintPath>..\packages\QuickGraph.3.6.61119.7\lib\net4\QuickGraph.dll</HintPath>
+    </Reference>
+    <Reference Include="QuickGraph.Serialization">
+      <HintPath>..\packages\QuickGraph.3.6.61119.7\lib\net4\QuickGraph.Serialization.dll</HintPath>
+    </Reference>
+    <Reference Include="RestSharp">
+      <HintPath>..\packages\RestSharp.103.1\lib\net4\RestSharp.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.Composition" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -52,10 +63,33 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Commands\Audit.cs" />
+    <Compile Include="FeedAudit\AuditEventTypes.cs" />
+    <Compile Include="FeedAudit\FeedAuditResultsOutputManager.cs" />
+    <Compile Include="FeedAudit\AssemblyNameEqualityComparer.cs" />
+    <Compile Include="FeedAudit\FeedAuditor.cs" />
+    <Compile Include="FeedAudit\PackageAuditResult.cs" />
+    <Compile Include="Commands\Graph.cs" />
+    <Compile Include="CloneResources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>CloneResources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="Commands\Clone.cs" />
+    <Compile Include="Commands\Copy.cs" />
     <Compile Include="Commands\FindAssembly.cs" />
     <Compile Include="Commands\Get.cs" />
+    <Compile Include="CopyResources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>CopyResources.resx</DependentUpon>
+    </Compile>
     <Compile Include="Commands\Details.cs" />
     <Compile Include="Commands\Nugetify.cs" />
+    <Compile Include="Commands\TeamCity.cs" />
+    <Compile Include="FeedAudit\GacResolver.cs" />
+    <Compile Include="FeedAudit\PackageAuditEventArgs.cs" />
+    <Compile Include="FeedAudit\PackageIgnoreEventArgs.cs" />
     <Compile Include="GetResources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -63,23 +97,37 @@
     </Compile>
     <Compile Include="MSBuild\Solution.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TeamCity\TeamCityApi.cs" />
+    <Compile Include="Wildcard.cs" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="CloneResources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>CloneResources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="CopyResources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>CopyResources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
     <EmbeddedResource Include="GetResources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>GetResources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <None Include="NuGet.Extensions.nuspec">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>if not exist $(TargetDir)Merged mkdir $(TargetDir)Merged
-$(SolutionDir)tools\ilmerge\ilmerge.exe /v4 /t:library /out:$(TargetDir)Merged\$(TargetFileName) $(TargetPath) $(TargetDir)Nuget.Extras.dll</PostBuildEvent>
+ copy $(TargetDir)NuGet.Extensions.nuspec $(TargetDir)Merged\Nuget.Extensions.nuspec /y
+$(SolutionDir)tools\ilmerge\ilmerge.exe /v4 /t:library /out:$(TargetDir)Merged\$(TargetFileName) $(TargetPath) $(TargetDir)Nuget.Extras.dll $(TargetDir)QuickGraph.dll $(TargetDir)QuickGraph.Serialization.dll $(TargetDir)RestSharp.dll</PostBuildEvent>
   </PropertyGroup>
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
   </Target>
