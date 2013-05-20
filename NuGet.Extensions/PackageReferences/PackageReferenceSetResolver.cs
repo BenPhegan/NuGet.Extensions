@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Versioning;
-using NuGet.Extras.ExtensionMethods;
+using NuGet.Extensions.PackageReferences;
 
-namespace NuGet.Extras.PackageReferences
+namespace NuGet.Extensions.PackageReferences
 {
     /// <summary>
     /// Resolves a set of packages to the smallest distinct set that provides all required constrained versions.

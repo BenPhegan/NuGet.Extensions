@@ -1,7 +1,7 @@
 ﻿using System;
 using NuGet;
 
-namespace NuGet.Extras.Comparers
+namespace NuGet.Extensions.Comparers
 {
     /// <summary>
     /// Allows comparison of IVersionSpec objects

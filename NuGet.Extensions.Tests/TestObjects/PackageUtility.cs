@@ -6,7 +6,7 @@ using System.Runtime.Versioning;
 using System.Text;
 using Moq;
 
-namespace NuGet.Extras.Tests.TestObjects
+namespace NuGet.Extensions.Tests.TestObjects
 {
     public class PackageUtility
     {

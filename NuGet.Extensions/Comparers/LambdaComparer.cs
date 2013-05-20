@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace NuGet.Extras.Comparers
+namespace NuGet.Extensions.Comparers
 {
     /// <summary>
     /// Allows comparers to be used via Lambdas

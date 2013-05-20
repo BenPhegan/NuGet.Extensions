@@ -2,10 +2,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using NuGet.Extras.Comparers;
+using NuGet.Extensions.Comparers;
 using NUnit.Framework;
 
-namespace NuGet.Extras.Tests.Comparers
+namespace NuGet.Extensions.Tests.Comparers
 {
     [TestFixture]
     public class PackageReferenceEqualityComparerTests

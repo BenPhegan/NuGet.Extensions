@@ -3,7 +3,7 @@ using System.Diagnostics.Contracts;
 using System.IO;
 using System.Xml.Linq;
 
-namespace NuGet.Extras.Repositories
+namespace NuGet.Extensions.Repositories
 {
     /// <summary>
     /// Implements IRepositoryEnumerator

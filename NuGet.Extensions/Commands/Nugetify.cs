@@ -9,7 +9,7 @@ using Microsoft.Build.Evaluation;
 using NuGet.Commands;
 using NuGet.Common;
 using NuGet.Extensions.GetLatest.MSBuild;
-using NuGet.Extras.Repositories;
+using NuGet.Extensions.Repositories;
 
 namespace NuGet.Extensions.Commands
 {

@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 using NuGet.Commands;
-using NuGet.Extras.BaseClasses;
+using NuGet.Extensions.ExtensionMethods;
 
-namespace NuGet.Extras.Commands
+namespace NuGet.Extensions.BaseClasses
 {
     /// <summary>
     /// Provides base functionality for commands that handle two repositories.

@@ -5,9 +5,8 @@ using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Linq;
 using NuGet.Commands;
-using NuGet.Extras;
-using NuGet.Extras.Commands;
-using NuGet.Extras.Comparers;
+using NuGet.Extensions.BaseClasses;
+using NuGet.Extensions.Comparers;
 
 namespace NuGet.Extensions.Commands
 {

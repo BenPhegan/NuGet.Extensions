@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace NuGet.Extras
+namespace NuGet.Extensions
 {
     /// <summary>
     /// Provides a blank set of user settings...

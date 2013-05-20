@@ -152,7 +152,7 @@ namespace NuGet.Extensions.Tests.Mocks
         public virtual IEnumerable<string> GetDirectories(string path)
         {
             return Paths.GroupBy(f => Path.GetDirectoryName(f.Key))
-                        .SelectMany(g => Extensions.Tests.Mocks.FileSystemExtensions.GetDirectories(g.Key))
+                        .SelectMany(g => FileSystemExtensions.GetDirectories(g.Key))
                         .Where(f => !String.IsNullOrEmpty(f) && Path.GetDirectoryName(f) != null && 
                             Path.GetDirectoryName(f).Equals(path, StringComparison.OrdinalIgnoreCase))
                         .Distinct();

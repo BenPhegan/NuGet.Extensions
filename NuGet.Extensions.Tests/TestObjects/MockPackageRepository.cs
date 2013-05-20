@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace NuGet.Extras.Tests.TestObjects
+namespace NuGet.Extensions.Tests.TestObjects
 {
     public class MockPackageRepository : PackageRepositoryBase, ICollection<IPackage>
     {

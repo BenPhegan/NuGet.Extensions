@@ -5,11 +5,11 @@ using System.Text;
 using NUnit.Framework;
 using Moq;
 using NuGet.Extensions.Tests.Mocks;
-using NuGet.Extras.Repositories;
+using NuGet.Extensions.Repositories;
 using NuGet.Common;
-using PackageUtility = NuGet.Extras.Tests.TestObjects.PackageUtility;
+using PackageUtility = NuGet.Extensions.Tests.TestObjects.PackageUtility;
 
-namespace NuGet.Extras.Tests.Repositories
+namespace NuGet.Extensions.Tests.Repositories
 {
     [TestFixture]
     public class RepositoryAssemblyResolverTests

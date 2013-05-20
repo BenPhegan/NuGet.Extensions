@@ -1,4 +1,4 @@
-namespace NuGet.Extras.Packages
+namespace NuGet.Extensions.Packages
 {
     /// <summary>
     /// Provides package resolution services.

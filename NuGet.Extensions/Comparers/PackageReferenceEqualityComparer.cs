@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
-namespace NuGet.Extras.Comparers
+namespace NuGet.Extensions.Comparers
 {
     /// <summary>
     /// Provides a set of Comparers to enable Packages comparisons to be evaluated in specific ways.

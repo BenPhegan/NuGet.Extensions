@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace NuGet.Extras
+namespace NuGet.Extensions.ExtensionMethods
 {
     /// <summary>
     /// Mwahahahaaaahaaaaaaaaa

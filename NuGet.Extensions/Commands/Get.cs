@@ -11,12 +11,12 @@ using System.Runtime.CompilerServices;
 using System.Xml.Linq;
 using NuGet.Commands;
 using NuGet.Common;
-using NuGet.Extras.Comparers;
-using NuGet.Extras.ExtensionMethods;
-using NuGet.Extras.PackageReferences;
-using NuGet.Extras.Packages;
-using NuGet.Extras.Repositories;
-using NuGet.Extras.Caches;
+using NuGet.Extensions.Caches;
+using NuGet.Extensions.ExtensionMethods;
+using NuGet.Extensions.PackageReferences;
+using NuGet.Extensions.Packages;
+using NuGet.Extensions.Comparers;
+using NuGet.Extensions.Repositories;
 
 //HACK to enable us to test some of the Internal stuff more easily.  Still not sure how many kittens die when we use this.....
 [assembly: InternalsVisibleTo("NuGet.Extensions.Tests")]

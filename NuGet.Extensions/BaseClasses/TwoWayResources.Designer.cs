@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace NuGet.Extras.BaseClasses {
+namespace NuGet.Extensions.BaseClasses {
     using System;
     
     
@@ -39,7 +39,7 @@ namespace NuGet.Extras.BaseClasses {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("NuGet.Extras.BaseClasses.TwoWayResources", typeof(TwoWayResources).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("NuGet.Extensions.BaseClasses.TwoWayResources", typeof(TwoWayResources).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;

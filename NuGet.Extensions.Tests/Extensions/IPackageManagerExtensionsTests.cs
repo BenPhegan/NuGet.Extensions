@@ -1,12 +1,12 @@
 ﻿using System.IO;
 using Moq;
 using NuGet.Extensions.Tests.Mocks;
-using NuGet.Extras.ExtensionMethods;
+using NuGet.Extensions.ExtensionMethods;
 using NUnit.Framework;
-using MockPackageRepository = NuGet.Extras.Tests.TestObjects.MockPackageRepository;
-using PackageUtility = NuGet.Extras.Tests.TestObjects.PackageUtility;
+using MockPackageRepository = NuGet.Extensions.Tests.TestObjects.MockPackageRepository;
+using PackageUtility = NuGet.Extensions.Tests.TestObjects.PackageUtility;
 
-namespace NuGet.Extras.Tests.Extensions
+namespace NuGet.Extensions.Tests.Extensions
 {
     [TestFixture]
     public class IPackageManagerExtensionsTests

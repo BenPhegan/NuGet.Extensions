@@ -2,7 +2,7 @@
 using Moq;
 using NuGet.Extensions.Tests.Mocks;
 
-namespace NuGet.Extras.Tests.TestObjects
+namespace NuGet.Extensions.Tests.TestObjects
 {
     static internal class Utilities
     {

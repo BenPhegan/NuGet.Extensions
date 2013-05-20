@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Xml.Linq;
 
-namespace NuGet.Extras.Tests.TestData
+namespace NuGet.Extensions.Tests.TestData
 {
     [Serializable]
     public class PackageResolverTestObject

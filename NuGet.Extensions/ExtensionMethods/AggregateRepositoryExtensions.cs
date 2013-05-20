@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Diagnostics.CodeAnalysis;
+using NuGet.Extensions.ExtensionMethods;
 
-namespace NuGet.Extras.ExtensionMethods
+namespace NuGet.Extensions.ExtensionMethods
 {
     /// <summary>
     /// Provides a set of extension methods that extend the AggregateRepository.
@@ -90,7 +90,7 @@ namespace NuGet.Extras.ExtensionMethods
             //TODO Return the latest package between the versionsConstraint...
             var remoteOnlyAggregateRepository = repository.GetRemoteOnlyAggregateRepository();
 
-            return remoteOnlyAggregateRepository.FindPackagesById(packageId).Where(p => versionSpec.Satisfies(p.Version)).OrderByDescending(p => p.Version).FirstOrDefault();
+            return remoteOnlyAggregateRepository.FindPackagesById(packageId).Where(p => IVersionExtensions.Satisfies(versionSpec, p.Version)).OrderByDescending(p => p.Version).FirstOrDefault();
         }
 
         //HACK Stolen from NuGet.AggregateRepository.

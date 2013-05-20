@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-namespace NuGet.Extras.Repositories
+namespace NuGet.Extensions.Repositories
 {
     /// <summary>
     /// Provides a few services across a Repository

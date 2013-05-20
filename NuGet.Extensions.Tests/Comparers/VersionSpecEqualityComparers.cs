@@ -1,8 +1,8 @@
 ﻿using System;
 using NUnit.Framework;
-using NuGet.Extras.Comparers;
+using NuGet.Extensions.Comparers;
 
-namespace NuGet.Extras.Tests.Comparers
+namespace NuGet.Extensions.Tests.Comparers
 {
     [TestFixture]
     public class VersionSpecEqualityComparerTests

@@ -1,11 +1,10 @@
 ﻿using System.Collections.Generic;
 using Moq;
 using NuGet.Common;
+using NuGet.Extensions.Caches;
 using NuGet.Extensions.Tests.TestObjects;
 using NUnit.Framework;
-using NuGet.Extras.Packages;
-using NuGet.Extras.Caches;
-using NuGet.Extras.Tests.TestObjects;
+using NuGet.Extensions.Packages;
 using MockFileSystem = NuGet.Extensions.Tests.Mocks.MockFileSystem;
 
 namespace NuGet.Extensions.Tests.Configuration

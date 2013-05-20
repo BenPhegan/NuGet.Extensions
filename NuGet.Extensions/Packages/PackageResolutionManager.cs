@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using NuGet.Extras.Caches;
-using NuGet.Extras.Comparers;
-using NuGet.Extras.ExtensionMethods;
+using NuGet.Extensions.ExtensionMethods;
+using NuGet.Extensions.Caches;
+using NuGet.Extensions.Comparers;
 
-namespace NuGet.Extras.Packages
+namespace NuGet.Extensions.Packages
 {
     /// <summary>
     /// Provides package resolution and caching services over PackageRepositories.

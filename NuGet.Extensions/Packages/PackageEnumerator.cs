@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using NuGet.Extras.Comparers;
+using NuGet.Extensions.Comparers;
+using NuGet.Extensions.Packages;
 
-namespace NuGet.Extras.Packages
+namespace NuGet.Extensions.Packages
 {
     /// <summary>
     /// Manages the enumeration of a list of PackageReferenceFile objects.

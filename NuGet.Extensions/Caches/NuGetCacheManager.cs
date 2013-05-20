@@ -3,8 +3,9 @@ using System.Diagnostics.Contracts;
 using System.Globalization;
 using System.IO;
 using NuGet.Common;
+using NuGet.Extensions.Caches;
 
-namespace NuGet.Extras.Caches
+namespace NuGet.Extensions.Caches
 {
     /// <summary>
     /// Provides management capability around NuGetCachePath so feed specific caches can be set.

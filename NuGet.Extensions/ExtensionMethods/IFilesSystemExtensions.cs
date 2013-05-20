@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace NuGet.Extras.ExtensionMethods
+namespace NuGet.Extensions.ExtensionMethods
 {
     /// <summary>
     /// IFileSystem extensions.

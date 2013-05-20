@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using Moq;
-using NuGet.Extras.Caches;
-using NuGet.Extras.Packages;
-using NuGet.Extras.Tests.TestObjects;
+using NuGet.Extensions.Caches;
+using NuGet.Extensions.Packages;
+using NuGet.Extensions.Tests.TestObjects;
 
-namespace NuGet.Extras.Tests.Packages
+namespace NuGet.Extensions.Tests.Packages
 {
     [TestFixture]
     public class PackageResolutionManagerTests

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 
-namespace NuGet.Extras.Repositories
+namespace NuGet.Extensions.Repositories
 {
     /// <summary>
     /// Allows enumeration of PackageReferenceFiles across a repository.

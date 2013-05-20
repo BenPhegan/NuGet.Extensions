@@ -1,15 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using NUnit.Framework;
+using NuGet.Extensions.Packages;
 using NuGet.Extensions.Tests.Mocks;
-using NuGet.Extras.Packages;
-using NuGet.Extras.Tests.TestObjects;
-using NuGet.Extras.Comparers;
+using NuGet.Extensions.Comparers;
 using System.IO;
 
-namespace NuGet.Extras.Tests.Packages
+namespace NuGet.Extensions.Tests.Packages
 {
     [TestFixture]
     public class PackageEnumeratorTests

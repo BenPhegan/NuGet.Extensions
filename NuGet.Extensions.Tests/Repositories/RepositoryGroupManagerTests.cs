@@ -2,11 +2,11 @@
 using System.Linq;
 using NUnit.Framework;
 using NuGet.Extensions.Tests.Mocks;
-using NuGet.Extras.Repositories;
-using NuGet.Extras.Tests.TestObjects;
+using NuGet.Extensions.Repositories;
+using NuGet.Extensions.Tests.TestObjects;
 using System.IO;
 
-namespace NuGet.Extras.Tests.Repositories
+namespace NuGet.Extensions.Tests.Repositories
 {
     [TestFixture]
     public class RepositoryGroupManagerTests

@@ -1,14 +1,15 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using NuGet.Extensions.Caches;
 
-namespace NuGet.Extras.Caches
+namespace NuGet.Extensions.Caches
 {
     /// <summary>
     /// Implements a simple package cache in memory.
     /// </summary>
     public class MemoryBasedPackageCache : IPackageCache
     {
-        private ILogger Console;
+        private readonly ILogger _console;
         
         private readonly Dictionary<string, List<IPackage>> _fullVersionPackageCache = new Dictionary<string, List<IPackage>>();
         private readonly Dictionary<string, IPackage> _latestPackageCache = new Dictionary<string, IPackage>();
@@ -20,7 +21,7 @@ namespace NuGet.Extras.Caches
         /// <param name="console"></param>
         public MemoryBasedPackageCache(ILogger console)
         {
-            Console = console;
+            _console = console;
         }
 
         /// <summary>
@@ -36,7 +37,7 @@ namespace NuGet.Extras.Caches
                 if (_latestPackageConstraintCache[packageReference.Id].ContainsKey(packageReference.VersionConstraint))
                 {
                     package = _latestPackageConstraintCache[packageReference.Id][packageReference.VersionConstraint];
-                    Console.Log(MessageLevel.Info, "Using cached latest constrained version : {0} {1} using constraint {2}",
+                    _console.Log(MessageLevel.Info, "Using cached latest constrained version : {0} {1} using constraint {2}",
                                 package.Id, package.Version.ToString(), packageReference.VersionConstraint);
                     return true;
                 }
@@ -56,7 +57,7 @@ namespace NuGet.Extras.Caches
             if (_latestPackageCache.ContainsKey(packageId))
             {
                 package = _latestPackageCache[packageId];
-                Console.Log(MessageLevel.Info, "Using cached latest version : {0} {1}", package.Id, package.Version.ToString());
+                _console.Log(MessageLevel.Info, "Using cached latest version : {0} {1}", package.Id, package.Version.ToString());
                 return true;
             }
             package = null;

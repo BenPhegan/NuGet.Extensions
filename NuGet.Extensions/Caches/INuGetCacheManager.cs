@@ -1,4 +1,4 @@
-namespace NuGet.Extras.Caches
+namespace NuGet.Extensions.Caches
 {
     /// <summary>
     /// Provides a management layer over the MachineCache cache location.

@@ -5,7 +5,7 @@ using System.Text;
 using System.IO;
 using NuGet.Common;
 
-namespace NuGet.Extras.Repositories
+namespace NuGet.Extensions.Repositories
 {
     /// <summary>
     /// Provides the ability to search across IQueryable package sources for a set of packages that contain a particular assembly or set of assemblies.

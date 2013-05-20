@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace NuGet.Extras.Caches
+namespace NuGet.Extensions.Caches
 {
     /// <summary>
     /// Provides package caching to reduce network round trips on package resolution and download.

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using NUnit.Framework;
 using Moq;
-using NuGet.Extensions.GetLatest.Commands;
+using NuGet.Extensions.Commands;
 using NuGet.Extensions.Tests.Mocks;
 
 namespace NuGet.Extensions.Tests.Commands

@@ -5,8 +5,7 @@ using System.ComponentModel.Composition;
 using System.IO;
 using NuGet.Commands;
 using NuGet.Common;
-using NuGet.Extras;
-using NuGet.Extras.Commands;
+using NuGet.Extensions.BaseClasses;
 
 namespace NuGet.Extensions.Commands
 {
@@ -33,7 +32,7 @@ namespace NuGet.Extensions.Commands
         /// Executes the command.
         /// </summary>
         protected override void ExecuteSub() {
-            string packageId = base.Arguments[0];
+            string packageId = Arguments[0];
 
             Console.WriteLine("Copying {0}{1} from {2} to {3}.",
                               string.IsNullOrEmpty(Version) ? packageId : packageId + " " + Version,
@@ -147,8 +146,8 @@ namespace NuGet.Extensions.Commands
             install.ExecuteCommand();
         }
 
-        private void PushToDestination(string workDirectory, string destination, IList<string> PackagePaths) {
-            foreach (string packagePath in PackagePaths) {
+        private void PushToDestination(string workDirectory, string destination, IEnumerable<string> packagePaths) {
+            foreach (var packagePath in packagePaths) {
                 if (IsDirectory(destination)) {
                     PushToDestinationDirectory(packagePath, destination);
                 }

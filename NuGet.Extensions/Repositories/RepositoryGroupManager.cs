@@ -5,9 +5,9 @@ using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using NuGet.Extras.ExtensionMethods;
+using NuGet.Extensions.ExtensionMethods;
 
-namespace NuGet.Extras.Repositories
+namespace NuGet.Extensions.Repositories
 {
     /// <summary>
     /// Provides functionality across multiple repositories.

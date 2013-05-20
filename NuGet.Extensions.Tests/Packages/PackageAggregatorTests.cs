@@ -1,18 +1,15 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Linq;
+using NuGet.Extensions.PackageReferences;
+using NuGet.Extensions.Packages;
 using NuGet.Extensions.Tests.Mocks;
-using NuGet.Extras.Packages;
-using NuGet.Extras.Repositories;
+using NuGet.Extensions.Repositories;
 using NUnit.Framework;
 using Moq;
-using NuGet;
 using System.Collections.Generic;
-using NuGet.Extras.Tests.TestObjects;
-using NuGet.Extras.Comparers;
-using NuGet.Extras.PackageReferences;
+using NuGet.Extensions.Comparers;
 
-namespace NuGet.Extras.Tests.Packages
+namespace NuGet.Extensions.Tests.Packages
 {
     [TestFixture]
     public class PackageAggregatorTests

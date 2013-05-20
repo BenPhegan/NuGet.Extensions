@@ -1,13 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
 using NUnit.Framework;
-using NuGet.Extras.PackageReferences;
-using NuGet.Extras.Tests.TestData;
+using NuGet.Extensions.PackageReferences;
+using NuGet.Extensions.Tests.TestData;
 using System.IO;
 
-namespace NuGet.Extras.Tests.PackageReferences
+namespace NuGet.Extensions.Tests.PackageReferences
 {
     [TestFixture]
     public class PackageReferenceSetResolverTests

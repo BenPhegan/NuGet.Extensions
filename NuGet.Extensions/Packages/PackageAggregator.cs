@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Xml.Linq;
-using NuGet.Extras.Repositories;
-using NuGet.Extras.PackageReferences;
-using NuGet.Extras.Comparers;
-using NuGet.Extras.ExtensionMethods;
+using NuGet.Extensions.Packages;
+using NuGet.Extensions.Repositories;
+using NuGet.Extensions.PackageReferences;
+using NuGet.Extensions.Comparers;
 
-namespace NuGet.Extras.Packages
+namespace NuGet.Extensions.Packages
 {
     /// <summary>
     /// Manages the saving of the aggregated packages.config file.

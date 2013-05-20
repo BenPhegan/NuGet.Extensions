@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace NuGet.Extras.ExtensionMethods
+namespace NuGet.Extensions.ExtensionMethods
 {
     /// <summary>
     /// Provides extension methods on IVersionSpec

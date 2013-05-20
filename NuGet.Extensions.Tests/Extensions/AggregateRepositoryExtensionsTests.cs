@@ -1,14 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using Moq;
 using NUnit.Framework;
+using NuGet.Extensions.ExtensionMethods;
 using NuGet.Extensions.Tests.Mocks;
-using NuGet.Extras.Tests.TestObjects;
-using NuGet.Extras.ExtensionMethods;
 
-namespace NuGet.Extras.Tests.Extensions
+namespace NuGet.Extensions.Tests.Extensions
 {
     [TestFixture]
     public class AggregateRepositoryExtensionsTests

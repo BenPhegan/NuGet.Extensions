@@ -5,8 +5,9 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using NuGet.Extensions.ExtensionMethods;
 
-namespace NuGet.Extras.ExtensionMethods
+namespace NuGet.Extensions.ExtensionMethods
 {
     /// <summary>
     /// IPackageManager Extensions

@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using NuGet.Extras.Comparers;
+using NuGet.Extensions.Comparers;
 
-namespace NuGet.Extras.Packages
+namespace NuGet.Extensions.Packages
 {
     /// <summary>
     /// Interface for package enumeration logic. Allows for mocking of the PackageReference list.
