@@ -2,10 +2,10 @@
 using Moq;
 using NuGet.Common;
 using NuGet.Extensions.Caches;
+using NuGet.Extensions.Tests.Mocks;
 using NuGet.Extensions.Tests.TestObjects;
 using NUnit.Framework;
 using NuGet.Extensions.Packages;
-using MockFileSystem = NuGet.Extensions.Tests.Mocks.MockFileSystem;
 
 namespace NuGet.Extensions.Tests.Configuration
 {
