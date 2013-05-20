@@ -197,7 +197,7 @@ namespace NuGet.Extensions.FeedAudit
         private IEnumerable<IPackage> GetDependencyAssemblyList(IPackage package, PackageAuditResult result)
         {
             var packageDependencies = new List<IPackage>();
-            foreach (var dependency in package.Dependencies)
+            foreach (var dependency in package.DependencySets.SelectMany(s => s.Dependencies))
             {
                 //HACK Slow and wrong and evil and I HATE ODATA.
                 var dependencyPackage = _feedPackages.FirstOrDefault(p => p.Id.Equals(dependency.Id, StringComparison.OrdinalIgnoreCase));

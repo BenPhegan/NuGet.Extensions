@@ -18,10 +18,8 @@ namespace NuGet.Extensions.GetLatest.Commands
     public class FindAssembly : Command
     {
         private readonly List<string> _sources = new List<string>();
-        public IPackageRepositoryFactory RepositoryFactory { get; set; }
-        public IPackageSourceProvider SourceProvider { get; set; }
-        private RepositoryAssemblyResolver resolver;
-        private IFileSystem fileSystem;
+        private RepositoryAssemblyResolver _resolver;
+        private IFileSystem _fileSystem;
 
         [Option("A list of sources to search")]
         public ICollection<string> Source
@@ -55,7 +53,7 @@ namespace NuGet.Extensions.GetLatest.Commands
                 List<string> assemblies = new List<string>();
                 if (!Arguments[0].EndsWith(".dll"))
                 {
-                    fileSystem = CreateFileSystem(Directory.GetCurrentDirectory());
+                    _fileSystem = CreateFileSystem(Directory.GetCurrentDirectory());
                     assemblies.AddRange(GetAssemblyListFromDirectory());
                 }
                 else
@@ -68,12 +66,12 @@ namespace NuGet.Extensions.GetLatest.Commands
                 sw.Start();
                 var repository = GetRepository();
                 IQueryable<IPackage> packageSource = GetPackageList(repository);
-                resolver = new RepositoryAssemblyResolver(assemblies, packageSource, fileSystem, Console);
+                _resolver = new RepositoryAssemblyResolver(assemblies, packageSource, _fileSystem, Console);
 
                 Dictionary<string, List<IPackage>> assemblyLocations = new Dictionary<string, List<IPackage>>();
                 if (assemblies.Count > 0)
                 {
-                    assemblyLocations = resolver.ResolveAssemblies(Exhaustive);
+                    assemblyLocations = _resolver.ResolveAssemblies(Exhaustive);
                 }
 
                 Console.WriteLine();
@@ -85,7 +83,7 @@ namespace NuGet.Extensions.GetLatest.Commands
                 }
                 else
                 {
-                    resolver.OutputPackageConfigFile();
+                    _resolver.OutputPackageConfigFile();
                     OutputErrors(assemblyLocations);
                 }
 
@@ -128,7 +126,7 @@ namespace NuGet.Extensions.GetLatest.Commands
         private IEnumerable<string> GetAssemblyListFromDirectory()
         {
             var assemblies = new List<string>();
-            var fqfn = fileSystem.GetFiles(Arguments[0], "*.dll");
+            var fqfn = _fileSystem.GetFiles(Arguments[0], "*.dll");
             var filenames = fqfn.Select(f =>
             {
                 var sfn = new FileInfo(f);

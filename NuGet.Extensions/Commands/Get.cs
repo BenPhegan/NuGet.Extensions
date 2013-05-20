@@ -71,10 +71,6 @@ namespace NuGet.Extensions.Commands
         [Option("Output directory for the TeamCity compatible nuget.xml file.", AltName = "to")]
         public string TeamCityNuGetXmlOutputDirectory { get; set; }
 
-        public IPackageRepositoryFactory RepositoryFactory { get; private set; }
-
-        public IPackageSourceProvider SourceProvider { get; private set; }
-
         /// <remarks>
         /// Meant for unit testing.
         /// </remarks>
@@ -403,7 +399,7 @@ namespace NuGet.Extensions.Commands
 
                 packageManager.PackageInstalled += (sender, e) => 
                     { 
-                        var installedPackage = new PackageReference(e.Package.Id, e.Package.Version, null);
+                        var installedPackage = new PackageReference(e.Package.Id, e.Package.Version, null, null);
                         if (!allInstalled.Contains(installedPackage))
                             allInstalled.Add(installedPackage);
                     };
@@ -412,14 +408,14 @@ namespace NuGet.Extensions.Commands
                 {
                     SemanticVersion version = _packageResolutionManager.ResolveInstallableVersion(_repository, packageReference);
                     installedAny |= InstallPackage(packageManager, fileSystem, packageReference.Id, version ?? packageReference.Version);
-                    installedPackages.Add(new PackageReference(packageReference.Id, version ?? packageReference.Version, null));
+                    installedPackages.Add(new PackageReference(packageReference.Id, version ?? packageReference.Version, null, null));
                 }
                 else
                 {
                     //We got it straight from the server, check whether we get a cache hit, else just install
                     var resolvedPackage = _packageResolutionManager.FindPackageInAllLocalSources(packageManager.LocalRepository, packageManager.SourceRepository, package);
                     packageManager.InstallPackage(resolvedPackage ?? package, !IncludeDependencies, false);
-                    installedPackages.Add(new PackageReference(package.Id, resolvedPackage != null ? resolvedPackage.Version : package.Version, null));
+                    installedPackages.Add(new PackageReference(package.Id, resolvedPackage != null ? resolvedPackage.Version : package.Version, null, null));
                 }
                 // Note that we ignore dependencies here because packages.config already contains the full closure
             }

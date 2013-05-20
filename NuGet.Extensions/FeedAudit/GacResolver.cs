@@ -60,7 +60,7 @@ namespace NuGet.Extensions.FeedAudit
                         Marshal.ThrowExceptionForHR(hr.ToInt32());
                     }
                 }
-                catch (FileLoadException e)
+                catch (FileLoadException)
                 {
                     return string.Empty;
                 }

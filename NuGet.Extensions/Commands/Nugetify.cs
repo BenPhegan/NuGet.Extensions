@@ -18,8 +18,6 @@ namespace NuGet.Extensions.Commands
     public class Nugetify : Command
     {
         private readonly List<string> _sources = new List<string>();
-        private IFileSystem _fileSystem;
-        private RepositoryAssemblyResolver _resolver;
 
         [ImportingConstructor]
         public Nugetify(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider sourceProvider)
@@ -30,10 +28,6 @@ namespace NuGet.Extensions.Commands
             RepositoryFactory = packageRepositoryFactory;
             SourceProvider = sourceProvider;
         }
-
-        public IPackageRepositoryFactory RepositoryFactory { get; set; }
-        public IPackageSourceProvider SourceProvider { get; set; }
-
 
         [Option("A list of sources to search")]
         public ICollection<string> Source
@@ -253,13 +247,17 @@ namespace NuGet.Extensions.Commands
             return null;
         }
 
-        private void CreateAndOutputNuSpecFile(string assemblyOutput, List<ManifestDependency> manifestDependencies)
+        private void CreateAndOutputNuSpecFile(string assemblyOutput, List<ManifestDependency> manifestDependencies, string targetFramework = ".NET Framework, Version=4.0")
         {
             var manifest = new Manifest
                                {
                                    Metadata =
                                        {
-                                           Dependencies = manifestDependencies,
+                                           //TODO need to revisit and get the TargetFramework from the assembly...
+                                           DependencySets = new List<ManifestDependencySet>
+                                               {
+                                                   new ManifestDependencySet{Dependencies = manifestDependencies,TargetFramework = targetFramework}
+                                               },
                                            Id = Id ?? assemblyOutput,
                                            Title = Title ?? assemblyOutput,
                                            Version = "$version$",

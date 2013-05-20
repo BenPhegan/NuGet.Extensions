@@ -16,6 +16,11 @@ namespace NuGet.Extensions.Tests.Mocks
             Deleted = new HashSet<string>();
         }
 
+        public DateTimeOffset GetLastAccessed(string path)
+        {
+            throw new NotImplementedException();
+        }
+
         public virtual ILogger Logger
         {
             get
@@ -63,6 +68,11 @@ namespace NuGet.Extensions.Tests.Mocks
                 }
             }
             Deleted.Add(path);
+        }
+
+        public IEnumerable<string> GetFiles(string path, string filter, bool recursive)
+        {
+            throw new NotImplementedException();
         }
 
         public virtual string GetFullPath(string path)
@@ -113,6 +123,11 @@ namespace NuGet.Extensions.Tests.Mocks
             return Paths.ContainsKey(path);
         }
 
+        public Stream CreateFile(string path)
+        {
+            throw new NotImplementedException();
+        }
+
         public virtual Stream OpenFile(string path)
         {
             Func<Stream> factory;
@@ -159,6 +174,16 @@ namespace NuGet.Extensions.Tests.Mocks
             stream.CopyTo(ms);
             byte[] buffer = ms.ToArray();
             Paths[GetFullPath(path)] = () => new MemoryStream(buffer);
+        }
+
+        public void AddFile(string path, Action<Stream> writeToStream)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void MakeFileWritable(string path)
+        {
+            throw new NotImplementedException();
         }
 
         public virtual void AddFile(string path, Func<Stream> getStream)

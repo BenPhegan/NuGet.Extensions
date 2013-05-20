@@ -190,17 +190,10 @@ namespace NuGet.Extensions.Commands
 
         }
 
-        //HACK Does this need to be here?
-        private IPackageSourceProvider CreateSourceProvider(IEnumerable<string> sources, bool useDefaultFeed = false)
-        {
-            return new PackageSourceProvider(new BlankUserSettings(), sources.AsPackageSourceList(useDefaultFeed));
-        }
-
         public IEnumerable<IPackage> GetPackageList(bool allVersions, string id, IPackageSourceProvider sourceProvider)
         {
             return GetPackageList(allVersions, id, sourceProvider, null);
         }
-
 
         public IQueryable<IPackage> GetPackageList(bool allVersions, string id, IPackageSourceProvider sourceProvider, IEnumerable<string> tags)
         {
@@ -260,10 +253,10 @@ namespace NuGet.Extensions.Commands
         //REVIEW Just in case we want to get away from using their list command....
         private IEnumerable<IPackage> GetInitialPackageList(bool allVersions, List<string> ids, IPackageSourceProvider sourceProvider)
         {
-            var listCommand = new ListCommand(RepositoryFactory, sourceProvider)
-            {
+            var listCommand = new ListCommand
+                {
                 AllVersions = allVersions,
-                Console = this.Console,
+                Console = Console,
             };
 
             if (ids != null && ids.Count != 0)

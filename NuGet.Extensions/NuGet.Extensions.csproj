@@ -13,7 +13,7 @@
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
-    <RestorePackages>false</RestorePackages>
+    <RestorePackages>true</RestorePackages>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -23,6 +23,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -36,12 +37,9 @@
     <Reference Include="Microsoft.Build" />
     <Reference Include="Microsoft.Build.Engine" />
     <Reference Include="Microsoft.Build.Framework" />
-    <Reference Include="NuGet">
-      <HintPath>..\packages\NuGet.CommandLine.1.7.0\tools\NuGet.exe</HintPath>
-    </Reference>
-    <Reference Include="NuGet.Extras, Version=1.0.0.14, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="NuGet, Version=1.7.0.0, Culture=neutral, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\NuGet.Extras.1.0.0.14\lib\net40\NuGet.Extras.dll</HintPath>
+      <HintPath>..\packages\NuGet.CommandLine.2.5.0\tools\NuGet.exe</HintPath>
     </Reference>
     <Reference Include="QuickGraph">
       <HintPath>..\packages\QuickGraph.3.6.61119.7\lib\net4\QuickGraph.dll</HintPath>
@@ -63,7 +61,27 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BaseClasses\TwoWayCommand.cs" />
+    <Compile Include="BaseClasses\TwoWayResources.Designer.cs">
+      <DependentUpon>TwoWayResources.resx</DependentUpon>
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+    </Compile>
+    <Compile Include="BlankUserSettings.cs" />
+    <Compile Include="Caches\INuGetCacheManager.cs" />
+    <Compile Include="Caches\IPackageCache.cs" />
+    <Compile Include="Caches\MemoryBasedPackageCache.cs" />
+    <Compile Include="Caches\NuGetCacheManager.cs" />
     <Compile Include="Commands\Audit.cs" />
+    <Compile Include="Comparers\LambdaComparer.cs" />
+    <Compile Include="Comparers\PackageReferenceEqualityComparer.cs" />
+    <Compile Include="Comparers\VersionSpecEqualityComparer.cs" />
+    <Compile Include="ExtensionMethods\AggregateRepositoryExtensions.cs" />
+    <Compile Include="ExtensionMethods\IEnumerableStringExtensions.cs" />
+    <Compile Include="ExtensionMethods\IFilesSystemExtensions.cs" />
+    <Compile Include="ExtensionMethods\IPackageManagerExtensions.cs" />
+    <Compile Include="ExtensionMethods\IVersionSpecExtensions.cs" />
+    <Compile Include="ExtensionMethods\ObjectExtensions.cs" />
     <Compile Include="FeedAudit\AuditEventTypes.cs" />
     <Compile Include="FeedAudit\FeedAuditResultsOutputManager.cs" />
     <Compile Include="FeedAudit\AssemblyNameEqualityComparer.cs" />
@@ -90,17 +108,35 @@
     <Compile Include="FeedAudit\GacResolver.cs" />
     <Compile Include="FeedAudit\PackageAuditEventArgs.cs" />
     <Compile Include="FeedAudit\PackageIgnoreEventArgs.cs" />
+    <Compile Include="FindFilesPatternToRegex.cs" />
     <Compile Include="GetResources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>GetResources.resx</DependentUpon>
     </Compile>
     <Compile Include="MSBuild\Solution.cs" />
+    <Compile Include="PackageReferences\IPackageReferenceSetResolver.cs" />
+    <Compile Include="PackageReferences\PackageReferenceSetResolver.cs" />
+    <Compile Include="Packages\IPackageEnumerator.cs" />
+    <Compile Include="Packages\IPackageResolutionManager.cs" />
+    <Compile Include="Packages\PackageAggregator.cs" />
+    <Compile Include="Packages\PackageEnumerator.cs" />
+    <Compile Include="Packages\PackageResolutionManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Repositories\IRepositoryEnumerator.cs" />
+    <Compile Include="Repositories\IRepositoryManager.cs" />
+    <Compile Include="Repositories\RepositoryAssemblyResolver.cs" />
+    <Compile Include="Repositories\RepositoryEnumerator.cs" />
+    <Compile Include="Repositories\RepositoryGroupManager.cs" />
+    <Compile Include="Repositories\RepositoryManager.cs" />
     <Compile Include="TeamCity\TeamCityApi.cs" />
     <Compile Include="Wildcard.cs" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="BaseClasses\TwoWayResources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>TwoWayResources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
     <EmbeddedResource Include="CloneResources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>CloneResources.Designer.cs</LastGenOutput>
@@ -122,9 +158,8 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>if not exist $(TargetDir)Merged mkdir $(TargetDir)Merged
- copy $(TargetDir)NuGet.Extensions.nuspec $(TargetDir)Merged\Nuget.Extensions.nuspec /y
-$(SolutionDir)tools\ilmerge\ilmerge.exe /v4 /t:library /out:$(TargetDir)Merged\$(TargetFileName) $(TargetPath) $(TargetDir)Nuget.Extras.dll $(TargetDir)QuickGraph.dll $(TargetDir)QuickGraph.Serialization.dll $(TargetDir)RestSharp.dll</PostBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
   </PropertyGroup>
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.

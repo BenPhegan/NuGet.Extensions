@@ -127,13 +127,13 @@ namespace NuGet.Extensions.Commands
         private void PrepareApiKey(string destination) {
             if (!IsDirectory(destination)) {
                 if (string.IsNullOrEmpty(ApiKey)) {
-                    ApiKey = GetApiKey(SourceProvider, Settings.LoadDefaultSettings(), destination, true);
+                    ApiKey = GetApiKey(SourceProvider, Settings, destination, true);
                 }
             }
         }
 
         private void InstallPackageLocally(string packageId, string workDirectory) {
-            var install = new InstallCommand(RepositoryFactory, SourceProvider);
+            var install = new InstallCommand();
             install.Arguments.Add(packageId);
             install.OutputDirectory = workDirectory;
             install.Console = Console;
@@ -205,7 +205,7 @@ namespace NuGet.Extensions.Commands
             // Push the package to the server
             var package = new ZipPackage(packagePath);
 
-            bool complete = false;
+            var complete = false;
 
             //HACK no pretty source name, as they have made the call to  CommandLineUtility.GetSourceDisplayName(source) internal
             Console.WriteLine("Pushing {0} to {1}", package.GetFullName(), source);
@@ -224,9 +224,11 @@ namespace NuGet.Extensions.Commands
 
             // Publish the package on the server
 
-            var cmd = new PublishCommand();
-            cmd.Console = Console;
-            cmd.Source = source;
+            var cmd = new PushCommand
+                {
+                    Console = Console, 
+                    Source = source
+                };
             cmd.Arguments.AddRange(new List<string> {
                                                  package.Id,
                                                  package.Version.ToString(),
