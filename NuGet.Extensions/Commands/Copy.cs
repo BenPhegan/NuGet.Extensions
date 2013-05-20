@@ -204,20 +204,19 @@ namespace NuGet.Extensions.Commands
             // Push the package to the server
             var package = new ZipPackage(packagePath);
 
-            var complete = false;
-
             //HACK no pretty source name, as they have made the call to  CommandLineUtility.GetSourceDisplayName(source) internal
             Console.WriteLine("Pushing {0} to {1}", package.GetFullName(), source);
 
-            try {
-                using (Stream stream = package.GetStream()) {
-                    packageServer.PushPackage(apiKey, stream, 60000);
+            try 
+            {
+                using (package.GetStream())
+                {
+                    packageServer.PushPackage(apiKey, package, 60000);
                 }
             }
-            catch {
-                if (!complete) {
-                    Console.WriteLine();
-                }
+            catch 
+            {
+                Console.WriteLine();
                 throw;
             }
 
