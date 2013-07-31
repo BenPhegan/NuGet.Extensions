@@ -16,6 +16,11 @@ namespace NuGet.Extensions.Tests.Mocks
             Deleted = new HashSet<string>();
         }
 
+        public DateTimeOffset GetLastAccessed(string path)
+        {
+            throw new NotImplementedException();
+        }
+
         public virtual ILogger Logger
         {
             get
@@ -63,6 +68,39 @@ namespace NuGet.Extensions.Tests.Mocks
                 }
             }
             Deleted.Add(path);
+        }
+
+        public virtual IEnumerable<string> GetFiles(string path, bool recursive)
+        {
+            var files = Paths.Select(f => f.Key);
+            if (recursive)
+            {
+                path = PathUtility.EnsureTrailingSlash(path);
+                files = files.Where(f => f.StartsWith(path, StringComparison.OrdinalIgnoreCase));
+            }
+            else
+            {
+                files = files.Where(f => Path.GetDirectoryName(f).Equals(path, StringComparison.OrdinalIgnoreCase));
+            }
+
+            return files;
+        }
+
+        public virtual IEnumerable<string> GetFiles(string path, string filter, bool recursive)
+        {
+            if (String.IsNullOrEmpty(filter) || filter == "*.*")
+            {
+                filter = "*";
+            }
+
+            var files = GetFiles(path, recursive);
+            if (!filter.Contains("*"))
+            {
+                return files.Where(f => f.Equals(Path.Combine(path, filter), StringComparison.OrdinalIgnoreCase));
+            }
+
+            Regex matcher = GetFilterRegex(filter);
+            return files.Where(f => matcher.IsMatch(f));
         }
 
         public virtual string GetFullPath(string path)
@@ -113,6 +151,11 @@ namespace NuGet.Extensions.Tests.Mocks
             return Paths.ContainsKey(path);
         }
 
+        public Stream CreateFile(string path)
+        {
+            return new MemoryStream();
+        }
+
         public virtual Stream OpenFile(string path)
         {
             Func<Stream> factory;
@@ -159,6 +202,16 @@ namespace NuGet.Extensions.Tests.Mocks
             stream.CopyTo(ms);
             byte[] buffer = ms.ToArray();
             Paths[GetFullPath(path)] = () => new MemoryStream(buffer);
+        }
+
+        public void AddFile(string path, Action<Stream> writeToStream)
+        {
+            AddFile(path, writeToStream.Target.ToString());
+        }
+
+        public void MakeFileWritable(string path)
+        {
+            throw new NotImplementedException();
         }
 
         public virtual void AddFile(string path, Func<Stream> getStream)

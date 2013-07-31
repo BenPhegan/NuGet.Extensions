@@ -3,7 +3,6 @@ syntax: glob
 obj/
 bin/
 *.user
-packages/**
 *.crunchsolution.local.xml
 *.crunchproject.local.xml
 *.crunchsolution.cache

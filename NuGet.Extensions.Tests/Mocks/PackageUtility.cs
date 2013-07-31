@@ -58,6 +58,8 @@ namespace NuGet.Extensions.Tests.Mocks
             allFiles.AddRange(CreateFiles(tools, "tools"));
             allFiles.AddRange(assemblyReferences);
 
+            var dependencySet = new PackageDependencySet(new FrameworkName(".NET Framework, Version=4.0"), dependencies);
+
             var mockPackage = new Mock<IPackage>() { CallBase = true };
             mockPackage.Setup(m => m.IsLatestVersion).Returns(isLatest);
             mockPackage.Setup(m => m.Id).Returns(id);
@@ -65,7 +67,7 @@ namespace NuGet.Extensions.Tests.Mocks
             mockPackage.Setup(m => m.Version).Returns(new SemanticVersion(version));
             mockPackage.Setup(m => m.GetFiles()).Returns(allFiles);
             mockPackage.Setup(m => m.AssemblyReferences).Returns(assemblyReferences);
-            mockPackage.Setup(m => m.Dependencies).Returns(dependencies);
+            mockPackage.Setup(m => m.DependencySets).Returns(new[] { dependencySet });
             mockPackage.Setup(m => m.Description).Returns(description);
             mockPackage.Setup(m => m.Language).Returns("en-US");
             mockPackage.Setup(m => m.Authors).Returns(new[] { "Tester" });

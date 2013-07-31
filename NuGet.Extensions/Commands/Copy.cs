@@ -5,7 +5,6 @@ using System.ComponentModel.Composition;
 using System.IO;
 using NuGet.Commands;
 using NuGet.Common;
-using NuGet.Extras;
 using NuGet.Extras.Commands;
 
 namespace NuGet.Extensions.Commands
@@ -127,13 +126,13 @@ namespace NuGet.Extensions.Commands
         private void PrepareApiKey(string destination) {
             if (!IsDirectory(destination)) {
                 if (string.IsNullOrEmpty(ApiKey)) {
-                    ApiKey = GetApiKey(SourceProvider, Settings.LoadDefaultSettings(), destination, true);
+                    ApiKey = GetApiKey(SourceProvider, Settings, destination, true);
                 }
             }
         }
 
         private void InstallPackageLocally(string packageId, string workDirectory) {
-            var install = new InstallCommand(RepositoryFactory, SourceProvider);
+            var install = new InstallCommand();
             install.Arguments.Add(packageId);
             install.OutputDirectory = workDirectory;
             install.Console = Console;
@@ -224,7 +223,7 @@ namespace NuGet.Extensions.Commands
 
             // Publish the package on the server
 
-            var cmd = new PublishCommand();
+            var cmd = new PushCommand();
             cmd.Console = Console;
             cmd.Source = source;
             cmd.Arguments.AddRange(new List<string> {

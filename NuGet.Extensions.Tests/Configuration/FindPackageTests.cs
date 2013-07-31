@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Runtime.Versioning;
 using Moq;
 using NuGet.Common;
 using NuGet.Extensions.Tests.Mocks;
@@ -55,7 +56,7 @@ namespace NuGet.Extensions.Tests.Configuration
         [TestCase("Assembly.Common", "0.0", "[1.0,2.0]", false, Result = "0.0")] // get latest constrained version (0.0 version)
         public string FindPackageLatestTests(string id, string version, string versionSpec, bool latest)
         {
-            var pr = new PackageReference(id, SemanticVersion.Parse(version), string.IsNullOrEmpty(versionSpec) ? new VersionSpec() : VersionUtility.ParseVersionSpec(versionSpec));
+            var pr = new PackageReference(id, SemanticVersion.Parse(version), string.IsNullOrEmpty(versionSpec) ? new VersionSpec() : VersionUtility.ParseVersionSpec(versionSpec), new FrameworkName(".NET Framework, Version=4.0"));
             var prc = new PackageResolutionManager(new Mock<ILogger>().Object, latest, new MemoryBasedPackageCache(new Mock<ILogger>().Object));
             var v = prc.ResolveInstallableVersion(Utilities.GetFactory().CreateRepository("SingleAggregate"), pr);
             return v != null ? v.ToString() : null;
