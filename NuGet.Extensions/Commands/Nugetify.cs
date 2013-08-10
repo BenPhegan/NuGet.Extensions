@@ -255,11 +255,18 @@ namespace NuGet.Extensions.Commands
 
         private void CreateAndOutputNuSpecFile(string assemblyOutput, List<ManifestDependency> manifestDependencies)
         {
+            var dependencySet = new ManifestDependencySet
+                {
+                    Dependencies = manifestDependencies
+                };
             var manifest = new Manifest
                                {
                                    Metadata =
                                        {
-                                           Dependencies = manifestDependencies,
+                                           DependencySets = new List<ManifestDependencySet>
+                                               {
+                                                   dependencySet
+                                               },
                                            Id = Id ?? assemblyOutput,
                                            Title = Title ?? assemblyOutput,
                                            Version = "$version$",

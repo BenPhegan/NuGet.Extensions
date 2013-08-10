@@ -3,7 +3,7 @@ using Moq;
 using NUnit.Framework;
 using NuGet.Common;
 using NuGet.Extensions.Commands;
-using NuGet.Extensions.Tests.Mocks;
+using NuGet.Extras.Tests.TestObjects;
 
 namespace NuGet.Extensions.Tests.TestObjects
 {

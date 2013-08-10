@@ -86,10 +86,10 @@ namespace NuGet.Extensions.Commands
 
         private void OutputDependencies(IPackage package)
         {
-            if (package.Dependencies.Any())
+            if (package.DependencySets.Any())
             {
                 Console.WriteLine("Package Dependencies:");
-                foreach (var dependency in package.Dependencies)
+                foreach (var dependency in package.DependencySets.SelectMany(set => set.Dependencies))
                 {
                     Console.WriteLine("".PadLeft(_indent) + string.Format("{0} {1}", dependency.Id, dependency.VersionSpec));
                 }

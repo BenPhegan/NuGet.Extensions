@@ -1,8 +1,8 @@
 ﻿using NuGet.Common;
 using NuGet.Extensions.Commands;
 using Moq;
-using NuGet.Extensions.Tests.Mocks;
 using NuGet.Extras.Caches;
+using NuGet.Extras.Tests.TestObjects;
 
 namespace NuGet.Extensions.Tests.TestObjects
 {

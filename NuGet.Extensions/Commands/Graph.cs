@@ -62,10 +62,12 @@ namespace NuGet.Extensions.Commands
 
             _graph = new AdjacencyGraph<string,Edge<string>>();
 
-            foreach (var package in packages)
-            {
-                RecursePackageDependencies(package);
-            }
+            RecursePackageDependencies(packages);
+
+            //foreach (var package in packages)
+            //{
+            //    RecursePackageDependencies(package);
+            //}
 
             if (NoLoners)
             {
@@ -103,18 +105,38 @@ namespace NuGet.Extensions.Commands
                                  });
         }
 
-        private void RecursePackageDependencies(IPackage package)
+        private void RecursePackageDependencies(IPackage package, IEnumerable<IPackage> packages)
         {
             Console.WriteLine("Adding package and dependencies: {0}", package.Id);
             _graph.AddVertex(package.Id.ToLowerInvariant());
-            foreach (var dependency in package.Dependencies)
+            foreach (var dependency in package.DependencySets.SelectMany(set => set.Dependencies))
             {
                 if (!_graph.Vertices.Contains(package.Id.ToLowerInvariant()))
-                    RecursePackageDependencies((IPackage)dependency);
+                    RecursePackageDependencies(dependency, packages);
                 _graph.AddVerticesAndEdge(new Edge<string>(package.Id.ToLowerInvariant(), dependency.Id.ToLowerInvariant()));
             }
         }
 
+        private void RecursePackageDependencies(PackageDependency packageDependency, IEnumerable<IPackage> packages)
+        {
+            Console.WriteLine("Adding package and dependencies: {0}", packageDependency.Id);
+            _graph.AddVertex(packageDependency.Id.ToLowerInvariant());
+            var dependencies = packages.First(p => p.Id == packageDependency.Id).DependencySets.SelectMany(set => set.Dependencies);
+            foreach (var dependency in dependencies)
+            {
+                if (!_graph.Vertices.Contains(dependency.Id.ToLowerInvariant()))
+                    RecursePackageDependencies(dependency, packages);
+                _graph.AddVerticesAndEdge(new Edge<string>(packageDependency.Id.ToLowerInvariant(), dependency.Id.ToLowerInvariant()));
+            }
+        }
+
+        private void RecursePackageDependencies(IEnumerable<IPackage> packages)
+        {
+            foreach (var package in packages)
+            {
+                RecursePackageDependencies(package, packages);
+            }
+        }
 
         private IEnumerable<IPackage> FilterPackageList(IQueryable<IPackage> packageSource)
           {

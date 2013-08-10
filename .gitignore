@@ -3,7 +3,6 @@ syntax: glob
 obj/
 bin/
 *.user
-packages/**
 *.crunchsolution.local.xml
 *.crunchproject.local.xml
 *.crunchsolution.cache
@@ -15,6 +14,10 @@ _ReSharper.*/**
 /NuGet.Extensions.Core/obj
 /NuGet.Extensions.Tests/bin
 /NuGet.Extensions.Tests/obj
+/NuGet.Extras/bin
+/NuGet.Extras/obj
+/NuGet.Extras.Tests/bin
+/NuGet.Extras.Tests/obj
 /Build.Debug
 /Build.Release
 /Test.Debug
