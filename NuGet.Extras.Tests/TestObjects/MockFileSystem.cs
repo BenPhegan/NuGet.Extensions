@@ -195,7 +195,7 @@ namespace NuGet.Extras.Tests.TestObjects
             var ms = new MemoryStream((int)stream.Length);
             stream.CopyTo(ms);
             byte[] buffer = ms.ToArray();
-            Paths[path] = () => new MemoryStream(buffer);
+            Paths[GetFullPath(path)] = () => new MemoryStream(buffer);
         }
 
         public virtual void AddFile(string path, Stream stream)

@@ -5,7 +5,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
 using NuGet.Extensions.FeedAudit;
-using NuGet.Extensions.Tests.Mocks;
+using NuGet.Extras.Tests.TestObjects;
 
 namespace NuGet.Extensions.Tests.FeedAudit
 {

@@ -3,7 +3,7 @@ using Moq;
 
 namespace NuGet.Extras.Tests.TestObjects
 {
-    static internal class Utilities
+    public static class Utilities
     {
         public static IPackageRepositoryFactory GetFactory()
         {

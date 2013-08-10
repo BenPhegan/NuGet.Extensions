@@ -71,13 +71,9 @@
     <Compile Include="FeedAudit\GacResolverTests.cs" />
     <Compile Include="TestObjects\GetCommandTestsBase.cs" />
     <Compile Include="Mocks\FileSystemExtensions.cs" />
-    <Compile Include="Mocks\MockFileSystem.cs" />
-    <Compile Include="Mocks\MockPackageRepository.cs" />
-    <Compile Include="Mocks\PackageUtility.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Commands\GetTests.cs" />
     <Compile Include="TestObjects\TestGetCommand.cs" />
-    <Compile Include="TestObjects\Utilities.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config">
@@ -88,6 +84,10 @@
     <ProjectReference Include="..\NuGet.Extensions\NuGet.Extensions.csproj">
       <Project>{280A97D8-09B5-48F5-A73A-82194E6FA534}</Project>
       <Name>NuGet.Extensions</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\NuGet.Extras.Tests\NuGet.Extras.Tests.csproj">
+      <Project>{4CDE1B34-3CB5-46BE-B259-421FBD380C42}</Project>
+      <Name>NuGet.Extras.Tests</Name>
     </ProjectReference>
     <ProjectReference Include="..\NuGet.Extras\NuGet.Extras.csproj">
       <Project>{f036b3f1-ea7c-4d69-b9b4-ced15a3475aa}</Project>

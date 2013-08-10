@@ -2,11 +2,11 @@
 using System.Runtime.Versioning;
 using Moq;
 using NuGet.Common;
-using NuGet.Extensions.Tests.Mocks;
 using NuGet.Extensions.Tests.TestObjects;
 using NUnit.Framework;
 using NuGet.Extras.Packages;
 using NuGet.Extras.Caches;
+using NuGet.Extras.Tests.TestObjects;
 
 namespace NuGet.Extensions.Tests.Configuration
 {
