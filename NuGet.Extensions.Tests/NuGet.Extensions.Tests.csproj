@@ -39,9 +39,8 @@
     <Reference Include="Moq">
       <HintPath>..\packages\Moq.4.0.10827\lib\NET40\Moq.dll</HintPath>
     </Reference>
-    <Reference Include="NuGet, Version=1.7.0.0, Culture=neutral, processorArchitecture=x86">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\NuGet.CommandLine.2.5.0\tools\NuGet.exe</HintPath>
+    <Reference Include="NuGet">
+      <HintPath>..\packages\NuGet.CommandLine.2.6.1\tools\NuGet.exe</HintPath>
     </Reference>
     <Reference Include="nunit.framework">
       <HintPath>..\packages\NUnit.2.5.10.11092\lib\nunit.framework.dll</HintPath>

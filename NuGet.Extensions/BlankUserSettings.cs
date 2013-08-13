@@ -98,5 +98,11 @@ namespace NuGet.Extensions
         public void SetNestedValues(string section, string key, IList<KeyValuePair<string, string>> values)
         {
         }
+
+
+        public IList<SettingValue> GetSettingValues(string section, bool isPath)
+        {
+            return new List<SettingValue>();
+        }
     }
 }
