@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Versioning;
 using NUnit.Framework;
 using Moq;
 using NuGet.Extensions.Caches;
@@ -122,7 +123,7 @@ namespace NuGet.Extensions.Tests.Packages
             var resolver = new PackageResolutionManager(console, true, new MemoryBasedPackageCache(console));
             var remoteRepository = Utilities.GetFactory().CreateRepository("SingleAggregate");
 
-            var packageReference = new PackageReference("Assembly.Common", SemanticVersion.Parse("1.0"), new VersionSpec(), null);
+            var packageReference = new PackageReference("Assembly.Common", SemanticVersion.Parse("1.0"), new VersionSpec(), new FrameworkName(".NET Framework, Version=4.0"));
 
             var test = resolver.ResolveLatestInstallablePackage(remoteRepository, packageReference);
             Assert.AreEqual("Assembly.Common", test.Id);

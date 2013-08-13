@@ -55,7 +55,7 @@ namespace NuGet.Extensions.Tests.Packages
             var fileSystem = new Mock<MockFileSystem>(){CallBase = true};
             _packageAggregator = new PackageAggregator(fileSystem.Object, _repositoryManager, new PackageEnumerator());
             FileInfo file = _packageAggregator.Save(@".");
-            Assert.IsTrue(fileSystem.Object.Paths.ContainsKey(file.ToString()));
+            Assert.IsTrue(fileSystem.Object.Paths.ContainsKey(string.Concat(fileSystem.Object.Root, file.ToString())));
         }
 
         [Test]

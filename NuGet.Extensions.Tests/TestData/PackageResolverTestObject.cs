@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Versioning;
 using System.Text;
 using System.Xml.Linq;
 
@@ -41,7 +42,7 @@ namespace NuGet.Extensions.Tests.TestData
 
         private PackageReference CreatePackageReferenceFromXElement(XElement input)
         {
-            return new PackageReference(input.Attribute("id").Value, SemanticVersion.Parse(input.Attribute("version").Value), GetVersionSpec(input), null);
+            return new PackageReference(input.Attribute("id").Value, SemanticVersion.Parse(input.Attribute("version").Value), GetVersionSpec(input), new FrameworkName(".NET Framework, Version=4.0"));
         }
 
         private VersionSpec GetVersionSpec(XElement input)
