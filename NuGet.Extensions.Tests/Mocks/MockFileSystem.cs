@@ -3,14 +3,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using NuGet.Extensions.Tests.TestObjects;
+using NuGet.Extensions.ExtensionMethods;
 
 namespace NuGet.Extensions.Tests.Mocks
 {
     public class MockFileSystem : IFileSystem
     {
         private ILogger _logger;
-        private readonly Dictionary<string, DateTime> _createdTime;
 
         public MockFileSystem()
             : this(@"C:\MockFileSystem\")
@@ -23,7 +22,11 @@ namespace NuGet.Extensions.Tests.Mocks
             Root = root;
             Paths = new Dictionary<string, Func<Stream>>(StringComparer.OrdinalIgnoreCase);
             Deleted = new HashSet<string>();
-            _createdTime = new Dictionary<string, DateTime>(StringComparer.OrdinalIgnoreCase);
+        }
+
+        public DateTimeOffset GetLastAccessed(string path)
+        {
+            throw new NotImplementedException();
         }
 
         public virtual ILogger Logger
@@ -73,11 +76,6 @@ namespace NuGet.Extensions.Tests.Mocks
             Deleted.Add(path);
         }
 
-        public virtual string GetFullPath(string path)
-        {
-            return Path.Combine(Root, path);
-        }
-
         public virtual IEnumerable<string> GetFiles(string path, bool recursive)
         {
             var files = Paths.Select(f => f.Key);
@@ -112,15 +110,33 @@ namespace NuGet.Extensions.Tests.Mocks
             return files.Where(f => matcher.IsMatch(f));
         }
 
+        public virtual string GetFullPath(string path)
+        {
+            return Path.Combine(Root, path);
+        }
+
+        public virtual IEnumerable<string> GetFiles(string path)
+        {
+            return Paths.Select(f => f.Key)
+                        .Where(f => Path.GetDirectoryName(f).Equals(path, StringComparison.OrdinalIgnoreCase));
+        }
+
+        public virtual IEnumerable<string> GetFiles(string path, string filter)
+        {
+            Regex matcher = FindFilesPatternToRegex.Convert(filter);
+
+            return GetFiles(path).Where(f => matcher.IsMatch(Path.GetFileName(f)));
+        }
+
         private static Regex GetFilterRegex(string wildcard)
         {
-            string pattern = '^' + String.Join(@"\.", wildcard.Split('.').Select(GetPattern)) + '$';
-            return new Regex(pattern, RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture);
+            string pattern = String.Join(String.Empty, wildcard.Split('.').Select(GetPattern));
+            return new Regex(pattern, RegexOptions.IgnoreCase);
         }
 
         private static string GetPattern(string token)
         {
-            return token.Replace("*", "(.*)");
+            return token == "*" ? @"(.*)" : @"(" + token + ")";
         }
 
         public virtual void DeleteFile(string path)
@@ -144,19 +160,6 @@ namespace NuGet.Extensions.Tests.Mocks
             return factory();
         }
 
-        public virtual Stream CreateFile(string path)
-        {
-            Paths[path] = () => Stream.Null;
-
-            Action<Stream> streamClose = (stream) =>
-            {
-                stream.Seek(0, SeekOrigin.Begin);
-                AddFile(path, stream);
-            };
-            var memoryStream = new EventMemoryStream(streamClose);
-            return memoryStream;
-        }
-
         public string ReadAllText(string path)
         {
             return OpenFile(path).ReadToEnd();
@@ -164,24 +167,22 @@ namespace NuGet.Extensions.Tests.Mocks
 
         public virtual bool DirectoryExists(string path)
         {
-            string pathPrefix = PathUtility.EnsureTrailingSlash(path);
-            return Paths.Keys
-                        .Any(file => file.Equals(path, StringComparison.OrdinalIgnoreCase) ||
-                                     file.StartsWith(pathPrefix, StringComparison.OrdinalIgnoreCase));
+            return Paths.Select(file => file.Key)
+                        .Any(file => Path.GetDirectoryName(file).Equals(path, StringComparison.OrdinalIgnoreCase));
         }
 
         public virtual IEnumerable<string> GetDirectories(string path)
         {
             return Paths.GroupBy(f => Path.GetDirectoryName(f.Key))
-                        .SelectMany(g => FileSystemExtensions.GetDirectories(g.Key))
-                        .Where(f => !String.IsNullOrEmpty(f) &&
-                               path.Equals(Path.GetDirectoryName(f), StringComparison.OrdinalIgnoreCase))
+                        .SelectMany(g => IFileSystemExtensions.GetDirectories(g.Key))
+                        .Where(f => Path.GetDirectoryName(f) != null && !String.IsNullOrEmpty(f) &&
+                               Path.GetDirectoryName(f).Equals(path, StringComparison.OrdinalIgnoreCase))
                         .Distinct();
         }
 
         public virtual void AddFile(string path)
         {
-            AddFile(path, Stream.Null);
+            AddFile(path, new MemoryStream());
         }
 
         public void AddFile(string path, string content)
@@ -194,8 +195,7 @@ namespace NuGet.Extensions.Tests.Mocks
             var ms = new MemoryStream((int)stream.Length);
             stream.CopyTo(ms);
             byte[] buffer = ms.ToArray();
-            Paths[path] = () => new MemoryStream(buffer);
-            _createdTime[path] = DateTime.UtcNow;
+            Paths[GetFullPath(path)] = () => new MemoryStream(buffer);
         }
 
         public virtual void AddFile(string path, Stream stream)
@@ -203,63 +203,34 @@ namespace NuGet.Extensions.Tests.Mocks
             AddFile(path, stream, overrideIfExists: true);
         }
 
-        public virtual void AddFile(string path, Action<Stream> writeToStream)
-        {
-            var ms = new MemoryStream();
-            writeToStream(ms);
-            byte[] buffer = ms.ToArray();
-            Paths[path] = () => new MemoryStream(buffer);
-            _createdTime[path] = DateTime.UtcNow;
-        }
-
         public virtual void AddFile(string path, Func<Stream> getStream)
         {
             Paths[path] = getStream;
         }
 
+        public virtual void AddFile(string path, Action<Stream> getStream)
+        {
+            AddFile(path, getStream.Target.ToString());
+        }
+
+        public virtual Stream CreateFile(string path)
+        {
+            return new MemoryStream();
+        }
+
         public virtual DateTimeOffset GetLastModified(string path)
         {
-            DateTime time;
-            if (_createdTime.TryGetValue(path, out time))
-            {
-                return time;
-            }
-            else
-            {
-                return DateTime.UtcNow;
-            }
+            return DateTime.UtcNow;
         }
 
         public virtual DateTimeOffset GetCreated(string path)
         {
-            DateTime time;
-            if (_createdTime.TryGetValue(path, out time))
-            {
-                return time;
-            }
-            else
-            {
-                return DateTime.UtcNow;
-            }
+            return DateTime.UtcNow;
         }
 
-        public virtual DateTimeOffset GetLastAccessed(string path)
+        public virtual void MakeFileWritable(string path)
         {
-            DateTime time;
-            if (_createdTime.TryGetValue(path, out time))
-            {
-                return time;
-            }
-            else
-            {
-                return DateTime.UtcNow;
-            }
-        }
-
-
-        public void MakeFileWritable(string path)
-        {
-            // Nothing to do here.
+            throw new NotImplementedException();
         }
     }
 }
