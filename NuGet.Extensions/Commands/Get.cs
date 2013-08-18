@@ -100,17 +100,9 @@ namespace NuGet.Extensions.Commands
         }
 
         [ImportingConstructor]
-        public Get(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider sourceProvider)
-        {
-            Contract.Assert(packageRepositoryFactory != null);
-            Contract.Assert(sourceProvider != null);
+        public Get() {}
 
-            RepositoryFactory = packageRepositoryFactory;
-            SourceProvider = sourceProvider;
-        }
-
-        public Get(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider sourceProvider, IPackageRepository cacheRepository, IFileSystem fileSystem, IPackageCache packageCache)
-            :this(packageRepositoryFactory, sourceProvider)
+        public Get(IPackageRepository cacheRepository, IFileSystem fileSystem, IPackageCache packageCache)
         {
             _cacheRepository = cacheRepository;
             OutputFileSystem = fileSystem;

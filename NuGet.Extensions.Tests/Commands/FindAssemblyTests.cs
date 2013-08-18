@@ -62,8 +62,9 @@ namespace NuGet.Extensions.Tests.Commands
         private IFileSystem filesystem;
 
         public FindAssemblyTest(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider packageSourceProvider, IFileSystem filesystem)
-        : base(packageRepositoryFactory, packageSourceProvider)
         {
+            RepositoryFactory = packageRepositoryFactory;
+            SourceProvider = packageSourceProvider;
             this.filesystem = filesystem;
         }
         protected override IFileSystem CreateFileSystem(string root)

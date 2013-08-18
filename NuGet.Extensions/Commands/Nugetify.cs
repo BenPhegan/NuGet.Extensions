@@ -20,14 +20,7 @@ namespace NuGet.Extensions.Commands
         private readonly List<string> _sources = new List<string>();
 
         [ImportingConstructor]
-        public Nugetify(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider sourceProvider)
-        {
-            Contract.Assert(packageRepositoryFactory != null);
-            Contract.Assert(sourceProvider != null);
-
-            RepositoryFactory = packageRepositoryFactory;
-            SourceProvider = sourceProvider;
-        }
+        public Nugetify() {}
 
         [Option("A list of sources to search")]
         public ICollection<string> Source
