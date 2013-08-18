@@ -253,7 +253,7 @@ namespace NuGet.Extensions.Commands
         //REVIEW Just in case we want to get away from using their list command....
         private IEnumerable<IPackage> GetInitialPackageList(bool allVersions, List<string> ids, IPackageSourceProvider sourceProvider)
         {
-            var repository = GetRepository(sourceProvider, Sources);
+            var repository = GetRepository(sourceProvider, sourceProvider.GetEnabledPackageSources().Select(s => s.Source).ToList());
             var packages = repository.GetPackages();
             return packages;
         }
