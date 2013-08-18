@@ -21,8 +21,7 @@ namespace NuGet.Extensions.Commands
         /// <param name="repositoryFactory">The repository factory.</param>
         /// <param name="sourceProvider">The source provider.</param>
         [ImportingConstructor]
-        public Clone(IPackageRepositoryFactory repositoryFactory, IPackageSourceProvider sourceProvider)
-            : base(repositoryFactory, sourceProvider) { }
+        public Clone() {}
 
         /// <summary>
         /// Gets or sets a value indicating whether [all versions].
@@ -174,7 +173,7 @@ namespace NuGet.Extensions.Commands
 
         private void ExecuteCopyAction(IPackageSourceProvider realSourceProvider, IPackage package)
         {
-            var copyCommand = new Copy(RepositoryFactory, SourceProvider)
+            var copyCommand = new Copy(realSourceProvider)
             {
                 ApiKey = ApiKey,
                 Destinations = Destinations,

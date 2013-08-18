@@ -13,7 +13,9 @@ namespace NuGet.Extensions.Commands
     public class Copy : TwoWayCommand
     {
         [ImportingConstructor]
-        public Copy(IPackageRepositoryFactory repositoryFactory, IPackageSourceProvider sourceProvider) : base(repositoryFactory, sourceProvider) {}
+        public Copy() {}
+
+        public Copy(IPackageSourceProvider sourceProvider) : base(sourceProvider) {}
 
         [DefaultValue(true)]
         [Option(typeof (CopyResources), "RecursiveDescription", AltName = "r")]

@@ -36,14 +36,7 @@ namespace NuGet.Extensions.Commands
         public bool NoDependencies { get; set; }
 
         [ImportingConstructor]
-        public Details(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider sourceProvider)
-        {
-            Contract.Assert(packageRepositoryFactory != null);
-            Contract.Assert(sourceProvider != null);
-
-            RepositoryFactory = packageRepositoryFactory;
-            SourceProvider = sourceProvider;
-        }
+        public Details() {}
 
         public override void ExecuteCommand()
         {

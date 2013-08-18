@@ -41,14 +41,7 @@ namespace NuGet.Extensions.Commands
         }
 
         [ImportingConstructor]
-        public Graph(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider sourceProvider)
-        {
-            Contract.Assert(packageRepositoryFactory != null);
-            Contract.Assert(sourceProvider != null);
-
-            RepositoryFactory = packageRepositoryFactory;
-            SourceProvider = sourceProvider;
-        }
+        public Graph () {}
 
         public override void ExecuteCommand()
         {
