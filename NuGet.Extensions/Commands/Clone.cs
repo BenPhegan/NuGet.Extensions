@@ -175,7 +175,7 @@ namespace NuGet.Extensions.Commands
 
         private void ExecuteCopyAction(IPackageSourceProvider realSourceProvider, IPackage package)
         {
-            var copyCommand = new Copy(realSourceProvider)
+            var copyCommand = new Copy()
             {
                 ApiKey = ApiKey,
                 Destinations = Destinations,
