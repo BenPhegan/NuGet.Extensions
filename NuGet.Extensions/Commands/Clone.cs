@@ -254,7 +254,7 @@ namespace NuGet.Extensions.Commands
         private IEnumerable<IPackage> GetInitialPackageList(bool allVersions, List<string> ids, IPackageSourceProvider sourceProvider)
         {
             var repository = GetRepository(sourceProvider, sourceProvider.GetEnabledPackageSources().Select(s => s.Source).ToList());
-            var packages = repository.GetPackages();
+            var packages = repository.GetPackages().ToList();
             return packages;
         }
 
