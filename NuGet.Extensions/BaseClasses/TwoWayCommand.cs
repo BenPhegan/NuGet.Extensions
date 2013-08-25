@@ -22,15 +22,21 @@ namespace NuGet.Extensions.BaseClasses
         /// <summary>
         /// Initializes a new instance of the <see cref="TwoWayCommand"/> class.
         /// </summary>
-        /// <param name="repositoryFactory">The repository factory.</param>
-        /// <param name="sourceProvider">The source provider.</param>
-        protected TwoWayCommand(IPackageRepositoryFactory repositoryFactory, IPackageSourceProvider sourceProvider)
+        protected TwoWayCommand()
         {
-            RepositoryFactory = repositoryFactory;
-            SourceProvider = sourceProvider;
             Sources = new List<string>();
             Destinations = new List<string>();
             _packageList = new List<string>();
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TwoWayCommand"/> class.
+        /// </summary>
+        /// <param name="sourceProvider">The source provider.</param>
+        protected TwoWayCommand(IPackageSourceProvider sourceProvider)
+            : this()
+        {
+            SourceProvider = sourceProvider;
         }
 
         /// <summary>

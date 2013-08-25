@@ -13,7 +13,7 @@ namespace NuGet.Extensions.Commands
     public class Copy : TwoWayCommand
     {
         [ImportingConstructor]
-        public Copy(IPackageRepositoryFactory repositoryFactory, IPackageSourceProvider sourceProvider) : base(repositoryFactory, sourceProvider) {}
+        public Copy() {}
 
         [DefaultValue(true)]
         [Option(typeof (CopyResources), "RecursiveDescription", AltName = "r")]
@@ -168,13 +168,8 @@ namespace NuGet.Extensions.Commands
         }
 
         private void PushToDestinationRemote(string packagePath, string destination) {
-            try {
-                //PushCommand push = new PushCommand(_sourceProvider);
-                //push.Arguments.Add(Path.GetFullPath(packagePath));
-                //push.Source = _sourceProvider.ResolveSource(Destination);
-                //push.Console = this.Console;
-                //push.ExecuteCommand();
-
+            try
+            {
                 PushPackage(Path.GetFullPath(packagePath), destination, ApiKey);
             }
             catch (Exception ex) {
@@ -219,20 +214,6 @@ namespace NuGet.Extensions.Commands
                 Console.WriteLine();
                 throw;
             }
-
-            // Publish the package on the server
-
-            var cmd = new PushCommand
-                {
-                    Console = Console, 
-                    Source = source
-                };
-            cmd.Arguments.AddRange(new List<string> {
-                                                 package.Id,
-                                                 package.Version.ToString(),
-                                                 apiKey
-                                             });
-            cmd.Execute();
         }
 
         #endregion

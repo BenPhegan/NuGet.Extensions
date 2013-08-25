@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.Linq;
 using NuGet.Commands;
+using NuGet.Common;
 using NuGet.Extensions.BaseClasses;
 using NuGet.Extensions.Comparers;
 
@@ -21,8 +23,7 @@ namespace NuGet.Extensions.Commands
         /// <param name="repositoryFactory">The repository factory.</param>
         /// <param name="sourceProvider">The source provider.</param>
         [ImportingConstructor]
-        public Clone(IPackageRepositoryFactory repositoryFactory, IPackageSourceProvider sourceProvider)
-            : base(repositoryFactory, sourceProvider) { }
+        public Clone() {}
 
         /// <summary>
         /// Gets or sets a value indicating whether [all versions].
@@ -174,7 +175,7 @@ namespace NuGet.Extensions.Commands
 
         private void ExecuteCopyAction(IPackageSourceProvider realSourceProvider, IPackage package)
         {
-            var copyCommand = new Copy(RepositoryFactory, SourceProvider)
+            var copyCommand = new Copy()
             {
                 ApiKey = ApiKey,
                 Destinations = Destinations,
@@ -252,15 +253,8 @@ namespace NuGet.Extensions.Commands
         //REVIEW Just in case we want to get away from using their list command....
         private IEnumerable<IPackage> GetInitialPackageList(bool allVersions, List<string> ids, IPackageSourceProvider sourceProvider)
         {
-            var listCommand = new ListCommand
-                {
-                AllVersions = allVersions,
-                Console = Console,
-            };
-
-            if (ids != null && ids.Count != 0)
-                listCommand.Arguments.AddRange(ids);
-            var packages = listCommand.GetPackages();
+            var repository = GetRepository(sourceProvider, sourceProvider.GetEnabledPackageSources().Select(s => s.Source).ToList());
+            var packages = repository.GetPackages().ToList();
             return packages;
         }
 
@@ -274,6 +268,13 @@ namespace NuGet.Extensions.Commands
             Debug.Assert(tags != null);
             return from tag in tags.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)
                    select tag.Trim();
+        }
+
+        private IPackageRepository GetRepository(IPackageSourceProvider sourceProvider, IList<string> source)
+        {
+            var repository = AggregateRepositoryHelper.CreateAggregateRepositoryFromSources(RepositoryFactory, sourceProvider, source);
+            repository.Logger = Console;
+            return repository;
         }
     }
 }

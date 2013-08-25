@@ -35,14 +35,7 @@ namespace NuGet.Extensions.Commands
         public bool OutputPackageConfig { get; set; }
 
         [ImportingConstructor]
-        public FindAssembly(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider sourceProvider)
-        {
-            Contract.Assert(packageRepositoryFactory != null);
-            Contract.Assert(sourceProvider != null);
-
-            RepositoryFactory = packageRepositoryFactory;
-            SourceProvider = sourceProvider;
-        }
+        public FindAssembly() {}
 
         public override void ExecuteCommand()
         {
