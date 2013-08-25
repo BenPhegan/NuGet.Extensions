@@ -67,10 +67,13 @@
     </CodeAnalysisDependentAssemblyPaths>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Commands\CloneTests.cs" />
     <Compile Include="Commands\FindAssemblyTests.cs" />
     <Compile Include="Configuration\FindPackageTests.cs" />
     <Compile Include="FeedAudit\FeedAuditorTests.cs" />
     <Compile Include="FeedAudit\GacResolverTests.cs" />
+    <Compile Include="TestObjects\CloneCommandTestsBase.cs" />
+    <Compile Include="TestObjects\TestCloneCommand.cs" />
     <Compile Include="TestObjects\GetCommandTestsBase.cs" />
     <Compile Include="Mocks\FileSystemExtensions.cs" />
     <Compile Include="Mocks\MockFileSystem.cs" />

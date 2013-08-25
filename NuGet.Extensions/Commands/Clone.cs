@@ -1,13 +1,17 @@
 using System;
+using System.IO;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.Composition;
+using System.Text.RegularExpressions;
 using System.Diagnostics;
 using System.Linq;
+using NuGet.Common;
 using NuGet.Commands;
 using NuGet.Extras;
 using NuGet.Extras.Commands;
 using NuGet.Extras.Comparers;
+using NuGet.Extras.ExtensionMethods;
 
 namespace NuGet.Extensions.Commands
 {
@@ -57,6 +61,15 @@ namespace NuGet.Extensions.Commands
         [Option("Gets a list of the Ids availabble on the destination, and only clones them")]
         public bool Refresh { get; set; }
 
+        [Option("Clone a specific verion", AltName = "v")]
+        public string Version { get; set; }
+
+        [Option("Missing packages only", AltName = "m")]
+        public bool Missing { get; set; }
+
+        [Option("Semi-colon delimited set of package IDs or wildcards that you do NOT want to clone.", AltName = "x")]
+        public string PackageExceptions { get; set; }
+
         private IQueryable<string> _packageList;
 
         /// <summary>
@@ -88,7 +101,7 @@ namespace NuGet.Extensions.Commands
         {
             if (!string.IsNullOrEmpty(Tags))
             {
-                _tags = Tags.Split(',').ToList();
+                _tags = Tags.ToLowerInvariant().Split(',').ToList();
             }
 
             Console.WriteLine(AllVersions ? "Cloning packages (full history)." : "Cloning packages (latest only).");
@@ -97,20 +110,33 @@ namespace NuGet.Extensions.Commands
 
             //TODO: Move to base class?
             string packageId = base.Arguments.Count > 0 ? base.Arguments[0] : string.Empty;
-            PopulateSourcePackageList(packageId);
+            if (!Missing)
+                PopulateSourcePackageList(packageId);
+            else
+                PopulateDifferentialPackageList(packageId);
+
+            var excludedPackageIds = GetLowerInvariantExclusions(PackageExceptions);
+            var excludedPackageWildcards = String.IsNullOrEmpty(PackageExceptions) ? new List<Regex>() : GetExcludedWildcards(PackageExceptions);
 
             //Grab each package, get the full list of versions, and then call a Copy on each.
             //TODO Copy is currently using the default InstallCommand under the covers, which means this is a bit messy on the dependencies (ie it gets them all)
             foreach (string packageName in _packageList)
             {
+                if (excludedPackageWildcards.Any(w => w.IsMatch(packageName.ToLowerInvariant())))
+                    continue;
+                if (excludedPackageIds.Any(e => e.Equals(packageName, StringComparison.OrdinalIgnoreCase)))
+                    continue;
+
                 //Get the list of packages from both source and destination, and if we only have one destination then find the set difference
-                IEnumerable<IPackage> sourcePackages = GetPackageList(AllVersions, packageName, SourceProvider);
+                IEnumerable<IPackage> sourcePackages = GetPackageList(AllVersions, packageName, Version, SourceProvider);
                 IEnumerable<IPackage> packagesToCopy = sourcePackages;
 
+                Console.WriteLine();
+                Console.WriteLine();
                 Console.WriteLine("{0}", packageName);
                 if (sourcePackages.Count() == 0)
                 {
-                    Console.WriteError("Package Id: \"{0}\" not found in any sources.  Skipping.", packageName);
+                    Console.WriteError("Package Id: \"{0}\" {1}not found in any sources.  Skipping.", packageName, string.IsNullOrEmpty(Version) ? string.Empty : string.Format("with Version: {0} ", Version));
                     Console.WriteLine();
                     continue;
                 }
@@ -119,23 +145,57 @@ namespace NuGet.Extensions.Commands
                 //TODO we could probably do this down in the copy command...Rob, thoughts?
                 if (Destinations.Count == 1)
                 {
-                    IEnumerable<IPackage> destinationPackages = GetPackageList(true, packageName, DestinationProvider);
+                    IEnumerable<IPackage> destinationPackages = GetPackageList(true, packageName, Version, DestinationProvider);
 
                     packagesToCopy = sourcePackages.Except(destinationPackages, GetIPackageLambdaComparer());
                     OutputCountToConsole("Destination:", destinationPackages.Count(), destinationPackages);
                 }
 
                 OutputCountToConsole("Copying:", packagesToCopy.Count(), packagesToCopy);
-                //Console.WriteLine(string.Format("Found: {0} versions of {1} to copy.{2}", packagesToCopy.Count(), packageName, packagesToCopy.Count() == 0 ? " All packages synced!" : string.Empty));
-                Console.WriteLine();
-                foreach (var package in packagesToCopy)
+                if (packagesToCopy.Count() > 0)
                 {
-                    if (!DryRun)
+                    Console.WriteLine();
+                    Console.WriteLine("Copying {0} from {1} to {2}.",
+                          string.IsNullOrEmpty(Version) ? packageName : packageName + " " + Version,
+                          string.Join(";", Sources), string.Join(";", Destinations));
+                }
+
+                if (!DryRun)
+                {
+                    foreach (var package in packagesToCopy)
                     {
-                        ExecuteCopyAction(SourceProvider, package);
+                        ExecuteCopyAction(package);
                         Console.WriteLine();
                     }
                 }
+            }
+        }
+
+        private IEnumerable<string> GetLowerInvariantExclusions(string exclusions)
+        {
+            var exceptions = new List<string>();
+            if (!String.IsNullOrEmpty(exclusions))
+            {
+                exceptions.AddRange(exclusions.Split(';').Select(s => s.ToLowerInvariant()));
+            }
+            return exceptions.Where(e => !e.Contains('*') && !e.Contains('?'));
+        }
+
+        private IEnumerable<Regex> GetExcludedWildcards(string exceptions)
+        {
+            var wildcards = exceptions.Split(';').Select(s => s.ToLowerInvariant());
+            return new List<Regex>(wildcards.Select(w => new Wildcard(w)));
+        }
+
+        private void PopulateDifferentialPackageList(string packageId)
+        {
+            if (!string.IsNullOrEmpty(packageId))
+            {
+                _packageList = new EnumerableQuery<string>(new List<string>() { packageId });
+            }
+            else
+            {
+                _packageList = GetPackageList(false, string.Empty, string.Empty, SourceProvider, _tags).Select(p => p.Id).Except(GetPackageList(false, string.Empty, string.Empty, DestinationProvider, _tags).Select(p => p.Id));
             }
         }
 
@@ -143,14 +203,14 @@ namespace NuGet.Extensions.Commands
         {
             if (!string.IsNullOrEmpty(packageId))
             {
-                _packageList = new EnumerableQuery<string>(new List<string>(){packageId});
+                _packageList = new EnumerableQuery<string>(new List<string>() { packageId });
             }
             else
             {
                 //or get the full list from the source, and go from there....
                 //REVIEW: this is a potential bottleneck - maybe split out in to batch call
-                _packageList = Refresh ? GetPackageList(false, string.Empty, DestinationProvider, _tags).Select(p => p.Id) 
-                                       : GetPackageList(false, string.Empty, SourceProvider, _tags).Select(p => p.Id);
+                _packageList = Refresh ? GetPackageList(false, string.Empty, string.Empty, DestinationProvider, _tags).Select(p => p.Id)
+                                       : GetPackageList(false, string.Empty, string.Empty, SourceProvider, _tags).Select(p => p.Id);
             }
         }
 
@@ -161,7 +221,7 @@ namespace NuGet.Extensions.Commands
 
         private void OutputCountToConsole(string message, int count, IEnumerable<IPackage> list)
         {
-            var packageVersionList =  list.Count() > 0 ? string.Format( "    (" +string.Join(", ", list.Select(x => x.Version)) + ")") : string.Empty;
+            var packageVersionList = list.Count() > 0 ? string.Format("    (" + string.Join(", ", list.Select(x => x.Version)) + ")") : string.Empty;
 
             Console.WriteLine(string.Format(message.PadRight(14) + count).PadLeft(18) + packageVersionList);
         }
@@ -173,21 +233,12 @@ namespace NuGet.Extensions.Commands
                                     (a) => a.Id.GetHashCode() + a.Version.ToString().GetHashCode());
         }
 
-        private void ExecuteCopyAction(IPackageSourceProvider realSourceProvider, IPackage package)
+        private void ExecuteCopyAction(IPackage package)
         {
-            var copyCommand = new Copy(RepositoryFactory, SourceProvider)
+            foreach (string dest in Destinations)
             {
-                ApiKey = ApiKey,
-                Destinations = Destinations,
-                Sources = Sources,
-                Version = package.Version.ToString(),
-                Console = Console,
-                Recursive = false,
-                WorkingDirectoryRoot = WorkingDirectoryRoot
-            };
-            copyCommand.Arguments.Add(package.Id);
-            copyCommand.Execute();
-
+                PushToDestination(dest, package);
+            }
         }
 
         //HACK Does this need to be here?
@@ -196,13 +247,13 @@ namespace NuGet.Extensions.Commands
             return new PackageSourceProvider(new BlankUserSettings(), sources.AsPackageSourceList(useDefaultFeed));
         }
 
-        public IEnumerable<IPackage> GetPackageList(bool allVersions, string id, IPackageSourceProvider sourceProvider)
+        public IEnumerable<IPackage> GetPackageList(bool allVersions, string id, string version, IPackageSourceProvider sourceProvider)
         {
-            return GetPackageList(allVersions, id, sourceProvider, null);
+            return GetPackageList(allVersions, id, version, sourceProvider, null);
         }
 
 
-        public IQueryable<IPackage> GetPackageList(bool allVersions, string id, IPackageSourceProvider sourceProvider, IEnumerable<string> tags)
+        public IQueryable<IPackage> GetPackageList(bool allVersions, string id, string version, IPackageSourceProvider sourceProvider, IEnumerable<string> tags)
         {
             bool singular = !string.IsNullOrEmpty(id);
 
@@ -213,17 +264,17 @@ namespace NuGet.Extensions.Commands
             //Check for tags
             if (tags != null && tags.Count() > 0)
             {
-                packages = GetPackagesByTag(allVersions, id, sourceProvider, tags);
+                packages = GetPackagesByTag(allVersions, id, version, sourceProvider, tags);
                 LogPackageList(packages, tags);
             }
             else
             {
-                packages = GetInitialPackageList(allVersions, new[] { id }.ToList(), sourceProvider);
+                packages = GetInitialPackageList(allVersions, id, version, sourceProvider);
             }
 
             //listcommand doesnt return just the matching packages, so filter here...
             if (singular)
-                return packages.Where(p => p.Id.ToLowerInvariant() == id.ToLowerInvariant()).AsQueryable();
+                return packages.Where(p => p != null && p.Id.ToLowerInvariant() == id.ToLowerInvariant()).AsQueryable();
             else
                 return packages.AsQueryable();
         }
@@ -246,30 +297,34 @@ namespace NuGet.Extensions.Commands
             Console.WriteLine();
         }
 
-        private IEnumerable<IPackage> GetPackagesByTag(bool allVersions, string id, IPackageSourceProvider sourceProvider, IEnumerable<string> tags)
+        private IEnumerable<IPackage> GetPackagesByTag(bool allVersions, string id, string version, IPackageSourceProvider sourceProvider, IEnumerable<string> tags)
         {
             IEnumerable<IPackage> packages;
             //Where we have tags on a package that include one of the tags we are looking for, include it...
-            tags.ToList().Add(id);
-            packages = GetInitialPackageList(allVersions, tags.ToList(), sourceProvider);
+            packages = GetInitialPackageList(allVersions, Tags.ToLowerInvariant().Replace(",", " "), version, sourceProvider);
             //Check them, as the list command adds packages regardless of where the search term occurs...
-            packages = packages.Where(p => p.Tags != null && p.Tags.Count() > 0 ? Clone.ParseTags(p.Tags).Any(t => tags.Contains(t)) : false);
+            packages = packages.Where(p => p.Tags != null && p.Tags.Count() > 0 ? Clone.ParseTags(p.Tags.ToLowerInvariant()).Any(t => tags.Contains(t)) : false);
             return packages;
         }
 
         //REVIEW Just in case we want to get away from using their list command....
-        private IEnumerable<IPackage> GetInitialPackageList(bool allVersions, List<string> ids, IPackageSourceProvider sourceProvider)
+        private IEnumerable<IPackage> GetInitialPackageList(bool allVersions, string id, string version, IPackageSourceProvider sourceProvider)
         {
-            var listCommand = new ListCommand(RepositoryFactory, sourceProvider)
+            var repo = sourceProvider.GetAggregate(RepositoryFactory);
+            // WTF This is so stupid, could use Search all round, but it's much slower than using Find
+            if (!string.IsNullOrEmpty(id))
             {
-                AllVersions = allVersions,
-                Console = this.Console,
-            };
-
-            if (ids != null && ids.Count != 0)
-                listCommand.Arguments.AddRange(ids);
-            var packages = listCommand.GetPackages();
-            return packages;
+                if (allVersions)
+                    return repo.FindPackagesById(id);
+                else if (!string.IsNullOrEmpty(version))
+                    return new[] { repo.FindPackage(id, new SemanticVersion(version)) };
+                else
+                    return new[] { repo.FindLatestPackage(id) };
+            }
+            if (allVersions)
+                return repo.Search(id, false).OrderBy(p => p.Id);
+            else
+                return repo.Search(id, false).Where(p => p.IsLatestVersion).OrderBy(p => p.Id).AsEnumerable().AsCollapsed();
         }
 
 
@@ -282,6 +337,47 @@ namespace NuGet.Extensions.Commands
             Debug.Assert(tags != null);
             return from tag in tags.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)
                    select tag.Trim();
+        }
+
+        private void PushToDestination(string destination, IPackage package)
+        {
+            if (IsDirectory(destination))
+            {
+                PushToDestinationDirectory(package, destination);
+                Console.Write("Completed copying {0} {1}", package.Id, package.Version.ToString());
+            }
+            else
+            {
+                PushToDestinationDirectory(package, WorkDirectory);
+                var packageString = String.Format("{0}.{1}.nupkg", package.Id, package.Version);
+                var outputPath = Path.Combine(WorkDirectory, packageString);
+                PushToDestinationRemote(outputPath, destination);
+            }
+        }
+
+        private void PushToDestinationDirectory(IPackage package, string destination)
+        {
+            var packageString = String.Format("{0}.{1}.nupkg", package.Id, package.Version);
+            var outputPath = Path.Combine(destination, packageString);
+            File.WriteAllBytes(outputPath, package.GetStream().ReadAllBytes());
+        }
+
+        private void PushToDestinationRemote(string packagePath, string destination)
+        {
+            try
+            {
+                PushCommand push = new PushCommand(SourceProvider, Settings.LoadDefaultSettings());
+                push.Arguments.Add(Path.GetFullPath(packagePath));
+                push.ApiKey = ApiKey;
+                push.Source = destination;
+                push.Console = this.Console;
+                push.ExecuteCommand();
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Copy encountered an issue. Perhaps the package already exists? {0}{1}", Environment.NewLine, ex);
+            }
         }
     }
 }
