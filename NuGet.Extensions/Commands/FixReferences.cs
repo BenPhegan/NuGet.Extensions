@@ -35,10 +35,11 @@ namespace NuGet.Extensions.Commands
             _fileSystem = fileSystem;
         }
 
-        public FixReferences(IFileSystem fileSystem, IPackageRepository repository)
+        public FixReferences(IFileSystem fileSystem, IPackageRepository repository, IConsole console)
         {
             _fileSystem = fileSystem;
             _repository = repository;
+            Console = console;
         }
 
         public override void ExecuteCommand()
@@ -54,31 +55,47 @@ namespace NuGet.Extensions.Commands
             }
 
             var packageFiles = _fileSystem.GetFiles(Directory, "packages.config", true).ToList();
+            Console.WriteLine("Processing : {0} files.",packageFiles.Count);
             Parallel.ForEach(packageFiles, packageFile =>
                 {
+                    Console.WriteLine("\t{0}", packageFile);
                     var newReferences = new List<PackageReference>();
                     var packageFileDetails = new PackageReferenceFile(_fileSystem, packageFile);
                     foreach (var packageReference in packageFileDetails.GetPackageReferences())
                     {
+                        Console.WriteLine("\t\t{0}",packageReference.ToString());
                         var exists = _repository.FindPackage(packageReference.Id, packageReference.Version);
                         if (exists != null)
                         {
+                            Console.WriteLine("\t\t\tExists, not changing.");
                             newReferences.Add(packageReference);
                         }
                         else
                         {
                             var package = _repository.FindPackagesById(packageReference.Id).FirstOrDefault();
-                            newReferences.Add(package != null ? new PackageReference(package.Id, package.Version, new VersionSpec(), new FrameworkName(".NET Framework, Version=4.0")) : packageReference);
+                            if (package == null)
+                            {
+                                Console.WriteLine("\t\t\tNot found, no change.");
+                                newReferences.Add(packageReference);
+                            }
+                            else
+                            {
+                                var newReference = new PackageReference(package.Id, package.Version, new VersionSpec(), new FrameworkName(".NET Framework, Version=4.0"));
+                                Console.WriteLine("\t\t\tUpdated to {0}", newReference.ToString());
+                                newReferences.Add(newReference);
+                            }
                         }
                     }
 
                     //TODO Clear the file (must be an easier way).
+                    Console.WriteLine("Clearing existing file...");
                     foreach (var packageReference in packageFileDetails.GetPackageReferences())
                     {
                         packageFileDetails.DeleteEntry(packageReference.Id, packageReference.Version);
                     }
 
                     //Add the new references.
+                    Console.WriteLine("Adding new references...");
                     foreach (var packageReference in newReferences)
                     {
                         packageFileDetails.AddEntry(packageReference.Id, packageReference.Version);

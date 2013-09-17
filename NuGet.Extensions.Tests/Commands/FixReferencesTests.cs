@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Moq;
+﻿using System.Linq;
 using NUnit.Framework;
 using NuGet.Extensions.Commands;
 using NuGet.Extensions.Tests.Mocks;
+using Console = NuGet.Common.Console;
 
 namespace NuGet.Extensions.Tests.Commands
 {
@@ -25,7 +22,7 @@ namespace NuGet.Extensions.Tests.Commands
             repository.AddPackage(PackageUtility.CreatePackage("Test", "2.0.0.0"));
             repository.AddPackage(PackageUtility.CreatePackage("Other", "1.0.0.0"));
 
-            var command = new FixReferences(fileSystem, repository) {Directory = @"d:\test"};
+            var command = new FixReferences(fileSystem, repository, new Console()) {Directory = @"d:\test"};
             command.Execute();
 
             var packageReferences = new PackageReferenceFile(fileSystem, @"d:\test\packages.config").GetPackageReferences().ToList();
@@ -44,7 +41,7 @@ namespace NuGet.Extensions.Tests.Commands
 
             var repository = new MockPackageRepository("http://test.com");
 
-            var command = new FixReferences(fileSystem, repository) { Directory = @"d:\test" };
+            var command = new FixReferences(fileSystem, repository, new Console()) { Directory = @"d:\test" };
             command.Execute();
 
             var packageReferences = new PackageReferenceFile(fileSystem, @"d:\test\packages.config").GetPackageReferences().ToList();
