@@ -9,7 +9,7 @@ using Microsoft.Build.Evaluation;
 using NuGet.Commands;
 using NuGet.Common;
 using NuGet.Extensions.GetLatest.MSBuild;
-using NuGet.Extras.Repositories;
+using NuGet.Extensions.Repositories;
 
 namespace NuGet.Extensions.Commands
 {
@@ -18,22 +18,9 @@ namespace NuGet.Extensions.Commands
     public class Nugetify : Command
     {
         private readonly List<string> _sources = new List<string>();
-        private IFileSystem _fileSystem;
-        private RepositoryAssemblyResolver _resolver;
 
         [ImportingConstructor]
-        public Nugetify(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider sourceProvider)
-        {
-            Contract.Assert(packageRepositoryFactory != null);
-            Contract.Assert(sourceProvider != null);
-
-            RepositoryFactory = packageRepositoryFactory;
-            SourceProvider = sourceProvider;
-        }
-
-        public IPackageRepositoryFactory RepositoryFactory { get; set; }
-        public IPackageSourceProvider SourceProvider { get; set; }
-
+        public Nugetify() {}
 
         [Option("A list of sources to search")]
         public ICollection<string> Source
@@ -253,13 +240,17 @@ namespace NuGet.Extensions.Commands
             return null;
         }
 
-        private void CreateAndOutputNuSpecFile(string assemblyOutput, List<ManifestDependency> manifestDependencies)
+        private void CreateAndOutputNuSpecFile(string assemblyOutput, List<ManifestDependency> manifestDependencies, string targetFramework = ".NET Framework, Version=4.0")
         {
             var manifest = new Manifest
                                {
                                    Metadata =
                                        {
-                                           Dependencies = manifestDependencies,
+                                           //TODO need to revisit and get the TargetFramework from the assembly...
+                                           DependencySets = new List<ManifestDependencySet>
+                                               {
+                                                   new ManifestDependencySet{Dependencies = manifestDependencies,TargetFramework = targetFramework}
+                                               },
                                            Id = Id ?? assemblyOutput,
                                            Title = Title ?? assemblyOutput,
                                            Version = "$version$",

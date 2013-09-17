@@ -1,27 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using NuGet.Commands;
 using System.ComponentModel.Composition;
 using NuGet.Common;
 using System.IO;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
-using NuGet.Extras.Repositories;
-using NuGet.Extras.ExtensionMethods;
+using NuGet.Extensions.Repositories;
 
-namespace NuGet.Extensions.GetLatest.Commands
+namespace NuGet.Extensions.Commands
 {
     [Command("findassembly", "Finds which package an assembly file exists within, can be run on a single file or on a full directory." +
                              " Optionally provides the ability to output a packages.config file that satisfies the directory of dll's", MinArgs = 1)]
     public class FindAssembly : Command
     {
         private readonly List<string> _sources = new List<string>();
-        public IPackageRepositoryFactory RepositoryFactory { get; set; }
-        public IPackageSourceProvider SourceProvider { get; set; }
-        private RepositoryAssemblyResolver resolver;
-        private IFileSystem fileSystem;
+        private RepositoryAssemblyResolver _resolver;
+        private IFileSystem _fileSystem;
 
         [Option("A list of sources to search")]
         public ICollection<string> Source
@@ -39,71 +35,59 @@ namespace NuGet.Extensions.GetLatest.Commands
         public bool OutputPackageConfig { get; set; }
 
         [ImportingConstructor]
-        public FindAssembly(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider sourceProvider)
-        {
-            Contract.Assert(packageRepositoryFactory != null);
-            Contract.Assert(sourceProvider != null);
-
-            RepositoryFactory = packageRepositoryFactory;
-            SourceProvider = sourceProvider;
-        }
+        public FindAssembly() {}
 
         public override void ExecuteCommand()
         {
-            if (!string.IsNullOrEmpty(Arguments[0]))
+            if (string.IsNullOrEmpty(Arguments[0])) return;
+            var assemblies = new List<string>();
+            if (!Arguments[0].EndsWith(".dll"))
             {
-                List<string> assemblies = new List<string>();
-                if (!Arguments[0].EndsWith(".dll"))
-                {
-                    fileSystem = CreateFileSystem(Directory.GetCurrentDirectory());
-                    assemblies.AddRange(GetAssemblyListFromDirectory());
-                }
-                else
-                {
-                    assemblies.Add(Arguments[0]);
-                }
-
-
-                Stopwatch sw = new Stopwatch();
-                sw.Start();
-                var repository = GetRepository();
-                IQueryable<IPackage> packageSource = GetPackageList(repository);
-                resolver = new RepositoryAssemblyResolver(assemblies, packageSource, fileSystem, Console);
-
-                Dictionary<string, List<IPackage>> assemblyLocations = new Dictionary<string, List<IPackage>>();
-                if (assemblies.Count > 0)
-                {
-                    assemblyLocations = resolver.ResolveAssemblies(Exhaustive);
-                }
-
-                Console.WriteLine();
-                sw.Stop();
-
-                if (!OutputPackageConfig)
-                {
-                    OutputResultsToConsole(sw, assemblyLocations);
-                }
-                else
-                {
-                    resolver.OutputPackageConfigFile();
-                    OutputErrors(assemblyLocations);
-                }
-
-                Environment.Exit(0);
-
+                _fileSystem = CreateFileSystem(Directory.GetCurrentDirectory());
+                assemblies.AddRange(GetAssemblyListFromDirectory());
             }
+            else
+            {
+                assemblies.Add(Arguments[0]);
+            }
+
+
+            var sw = new Stopwatch();
+            sw.Start();
+            var repository = GetRepository();
+            var packageSource = GetPackageList(repository);
+            _resolver = new RepositoryAssemblyResolver(assemblies, packageSource, _fileSystem, Console);
+
+            var assemblyLocations = new Dictionary<string, List<IPackage>>();
+            if (assemblies.Count > 0)
+            {
+                assemblyLocations = _resolver.ResolveAssemblies(Exhaustive);
+            }
+
+            Console.WriteLine();
+            sw.Stop();
+
+            if (!OutputPackageConfig)
+            {
+                OutputResultsToConsole(sw, assemblyLocations);
+            }
+            else
+            {
+                _resolver.OutputPackageConfigFile();
+                OutputErrors(assemblyLocations);
+            }
+
+            Environment.Exit(0);
         }
 
         private void OutputErrors(Dictionary<string, List<IPackage>> assemblyLocations)
         {
-            var notFound = assemblyLocations.Where(l => l.Value.Count == 0);
-            if (notFound.Count() > 0)
+            var notFound = assemblyLocations.Where(l => l.Value.Count == 0).ToList();
+            if (!notFound.Any()) return;
+            Console.WriteLine("Could not find the following assemblies in any packages on the provided source:");
+            foreach (var a in notFound)
             {
-                Console.WriteLine("Could not find the following assemblies in any packages on the provided source:");
-                foreach (var a in notFound)
-                {
-                    Console.WriteLine("{0}".PadLeft(15), a.Key);
-                }
+                Console.WriteLine("{0}".PadLeft(15), a.Key);
             }
         }
 
@@ -127,8 +111,7 @@ namespace NuGet.Extensions.GetLatest.Commands
 
         private IEnumerable<string> GetAssemblyListFromDirectory()
         {
-            var assemblies = new List<string>();
-            var fqfn = fileSystem.GetFiles(Arguments[0], "*.dll");
+            var fqfn = _fileSystem.GetFiles(Arguments[0], "*.dll");
             var filenames = fqfn.Select(f =>
             {
                 var sfn = new FileInfo(f);
@@ -140,15 +123,7 @@ namespace NuGet.Extensions.GetLatest.Commands
 
         private IQueryable<IPackage> GetPackageList(IPackageRepository repository)
         {
-            IQueryable<IPackage> packages;
-            if (AllVersions)
-            {
-                packages = repository.GetPackages();
-            }
-            else
-            {
-                packages = repository.GetPackages().Where(p => p.IsLatestVersion);
-            }
+            IQueryable<IPackage> packages = AllVersions ? repository.GetPackages() : repository.GetPackages().Where(p => p.IsLatestVersion);
             return packages;
         }
 
@@ -157,7 +132,7 @@ namespace NuGet.Extensions.GetLatest.Commands
             Console.WriteLine("Completed search in {0} seconds", sw.Elapsed.TotalSeconds);
         }
 
-        private void LogFoundPackages(List<IPackage> found)
+        private void LogFoundPackages(IEnumerable<IPackage> found)
         {
             foreach (var p in found)
             {
