@@ -5,8 +5,7 @@ using System.ComponentModel.Composition;
 using System.IO;
 using NuGet.Commands;
 using NuGet.Common;
-using NuGet.Extras;
-using NuGet.Extras.Commands;
+using NuGet.Extensions.BaseClasses;
 
 namespace NuGet.Extensions.Commands
 {
@@ -14,7 +13,7 @@ namespace NuGet.Extensions.Commands
     public class Copy : TwoWayCommand
     {
         [ImportingConstructor]
-        public Copy(IPackageRepositoryFactory repositoryFactory, IPackageSourceProvider sourceProvider) : base(repositoryFactory, sourceProvider) {}
+        public Copy() {}
 
         [DefaultValue(true)]
         [Option(typeof (CopyResources), "RecursiveDescription", AltName = "r")]
@@ -33,7 +32,7 @@ namespace NuGet.Extensions.Commands
         /// Executes the command.
         /// </summary>
         protected override void ExecuteSub() {
-            string packageId = base.Arguments[0];
+            string packageId = Arguments[0];
 
             Console.WriteLine("Copying {0}{1} from {2} to {3}.",
                               string.IsNullOrEmpty(Version) ? packageId : packageId + " " + Version,
@@ -127,13 +126,13 @@ namespace NuGet.Extensions.Commands
         private void PrepareApiKey(string destination) {
             if (!IsDirectory(destination)) {
                 if (string.IsNullOrEmpty(ApiKey)) {
-                    ApiKey = GetApiKey(SourceProvider, Settings.LoadDefaultSettings(), destination, true);
+                    ApiKey = GetApiKey(SourceProvider, Settings, destination, true);
                 }
             }
         }
 
         private void InstallPackageLocally(string packageId, string workDirectory) {
-            var install = new InstallCommand(RepositoryFactory, SourceProvider);
+            var install = new InstallCommand();
             install.Arguments.Add(packageId);
             install.OutputDirectory = workDirectory;
             install.Console = Console;
@@ -147,8 +146,8 @@ namespace NuGet.Extensions.Commands
             install.ExecuteCommand();
         }
 
-        private void PushToDestination(string workDirectory, string destination, IList<string> PackagePaths) {
-            foreach (string packagePath in PackagePaths) {
+        private void PushToDestination(string workDirectory, string destination, IEnumerable<string> packagePaths) {
+            foreach (var packagePath in packagePaths) {
                 if (IsDirectory(destination)) {
                     PushToDestinationDirectory(packagePath, destination);
                 }
@@ -169,13 +168,8 @@ namespace NuGet.Extensions.Commands
         }
 
         private void PushToDestinationRemote(string packagePath, string destination) {
-            try {
-                //PushCommand push = new PushCommand(_sourceProvider);
-                //push.Arguments.Add(Path.GetFullPath(packagePath));
-                //push.Source = _sourceProvider.ResolveSource(Destination);
-                //push.Console = this.Console;
-                //push.ExecuteCommand();
-
+            try
+            {
                 PushPackage(Path.GetFullPath(packagePath), destination, ApiKey);
             }
             catch (Exception ex) {
@@ -205,34 +199,21 @@ namespace NuGet.Extensions.Commands
             // Push the package to the server
             var package = new ZipPackage(packagePath);
 
-            bool complete = false;
-
             //HACK no pretty source name, as they have made the call to  CommandLineUtility.GetSourceDisplayName(source) internal
             Console.WriteLine("Pushing {0} to {1}", package.GetFullName(), source);
 
-            try {
-                using (Stream stream = package.GetStream()) {
-                    packageServer.PushPackage(apiKey, stream, 60000);
+            try 
+            {
+                using (package.GetStream())
+                {
+                    packageServer.PushPackage(apiKey, package, 60000);
                 }
             }
-            catch {
-                if (!complete) {
-                    Console.WriteLine();
-                }
+            catch 
+            {
+                Console.WriteLine();
                 throw;
             }
-
-            // Publish the package on the server
-
-            var cmd = new PublishCommand();
-            cmd.Console = Console;
-            cmd.Source = source;
-            cmd.Arguments.AddRange(new List<string> {
-                                                 package.Id,
-                                                 package.Version.ToString(),
-                                                 apiKey
-                                             });
-            cmd.Execute();
         }
 
         #endregion

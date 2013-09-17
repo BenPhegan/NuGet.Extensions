@@ -8,15 +8,16 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.Versioning;
 using System.Xml.Linq;
 using NuGet.Commands;
 using NuGet.Common;
-using NuGet.Extras.Comparers;
-using NuGet.Extras.ExtensionMethods;
-using NuGet.Extras.PackageReferences;
-using NuGet.Extras.Packages;
-using NuGet.Extras.Repositories;
-using NuGet.Extras.Caches;
+using NuGet.Extensions.Caches;
+using NuGet.Extensions.ExtensionMethods;
+using NuGet.Extensions.PackageReferences;
+using NuGet.Extensions.Packages;
+using NuGet.Extensions.Comparers;
+using NuGet.Extensions.Repositories;
 
 //HACK to enable us to test some of the Internal stuff more easily.  Still not sure how many kittens die when we use this.....
 [assembly: InternalsVisibleTo("NuGet.Extensions.Tests")]
@@ -34,6 +35,7 @@ namespace NuGet.Extensions.Commands
         private IPackageResolutionManager _packageResolutionManager;
         private IPackageCache _packageCache;
         private string _baseDirectory;
+        private FrameworkName _frameworkName = new FrameworkName(".NET Framework, Version=4.0");
 
         [Option(typeof(GetResources), "GetCommandSourceDescription")]
         public ICollection<string> Source
@@ -71,9 +73,12 @@ namespace NuGet.Extensions.Commands
         [Option("Output directory for the TeamCity compatible nuget.xml file.", AltName = "to")]
         public string TeamCityNuGetXmlOutputDirectory { get; set; }
 
-        public IPackageRepositoryFactory RepositoryFactory { get; private set; }
-
-        public IPackageSourceProvider SourceProvider { get; private set; }
+        [Option(".NET Framework name", AltName = "fn")]
+        public string FrameworkName
+        {
+            get { return _frameworkName.ToString(); }
+            set { _frameworkName = new FrameworkName(value); }
+        }
 
         /// <remarks>
         /// Meant for unit testing.
@@ -95,17 +100,9 @@ namespace NuGet.Extensions.Commands
         }
 
         [ImportingConstructor]
-        public Get(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider sourceProvider)
-        {
-            Contract.Assert(packageRepositoryFactory != null);
-            Contract.Assert(sourceProvider != null);
+        public Get() {}
 
-            RepositoryFactory = packageRepositoryFactory;
-            SourceProvider = sourceProvider;
-        }
-
-        public Get(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider sourceProvider, IPackageRepository cacheRepository, IFileSystem fileSystem, IPackageCache packageCache)
-            :this(packageRepositoryFactory, sourceProvider)
+        public Get(IPackageRepository cacheRepository, IFileSystem fileSystem, IPackageCache packageCache)
         {
             _cacheRepository = cacheRepository;
             OutputFileSystem = fileSystem;
@@ -403,7 +400,7 @@ namespace NuGet.Extensions.Commands
 
                 packageManager.PackageInstalled += (sender, e) => 
                     { 
-                        var installedPackage = new PackageReference(e.Package.Id, e.Package.Version, null);
+                        var installedPackage = new PackageReference(e.Package.Id, e.Package.Version, null, _frameworkName);
                         if (!allInstalled.Contains(installedPackage))
                             allInstalled.Add(installedPackage);
                     };
@@ -412,14 +409,14 @@ namespace NuGet.Extensions.Commands
                 {
                     SemanticVersion version = _packageResolutionManager.ResolveInstallableVersion(_repository, packageReference);
                     installedAny |= InstallPackage(packageManager, fileSystem, packageReference.Id, version ?? packageReference.Version);
-                    installedPackages.Add(new PackageReference(packageReference.Id, version ?? packageReference.Version, null));
+                    installedPackages.Add(new PackageReference(packageReference.Id, version ?? packageReference.Version, null, _frameworkName));
                 }
                 else
                 {
                     //We got it straight from the server, check whether we get a cache hit, else just install
                     var resolvedPackage = _packageResolutionManager.FindPackageInAllLocalSources(packageManager.LocalRepository, packageManager.SourceRepository, package);
                     packageManager.InstallPackage(resolvedPackage ?? package, !IncludeDependencies, false);
-                    installedPackages.Add(new PackageReference(package.Id, resolvedPackage != null ? resolvedPackage.Version : package.Version, null));
+                    installedPackages.Add(new PackageReference(package.Id, resolvedPackage != null ? resolvedPackage.Version : package.Version, null, _frameworkName));
                 }
                 // Note that we ignore dependencies here because packages.config already contains the full closure
             }

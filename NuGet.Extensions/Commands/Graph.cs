@@ -17,8 +17,6 @@ namespace NuGet.Extensions.Commands
     public class Graph : Command
     {
         private readonly List<string> _sources = new List<string>();
-        public IPackageRepositoryFactory RepositoryFactory { get; set; }
-        public IPackageSourceProvider SourceProvider { get; set; }
         private AdjacencyGraph<string, Edge<string>> _graph;
 
         [Option("A list of sources to search")]
@@ -43,14 +41,7 @@ namespace NuGet.Extensions.Commands
         }
 
         [ImportingConstructor]
-        public Graph(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider sourceProvider)
-        {
-            Contract.Assert(packageRepositoryFactory != null);
-            Contract.Assert(sourceProvider != null);
-
-            RepositoryFactory = packageRepositoryFactory;
-            SourceProvider = sourceProvider;
-        }
+        public Graph () {}
 
         public override void ExecuteCommand()
         {
@@ -107,7 +98,8 @@ namespace NuGet.Extensions.Commands
         {
             Console.WriteLine("Adding package and dependencies: {0}", package.Id);
             _graph.AddVertex(package.Id.ToLowerInvariant());
-            foreach (var dependency in package.Dependencies)
+            //We are going to ignore the TargetFramework for these purposes...
+            foreach (var dependency in package.DependencySets.SelectMany(p => p.Dependencies))
             {
                 if (!_graph.Vertices.Contains(package.Id.ToLowerInvariant()))
                     RecursePackageDependencies((IPackage)dependency);

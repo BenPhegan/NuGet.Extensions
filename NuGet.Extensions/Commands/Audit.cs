@@ -60,11 +60,7 @@ namespace NuGet.Extensions.Commands
         public Boolean AllOutput { get; set; }
 
         [ImportingConstructor]
-        public Audit(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider sourceProvider)
-        {
-            _factory = packageRepositoryFactory;
-            _provider = sourceProvider;
-        }
+        public Audit() {}
 
         public override void ExecuteCommand()
         {

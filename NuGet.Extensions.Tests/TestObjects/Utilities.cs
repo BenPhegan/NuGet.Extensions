@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Moq;
 using NuGet.Extensions.Tests.Mocks;
 
@@ -32,6 +32,11 @@ namespace NuGet.Extensions.Tests.TestObjects
                                       PackageUtility.CreatePackage("Assembly.Data", "1.2"),
                                       PackageUtility.CreatePackage("Assembly.Data", "2.0"),
                                       PackageUtility.CreatePackage("Assembly.Data", "2.1", isLatest: true),
+                                      PackageUtility.CreatePackage("Assembly.Instrumentation"),
+                                      PackageUtility.CreatePackage("Assembly.Instrumentation", "1.1"),
+                                      PackageUtility.CreatePackage("Assembly.Instrumentation", "1.2"),
+                                      PackageUtility.CreatePackage("Assembly.Instrumentation", "2.0"),
+                                      PackageUtility.CreatePackage("Assembly.Instrumentation", "2.1", isLatest: true),
                                   };
 
             var factory = new Mock<IPackageRepositoryFactory>();
@@ -39,7 +44,7 @@ namespace NuGet.Extensions.Tests.TestObjects
             factory.Setup(c => c.CreateRepository(It.Is<string>(f => f.Equals("Dev")))).Returns(repositoryA);
             factory.Setup(c => c.CreateRepository(It.Is<string>(f => f.Equals("Release")))).Returns(repositoryB);
             factory.Setup(c => c.CreateRepository(It.Is<string>(f => f.Equals("SingleAggregate")))).Returns(
-                new AggregateRepository(new List<IPackageRepository> {repositoryA}));
+                new AggregateRepository(new List<IPackageRepository> { repositoryA }));
             factory.Setup(c => c.CreateRepository(It.Is<string>(f => f.Equals("MultiAggregate")))).Returns(
                 new AggregateRepository(new List<IPackageRepository>() { repositoryA, repositoryB }));
 
@@ -49,7 +54,7 @@ namespace NuGet.Extensions.Tests.TestObjects
         public static IPackageSourceProvider GetSourceProvider(IEnumerable<PackageSource> sources = null)
         {
             var sourceProvider = new Mock<IPackageSourceProvider>();
-            sources = sources ?? new[] {new PackageSource("Dev", "Development Feed"), new PackageSource("Release", "Release Feed")};
+            sources = sources ?? new[] { new PackageSource("Dev", "Development Feed"), new PackageSource("Release", "Release Feed") };
             sourceProvider.Setup(c => c.LoadPackageSources()).Returns(sources);
 
             return sourceProvider.Object;
@@ -57,7 +62,7 @@ namespace NuGet.Extensions.Tests.TestObjects
 
         public static Mock<MockFileSystem> CreatePopulatedMockFileSystem()
         {
-            var fileSystem = new Mock<MockFileSystem> {CallBase = true};
+            var fileSystem = new Mock<MockFileSystem> { CallBase = true };
 
             fileSystem.Object.CreateDirectory(@"c:\TestSolution");
             fileSystem.Object.CreateDirectory(@"c:\TestSolution\Project1");

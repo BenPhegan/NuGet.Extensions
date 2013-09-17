@@ -1,6 +1,6 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NuGet.Extensions", "NuGet.Extensions\NuGet.Extensions.csproj", "{280A97D8-09B5-48F5-A73A-82194E6FA534}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NuGet.Extensions.Tests", "NuGet.Extensions.Tests\NuGet.Extensions.Tests.csproj", "{3821BF1D-0A3B-46A2-9DEB-16254E6107B8}"

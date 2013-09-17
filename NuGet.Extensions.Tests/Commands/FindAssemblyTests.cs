@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using NUnit.Framework;
 using Moq;
-using NuGet.Extensions.GetLatest.Commands;
+using NuGet.Extensions.Commands;
 using NuGet.Extensions.Tests.Mocks;
 
 namespace NuGet.Extensions.Tests.Commands
@@ -62,8 +62,9 @@ namespace NuGet.Extensions.Tests.Commands
         private IFileSystem filesystem;
 
         public FindAssemblyTest(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider packageSourceProvider, IFileSystem filesystem)
-        : base(packageRepositoryFactory, packageSourceProvider)
         {
+            RepositoryFactory = packageRepositoryFactory;
+            SourceProvider = packageSourceProvider;
             this.filesystem = filesystem;
         }
         protected override IFileSystem CreateFileSystem(string root)

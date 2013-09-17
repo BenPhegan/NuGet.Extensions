@@ -1,11 +1,13 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Runtime.Versioning;
 using Moq;
 using NuGet.Common;
+using NuGet.Extensions.Caches;
 using NuGet.Extensions.Tests.Mocks;
 using NuGet.Extensions.Tests.TestObjects;
 using NUnit.Framework;
-using NuGet.Extras.Packages;
-using NuGet.Extras.Caches;
+using NuGet.Extensions.Packages;
 
 namespace NuGet.Extensions.Tests.Configuration
 {
@@ -26,7 +28,7 @@ namespace NuGet.Extensions.Tests.Configuration
                 new DefaultPackagePathResolver(_mockFileSystem), _mockFileSystem);
         }
 
-        [TestCase("Should.Not.Exist.On.Feed", "0.0", null, true, Result = null)] // get latest for package id (0.0 version)
+        [TestCase("Should.Not.Exist.On.Feed", "0.0", null, true, Result = "")] // get latest for package id (0.0 version)
         [TestCase("Assembly.Common", "0.0", null, true, Result = "2.0")] // get latest for package id (0.0 version)
         [TestCase("Assembly.Data", "0.0", null, true, Result = "2.1")]  // get latest for package id (0.0 version)
         [TestCase("Assembly.Common", "1.0", null, true, Result = "2.0")] // get specific version for package id
@@ -55,10 +57,10 @@ namespace NuGet.Extensions.Tests.Configuration
         [TestCase("Assembly.Common", "0.0", "[1.0,2.0]", false, Result = "0.0")] // get latest constrained version (0.0 version)
         public string FindPackageLatestTests(string id, string version, string versionSpec, bool latest)
         {
-            var pr = new PackageReference(id, SemanticVersion.Parse(version), string.IsNullOrEmpty(versionSpec) ? new VersionSpec() : VersionUtility.ParseVersionSpec(versionSpec));
+            var pr = new PackageReference(id, SemanticVersion.Parse(version), string.IsNullOrEmpty(versionSpec) ? new VersionSpec() : VersionUtility.ParseVersionSpec(versionSpec), new FrameworkName(".NET Framework, Version=4.0"));
             var prc = new PackageResolutionManager(new Mock<ILogger>().Object, latest, new MemoryBasedPackageCache(new Mock<ILogger>().Object));
             var v = prc.ResolveInstallableVersion(Utilities.GetFactory().CreateRepository("SingleAggregate"), pr);
-            return v != null ? v.ToString() : null;
+            return v != null ? v.ToString() : "";
         }
 
         protected override void SetUpTest()

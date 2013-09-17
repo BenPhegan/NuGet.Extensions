@@ -8,7 +8,6 @@ using System.Linq;
 using System.Text;
 using NuGet.Commands;
 using NuGet.Common;
-using NuGet.Extras.Repositories;
 
 namespace NuGet.Extensions.Commands
 {
@@ -17,10 +16,6 @@ namespace NuGet.Extensions.Commands
     {
         private const int _indent = 25;
         private readonly List<string> _sources = new List<string>();
-        public IPackageRepositoryFactory RepositoryFactory { get; set; }
-        public IPackageSourceProvider SourceProvider { get; set; }
-        private RepositoryAssemblyResolver resolver;
-        private IFileSystem fileSystem;
 
         [Option("A list of sources to search")]
         public ICollection<string> Source
@@ -41,14 +36,7 @@ namespace NuGet.Extensions.Commands
         public bool NoDependencies { get; set; }
 
         [ImportingConstructor]
-        public Details(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider sourceProvider)
-        {
-            Contract.Assert(packageRepositoryFactory != null);
-            Contract.Assert(sourceProvider != null);
-
-            RepositoryFactory = packageRepositoryFactory;
-            SourceProvider = sourceProvider;
-        }
+        public Details() {}
 
         public override void ExecuteCommand()
         {
@@ -84,14 +72,17 @@ namespace NuGet.Extensions.Commands
             Console.WriteLine();
         }
 
-        private void OutputDependencies(IPackage package)
+        private void OutputDependencies(IPackageMetadata package)
         {
-            if (package.Dependencies.Any())
+            if (package.DependencySets.Any())
             {
                 Console.WriteLine("Package Dependencies:");
-                foreach (var dependency in package.Dependencies)
+                foreach (var dependencySet in package.DependencySets)
                 {
-                    Console.WriteLine("".PadLeft(_indent) + string.Format("{0} {1}", dependency.Id, dependency.VersionSpec));
+                    foreach (var dependency in dependencySet.Dependencies)
+                    {
+                        Console.WriteLine("".PadLeft(_indent) + string.Format("{0} - {1} {2}",dependencySet.TargetFramework, dependency.Id, dependency.VersionSpec));
+                    }
                 }
             }
         }

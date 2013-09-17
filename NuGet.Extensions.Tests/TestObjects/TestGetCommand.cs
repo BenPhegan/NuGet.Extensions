@@ -1,18 +1,20 @@
 ﻿using NuGet.Common;
+using NuGet.Extensions.Caches;
 using NuGet.Extensions.Commands;
 using Moq;
 using NuGet.Extensions.Tests.Mocks;
-using NuGet.Extras.Caches;
 
 namespace NuGet.Extensions.Tests.TestObjects
 {
     public class TestGetCommand : Get
     {
-        Mock<MockFileSystem> mockFileSystem;
+        readonly Mock<MockFileSystem> mockFileSystem;
 
         public TestGetCommand(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider sourceProvider, IPackageRepository cacheRepository, Mock<MockFileSystem> fileSystem)
-            : base(packageRepositoryFactory, sourceProvider, cacheRepository, fileSystem.Object, new MemoryBasedPackageCache(new Mock<IConsole>().Object)) 
+            : base(cacheRepository, fileSystem.Object, new MemoryBasedPackageCache(new Mock<IConsole>().Object))
         {
+            RepositoryFactory = packageRepositoryFactory;
+            SourceProvider = sourceProvider;
             mockFileSystem = fileSystem;
         }
 
