@@ -59,6 +59,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Commands\FindAssemblyTests.cs" />
+    <Compile Include="Commands\FixReferencesTests.cs" />
     <Compile Include="Comparers\PackageReferenceEqualityComparerTests.cs" />
     <Compile Include="Comparers\VersionSpecEqualityComparers.cs" />
     <Compile Include="Configuration\FindPackageTests.cs" />
