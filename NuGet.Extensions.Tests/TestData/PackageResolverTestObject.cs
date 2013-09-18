@@ -42,7 +42,7 @@ namespace NuGet.Extensions.Tests.TestData
 
         private PackageReference CreatePackageReferenceFromXElement(XElement input)
         {
-            return new PackageReference(input.Attribute("id").Value, SemanticVersion.Parse(input.Attribute("version").Value), GetVersionSpec(input), new FrameworkName(".NET Framework, Version=4.0"));
+            return new PackageReference(input.Attribute("id").Value, SemanticVersion.Parse(input.Attribute("version").Value), GetVersionSpec(input), new FrameworkName(".NET Framework, Version=4.0"), false);
         }
 
         private VersionSpec GetVersionSpec(XElement input)

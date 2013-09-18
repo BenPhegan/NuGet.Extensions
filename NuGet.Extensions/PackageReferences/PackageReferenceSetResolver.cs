@@ -144,7 +144,7 @@ namespace NuGet.Extensions.PackageReferences
                 if (failures.Count == 0)
                 {
                     //TODO this is pretty crap, need to sort out how to deal with FrameworkName
-                    var pr = new PackageReference(id, winner, smallest, new FrameworkName(@".NET Framework, Version=4.0"));
+                    var pr = new PackageReference(id, winner, smallest, new FrameworkName(@".NET Framework, Version=4.0"), false);
                     return pr;
                 }
             }

@@ -80,7 +80,7 @@ namespace NuGet.Extensions.Commands
                             }
                             else
                             {
-                                var newReference = new PackageReference(package.Id, package.Version, new VersionSpec(), new FrameworkName(".NET Framework, Version=4.0"));
+                                var newReference = new PackageReference(package.Id, package.Version, new VersionSpec(), new FrameworkName(".NET Framework, Version=4.0"), false);
                                 Console.WriteLine("\t\t\tUpdated to {0}", newReference.ToString());
                                 newReferences.Add(newReference);
                             }

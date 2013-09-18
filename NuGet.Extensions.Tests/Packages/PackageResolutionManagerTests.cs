@@ -51,7 +51,7 @@ namespace NuGet.Extensions.Tests.Packages
             //Repository does not have these versions, so any call to it will fail...
             var resolver = new PackageResolutionManager(console, isLatest, cache);
             var remoteRepository = Utilities.GetFactory().CreateRepository("SingleAggregate");
-            var result = resolver.ResolveLatestInstallablePackage(remoteRepository, new PackageReference(id, SemanticVersion.Parse(version), versionSpec, null));
+            var result = resolver.ResolveLatestInstallablePackage(remoteRepository, new PackageReference(id, SemanticVersion.Parse(version), versionSpec, null, false));
             
             //Null result when we call ResolveLastestInstallablePackage when PackageResolutionManager not using Latest
             return result == null ? "" : result.Version.ToString();
@@ -73,7 +73,7 @@ namespace NuGet.Extensions.Tests.Packages
             //Repository does not have these versions, so any call to it will fail...
             var resolver = new PackageResolutionManager(console, isLatest, cache);
             var remoteRepository = Utilities.GetFactory().CreateRepository("MultiAggregate");
-            var result = resolver.ResolveLatestInstallablePackage(remoteRepository, new PackageReference(id, SemanticVersion.Parse(version), versionSpec, null));
+            var result = resolver.ResolveLatestInstallablePackage(remoteRepository, new PackageReference(id, SemanticVersion.Parse(version), versionSpec, null, false));
 
             //Null result when we call ResolveLastestInstallablePackage when PackageResolutionManager not using Latest
             return result == null ? "" : result.Version.ToString();
@@ -123,7 +123,7 @@ namespace NuGet.Extensions.Tests.Packages
             var resolver = new PackageResolutionManager(console, true, new MemoryBasedPackageCache(console));
             var remoteRepository = Utilities.GetFactory().CreateRepository("SingleAggregate");
 
-            var packageReference = new PackageReference("Assembly.Common", SemanticVersion.Parse("1.0"), new VersionSpec(), new FrameworkName(".NET Framework, Version=4.0"));
+            var packageReference = new PackageReference("Assembly.Common", SemanticVersion.Parse("1.0"), new VersionSpec(), new FrameworkName(".NET Framework, Version=4.0"), false);
 
             var test = resolver.ResolveLatestInstallablePackage(remoteRepository, packageReference);
             Assert.AreEqual("Assembly.Common", test.Id);

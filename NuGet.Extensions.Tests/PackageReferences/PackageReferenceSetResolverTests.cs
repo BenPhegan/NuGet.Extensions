@@ -26,8 +26,8 @@ namespace NuGet.Extensions.Tests.PackageReferences
         {
             var t = new PackageReferenceSetResolver();
             var l = new List<PackageReference>();
-            l.Add(new PackageReference("test", SemanticVersion.Parse("1.1.1.1"), VersionUtility.ParseVersionSpec(v1), new FrameworkName(".NET Framework, Version=4.0")));
-            l.Add(new PackageReference("test", SemanticVersion.Parse("1.1.1.1"), VersionUtility.ParseVersionSpec(v2), new FrameworkName(".NET Framework, Version=4.0")));
+            l.Add(new PackageReference("test", SemanticVersion.Parse("1.1.1.1"), VersionUtility.ParseVersionSpec(v1), new FrameworkName(".NET Framework, Version=4.0"), false));
+            l.Add(new PackageReference("test", SemanticVersion.Parse("1.1.1.1"), VersionUtility.ParseVersionSpec(v2), new FrameworkName(".NET Framework, Version=4.0"), false));
             var resolvedVs = t.ResolveValidVersionSpec(l);
             if (expected == null)
             {
@@ -55,9 +55,9 @@ namespace NuGet.Extensions.Tests.PackageReferences
         {
             var t = new PackageReferenceSetResolver();
             var l = new List<PackageReference>();
-            l.Add(new PackageReference("test", SemanticVersion.Parse("1.1.1.1"), VersionUtility.ParseVersionSpec(v1), new FrameworkName(".NET Framework, Version=4.0")));
-            l.Add(new PackageReference("test", SemanticVersion.Parse("1.1.1.1"), VersionUtility.ParseVersionSpec(v2), new FrameworkName(".NET Framework, Version=4.0")));
-            l.Add(new PackageReference("test", SemanticVersion.Parse("1.1.1.1"), VersionUtility.ParseVersionSpec(v3), new FrameworkName(".NET Framework, Version=4.0")));
+            l.Add(new PackageReference("test", SemanticVersion.Parse("1.1.1.1"), VersionUtility.ParseVersionSpec(v1), new FrameworkName(".NET Framework, Version=4.0"), false));
+            l.Add(new PackageReference("test", SemanticVersion.Parse("1.1.1.1"), VersionUtility.ParseVersionSpec(v2), new FrameworkName(".NET Framework, Version=4.0"), false));
+            l.Add(new PackageReference("test", SemanticVersion.Parse("1.1.1.1"), VersionUtility.ParseVersionSpec(v3), new FrameworkName(".NET Framework, Version=4.0"), false));
             var resolvedVs = t.ResolveValidVersionSpec(l);
             if (expected == null)
             {
@@ -82,8 +82,8 @@ namespace NuGet.Extensions.Tests.PackageReferences
         {
             var t = new PackageReferenceSetResolver();
             var l = new List<PackageReference>();
-            l.Add(new PackageReference("test", SemanticVersion.Parse(v1), new VersionSpec(), new FrameworkName(".NET Framework, Version=4.0")));
-            l.Add(new PackageReference("test", SemanticVersion.Parse(v2), new VersionSpec(), new FrameworkName(".NET Framework, Version=4.0")));
+            l.Add(new PackageReference("test", SemanticVersion.Parse(v1), new VersionSpec(), new FrameworkName(".NET Framework, Version=4.0"), false));
+            l.Add(new PackageReference("test", SemanticVersion.Parse(v2), new VersionSpec(), new FrameworkName(".NET Framework, Version=4.0"), false));
 
             if (expected == null)
                 Assert.IsNull(t.ResolveValidVersion(l));

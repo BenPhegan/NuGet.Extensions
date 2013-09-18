@@ -48,8 +48,8 @@ namespace NuGet.Extensions.Tests.Comparers
         {
             var packages = new List<PackageReference>
                                {
-                                   new PackageReference(id1, v1 == null ? null : SemanticVersion.Parse(v1), vs1 == null ? null : VersionUtility.ParseVersionSpec(vs1), new FrameworkName(".NET Framework, Version=4.0")),
-                                   new PackageReference(id2, v2 == null ? null : SemanticVersion.Parse(v2), vs2 == null ? null : VersionUtility.ParseVersionSpec(vs2), new FrameworkName(".NET Framework, Version=4.0"))
+                                   new PackageReference(id1, v1 == null ? null : SemanticVersion.Parse(v1), vs1 == null ? null : VersionUtility.ParseVersionSpec(vs1), new FrameworkName(".NET Framework, Version=4.0"), false),
+                                   new PackageReference(id2, v2 == null ? null : SemanticVersion.Parse(v2), vs2 == null ? null : VersionUtility.ParseVersionSpec(vs2), new FrameworkName(".NET Framework, Version=4.0"), false)
                                };
             return packages;
         }
