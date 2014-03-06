@@ -11,7 +11,7 @@ using NuGet.Extensions.Repositories;
 namespace NuGet.Extensions.Commands
 {
     public class ReferenceNugetifier {
-        private const string _packagesConfigFilename = "packages.config";
+        public const string _packagesConfigFilename = "packages.config";
         private readonly IPackageRepositoryFactory _repositoryFactory;
         private readonly IPackageSourceProvider _sourceProvider;
         private readonly IConsole _console;
@@ -23,7 +23,7 @@ namespace NuGet.Extensions.Commands
         private readonly IProjectAdapter _projectAdapter;
         private readonly PackageReferenceFile _packageReferenceFile;
 
-        public ReferenceNugetifier(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider packageSourceProvider, IConsole console, bool nuspec, IEnumerable<string> source, FileInfo projectFileInfo, Project project, DirectoryInfo solutionRoot, IFileSystem projectFileSystem)
+        public ReferenceNugetifier(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider packageSourceProvider, IConsole console, bool nuspec, IEnumerable<string> source, FileInfo projectFileInfo, Project project, DirectoryInfo solutionRoot, IFileSystem projectFileSystem, ProjectAdapter projectAdapter, PackageReferenceFile packageReferenceFile)
         {
             _repositoryFactory = packageRepositoryFactory;
             _sourceProvider = packageSourceProvider;
@@ -33,8 +33,8 @@ namespace NuGet.Extensions.Commands
             _projectFileInfo = projectFileInfo;
             _solutionRoot = solutionRoot;
             _projectFileSystem = projectFileSystem;
-            _projectAdapter = new ProjectAdapter(project, _packagesConfigFilename);
-            _packageReferenceFile = new PackageReferenceFile(_projectFileSystem, _packagesConfigFilename);
+            _projectAdapter = projectAdapter;
+            _packageReferenceFile = packageReferenceFile;
         }
 
         public string NugetifyReferences(ISharedPackageRepository sharedPackagesRepository, string projectPath, List<ManifestDependency> manifestDependencies, List<string> projectReferences)
