@@ -29,15 +29,7 @@ namespace NuGet.Extensions.FeedAudit
         public static String GetAssemblyPath(string assemblyName)
         {
             var assemblyNames = GetAllAssemblyNames(assemblyName);
-            var assemblyPath = string.Empty;
-            foreach (var assembly in assemblyNames)
-            {
-                assemblyPath = GetGacAssemblyPath(assembly);
-                if (!String.IsNullOrEmpty(assemblyPath))
-                    return assemblyPath;
-            }
-
-            return assemblyPath;
+            return assemblyNames.Select(GetGacAssemblyPath).SkipWhile(String.IsNullOrEmpty).FirstOrDefault();
         }
 
         // If assemblyName is not fully qualified, a random matching may be 
