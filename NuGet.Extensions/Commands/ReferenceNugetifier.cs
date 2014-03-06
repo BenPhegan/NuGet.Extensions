@@ -15,29 +15,30 @@ namespace NuGet.Extensions.Commands
         private readonly IConsole _console;
         private readonly bool _nuspec;
         private readonly IEnumerable<string> _source;
+        private readonly FileInfo _projectFileInfo;
 
-        public ReferenceNugetifier(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider packageSourceProvider, IConsole console, bool nuspec, IEnumerable<string> source)
+        public ReferenceNugetifier(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider packageSourceProvider, IConsole console, bool nuspec, IEnumerable<string> source, FileInfo projectFileInfo)
         {
             _repositoryFactory = packageRepositoryFactory;
             _sourceProvider = packageSourceProvider;
             _console = console;
             _nuspec = nuspec;
             _source = source;
+            _projectFileInfo = projectFileInfo;
         }
 
         public string NugetifyReferences(Project project, DirectoryInfo solutionRoot, SharedPackageRepository sharedPackagesRepository, string projectPath, List<ManifestDependency> manifestDependencies, List<string> projectReferences)
         {
-            var projectFileInfo = new FileInfo(projectPath);
             var assemblyOutput = project.GetPropertyValue("AssemblyName");
 
             var references = project.GetItems("Reference");
 
-            var resolvedMappings = ResolveReferenceMappings(references, projectFileInfo);
+            var resolvedMappings = ResolveReferenceMappings(references, _projectFileInfo);
 
             if (resolvedMappings != null && resolvedMappings.Any())
             {
                 UpdateProjectFileReferenceHintPaths(solutionRoot, project, projectPath, resolvedMappings, references);
-                CreateNuGetScaffolding(sharedPackagesRepository, manifestDependencies, resolvedMappings, projectFileInfo, project, projectReferences);
+                CreateNuGetScaffolding(sharedPackagesRepository, manifestDependencies, resolvedMappings, _projectFileInfo, project, projectReferences);
             }
             return assemblyOutput;
         }
