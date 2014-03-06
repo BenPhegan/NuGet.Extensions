@@ -14,25 +14,27 @@ namespace NuGet.Extensions.Commands
         private readonly IPackageSourceProvider _sourceProvider;
         private readonly IConsole _console;
         private readonly bool _nuspec;
-        private readonly IEnumerable<string> _source;
+        private readonly IEnumerable<string> _packageSources;
         private readonly FileInfo _projectFileInfo;
         private readonly DirectoryInfo _solutionRoot;
         private readonly IFileSystem _projectFileSystem;
         private readonly IVsProject _vsProject;
         private readonly PackageReferenceFile _packageReferenceFile;
+        private readonly IPackageRepository _packageRepository;
 
-        public ReferenceNugetifier(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider packageSourceProvider, IConsole console, bool nuspec, IEnumerable<string> source, FileInfo projectFileInfo, DirectoryInfo solutionRoot, IFileSystem projectFileSystem, IVsProject vsProject, PackageReferenceFile packageReferenceFile)
+        public ReferenceNugetifier(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider packageSourceProvider, IConsole console, bool nuspec, IEnumerable<string> packageSources, FileInfo projectFileInfo, DirectoryInfo solutionRoot, IFileSystem projectFileSystem, IVsProject vsProject, PackageReferenceFile packageReferenceFile, IPackageRepository packageRepository)
         {
             _repositoryFactory = packageRepositoryFactory;
             _sourceProvider = packageSourceProvider;
             _console = console;
             _nuspec = nuspec;
-            _source = source;
+            _packageSources = packageSources;
             _projectFileInfo = projectFileInfo;
             _solutionRoot = solutionRoot;
             _projectFileSystem = projectFileSystem;
             _vsProject = vsProject;
             _packageReferenceFile = packageReferenceFile;
+            _packageRepository = packageRepository;
         }
 
         public string NugetifyReferences(ISharedPackageRepository sharedPackagesRepository, string projectPath, List<ManifestDependency> manifestDependencies, List<string> projectReferences)
@@ -176,7 +178,7 @@ namespace NuGet.Extensions.Commands
             {
                 _console.WriteLine("Checking feed for {0} references...", referenceFiles.Count);
 
-                IQueryable<IPackage> packageSource = GetRepository().GetPackages().OrderBy(p => p.Id);
+                IQueryable<IPackage> packageSource = _packageRepository.GetPackages().OrderBy(p => p.Id);
 
                 var assemblyResolver = new RepositoryAssemblyResolver(referenceFiles,
                     packageSource,
@@ -189,13 +191,6 @@ namespace NuGet.Extensions.Commands
                 _console.WriteWarning("No references found to resolve (all GAC?)");
             }
             return results;
-        }
-
-        private IPackageRepository GetRepository()
-        {
-            var repository = AggregateRepositoryHelper.CreateAggregateRepositoryFromSources(_repositoryFactory, _sourceProvider, _source);
-            repository.Logger = _console;
-            return repository;
         }
     }
 }

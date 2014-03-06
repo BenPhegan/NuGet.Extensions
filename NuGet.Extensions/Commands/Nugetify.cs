@@ -106,7 +106,8 @@ namespace NuGet.Extensions.Commands
                 var packagesConfigFilename = ReferenceNugetifier._packagesConfigFilename;
                 var packageReferenceFile = new PackageReferenceFile(projectFileSystem, packagesConfigFilename);
                 var projectAdapter = new ProjectAdapter(project, packagesConfigFilename);
-                var referenceNugetifier = new ReferenceNugetifier(RepositoryFactory, SourceProvider, Console, NuSpec, Source, projectFileInfo, solutionRoot, projectFileSystem, projectAdapter, packageReferenceFile);
+                var packageRepository = GetRepository();
+                var referenceNugetifier = new ReferenceNugetifier(RepositoryFactory, SourceProvider, Console, NuSpec, Source, projectFileInfo, solutionRoot, projectFileSystem, projectAdapter, packageReferenceFile, packageRepository);
                 var projectReferences = ParseProjectReferences(project, Console);
                 var assemblyOutput = referenceNugetifier.NugetifyReferences(sharedPackagesRepository, projectPath, manifestDependencies, projectReferences);
 
@@ -193,6 +194,13 @@ namespace NuGet.Extensions.Commands
                 refs.Add(refProject.GetPropertyValue("AssemblyName"));
             }
             return refs;
+        }
+
+        private IPackageRepository GetRepository()
+        {
+            var repository = AggregateRepositoryHelper.CreateAggregateRepositoryFromSources(RepositoryFactory, SourceProvider, Source);
+            repository.Logger = Console;
+            return repository;
         }
     }
 }
