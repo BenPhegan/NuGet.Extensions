@@ -24,9 +24,9 @@ namespace NuGet.Extensions.Commands
             return _reference.HasMetadata("HintPath");
         }
 
-        public ProjectMetadata SetHintPath(string newHintPathRelative)
+        public void SetHintPath(string newHintPathRelative)
         {
-            return _reference.SetMetadataValue("HintPath", newHintPathRelative);
+            _reference.SetMetadataValue("HintPath", newHintPathRelative);
         }
 
         public string GetIncludeVersion()
