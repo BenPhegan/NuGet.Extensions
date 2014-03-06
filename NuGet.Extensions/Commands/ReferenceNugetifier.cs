@@ -34,7 +34,7 @@ namespace NuGet.Extensions.Commands
             _projectFileSystem = projectFileSystem;
         }
 
-        public string NugetifyReferences(SharedPackageRepository sharedPackagesRepository, string projectPath, List<ManifestDependency> manifestDependencies, List<string> projectReferences)
+        public string NugetifyReferences(ISharedPackageRepository sharedPackagesRepository, string projectPath, List<ManifestDependency> manifestDependencies, List<string> projectReferences)
         {
             var assemblyOutput = _project.GetPropertyValue("AssemblyName");
 
@@ -88,7 +88,7 @@ namespace NuGet.Extensions.Commands
             else _console.WriteWarning(message);
         }
 
-        private void CreateNuGetScaffolding(SharedPackageRepository sharedPackagesRepository, List<ManifestDependency> manifestDependencies, IEnumerable<KeyValuePair<string, List<IPackage>>> resolvedMappings, FileInfo projectFileInfo, Project project, List<string> projectDependencies)
+        private void CreateNuGetScaffolding(ISharedPackageRepository sharedPackagesRepository, List<ManifestDependency> manifestDependencies, IEnumerable<KeyValuePair<string, List<IPackage>>> resolvedMappings, FileInfo projectFileInfo, Project project, List<string> projectDependencies)
         {
             //Now, create the packages.config for the resolved packages, and update the repositories.config
             _console.WriteLine("Creating packages.config");

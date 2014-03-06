@@ -92,7 +92,7 @@ namespace NuGet.Extensions.Commands
             }
         }
 
-        private void NugetifyProject(FileInfo solutionFile, SolutionProject simpleProject, DirectoryInfo solutionRoot, SharedPackageRepository sharedPackagesRepository)
+        private void NugetifyProject(FileInfo solutionFile, SolutionProject simpleProject, DirectoryInfo solutionRoot, ISharedPackageRepository sharedPackagesRepository)
         {
             var manifestDependencies = new List<ManifestDependency>();
             var projectPath = Path.Combine(solutionFile.Directory.FullName, simpleProject.RelativePath);
