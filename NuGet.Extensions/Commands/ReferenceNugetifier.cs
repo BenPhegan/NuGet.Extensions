@@ -18,6 +18,7 @@ namespace NuGet.Extensions.Commands
         private readonly FileInfo _projectFileInfo;
         private readonly Project _project;
         private readonly DirectoryInfo _solutionRoot;
+        private readonly IFileSystem _physicalFileSystem;
 
         public ReferenceNugetifier(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider packageSourceProvider, IConsole console, bool nuspec, IEnumerable<string> source, FileInfo projectFileInfo, Project project, DirectoryInfo solutionRoot)
         {
@@ -29,6 +30,7 @@ namespace NuGet.Extensions.Commands
             _projectFileInfo = projectFileInfo;
             _project = project;
             _solutionRoot = solutionRoot;
+            _physicalFileSystem = new PhysicalFileSystem(_projectFileInfo.Directory.ToString());
         }
 
         public string NugetifyReferences(SharedPackageRepository sharedPackagesRepository, string projectPath, List<ManifestDependency> manifestDependencies, List<string> projectReferences)
@@ -37,7 +39,7 @@ namespace NuGet.Extensions.Commands
 
             var references = _project.GetItems("Reference");
 
-            var resolvedMappings = ResolveReferenceMappings(references, _projectFileInfo);
+            var resolvedMappings = ResolveReferenceMappings(references);
 
             if (resolvedMappings != null && resolvedMappings.Any())
             {
@@ -126,12 +128,12 @@ namespace NuGet.Extensions.Commands
             }
         }
 
-        private IEnumerable<KeyValuePair<string, List<IPackage>>> ResolveReferenceMappings(ICollection<ProjectItem> references, FileInfo projectFileInfo)
+        private IEnumerable<KeyValuePair<string, List<IPackage>>> ResolveReferenceMappings(ICollection<ProjectItem> references)
         {
             var referenceList = GetReferencedAssemblies(references);
             if (referenceList.Any())
             {
-                var referenceMappings = ResolveAssembliesToPackagesConfigFile(projectFileInfo, referenceList);
+                var referenceMappings = ResolveAssembliesToPackagesConfigFile(referenceList);
                 var resolvedMappings = referenceMappings.Where(m => m.Value.Any());
                 var failedMappings = referenceMappings.Where(m => m.Value.Count == 0);
                 //next, lets rewrite the project file with the mappings to the new location...
@@ -170,7 +172,7 @@ namespace NuGet.Extensions.Commands
             return Uri.UnescapeDataString(relativeUri.ToString()).Replace('/', Path.DirectorySeparatorChar);
         }
 
-        private Dictionary<string, List<IPackage>> ResolveAssembliesToPackagesConfigFile(FileInfo projectFileInfo, List<string> referenceFiles)
+        private Dictionary<string, List<IPackage>> ResolveAssembliesToPackagesConfigFile(List<string> referenceFiles)
         {
             var results = new Dictionary<string, List<IPackage>>();
             if (referenceFiles.Any())
@@ -181,7 +183,7 @@ namespace NuGet.Extensions.Commands
 
                 var assemblyResolver = new RepositoryAssemblyResolver(referenceFiles,
                     packageSource,
-                    new PhysicalFileSystem(projectFileInfo.Directory.ToString()), _console);
+                    _physicalFileSystem, _console);
                 results = assemblyResolver.ResolveAssemblies(false);
                 assemblyResolver.OutputPackageConfigFile();
             }
