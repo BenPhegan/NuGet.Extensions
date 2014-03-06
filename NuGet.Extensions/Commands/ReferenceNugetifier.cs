@@ -21,6 +21,7 @@ namespace NuGet.Extensions.Commands
         private readonly IFileSystem _projectFileSystem;
         private readonly IProjectAdapter _projectAdapter;
         private readonly PackageReferenceFile _packageReferenceFile;
+        private readonly BinaryReferenceAdapter _binaryReferenceAdapter;
 
         public ReferenceNugetifier(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider packageSourceProvider, IConsole console, bool nuspec, IEnumerable<string> source, FileInfo projectFileInfo, DirectoryInfo solutionRoot, IFileSystem projectFileSystem, ProjectAdapter projectAdapter, PackageReferenceFile packageReferenceFile)
         {
@@ -34,6 +35,7 @@ namespace NuGet.Extensions.Commands
             _projectFileSystem = projectFileSystem;
             _projectAdapter = projectAdapter;
             _packageReferenceFile = packageReferenceFile;
+            _binaryReferenceAdapter = new BinaryReferenceAdapter();
         }
 
         public string NugetifyReferences(ISharedPackageRepository sharedPackagesRepository, string projectPath, List<ManifestDependency> manifestDependencies, List<string> projectReferences)
@@ -56,11 +58,11 @@ namespace NuGet.Extensions.Commands
         {
             foreach (var mapping in resolvedMappings)
             {
-                var referenceMatch = references.FirstOrDefault(r => ResolveProjectReferenceItemByAssemblyName(r, mapping.Key));
+                var referenceMatch = references.FirstOrDefault(r => _binaryReferenceAdapter.ResolveProjectReferenceItemByAssemblyName(r, mapping.Key));
                 if (referenceMatch != null)
                 {
-                    var includeName = GetIncludeName(referenceMatch);
-                    var includeVersion = GetIncludeVersion(referenceMatch);
+                    var includeName = BinaryReferenceAdapter.GetIncludeName(referenceMatch);
+                    var includeVersion = BinaryReferenceAdapter.GetIncludeVersion(referenceMatch);
                     var package = mapping.Value.OrderBy(p => p.GetFiles().Count()).First();
 
                     LogHintPathRewriteMessage(package, includeName, includeVersion);
@@ -69,35 +71,10 @@ namespace NuGet.Extensions.Commands
                     var newHintPathFull  = Path.Combine(solutionRoot.FullName, "packages", package.Id, fileLocation);
                     var newHintPathRelative = String.Format(GetRelativePath(_projectFileInfo.FullName, newHintPathFull));
                     //TODO make version available, currently only works for non versioned package directories...
-                    SetHintPath(referenceMatch, newHintPathRelative);
+                    BinaryReferenceAdapter.SetHintPath(referenceMatch, newHintPathRelative);
                 }
             }
             _projectAdapter.Save();
-        }
-
-        private static string GetHintPath(ProjectItem reference)
-        {
-            return reference.GetMetadataValue("HintPath");
-        }
-
-        private static bool HasHintPath(ProjectItem reference)
-        {
-            return reference.HasMetadata("HintPath");
-        }
-
-        private static ProjectMetadata SetHintPath(ProjectItem referenceMatch, string newHintPathRelative)
-        {
-            return referenceMatch.SetMetadataValue("HintPath", newHintPathRelative);
-        }
-
-        private static string GetIncludeVersion(ProjectItem referenceMatch)
-        {
-            return referenceMatch.EvaluatedInclude.Contains(',') ? referenceMatch.EvaluatedInclude.Split(',')[1].Split('=')[1] : null;
-        }
-
-        private static string GetIncludeName(ProjectItem referenceMatch)
-        {
-            return referenceMatch.EvaluatedInclude.Contains(',') ? referenceMatch.EvaluatedInclude.Split(',')[0] : referenceMatch.EvaluatedInclude;
         }
 
         private void LogHintPathRewriteMessage(IPackage package, string includeName, string includeVersion)
@@ -215,18 +192,6 @@ namespace NuGet.Extensions.Commands
                 _console.WriteWarning("No references found to resolve (all GAC?)");
             }
             return results;
-        }
-
-        private bool ResolveProjectReferenceItemByAssemblyName(ProjectItem reference, string mapping)
-        {
-            if (HasHintPath(reference))
-            {
-                var hintpath = GetHintPath(reference);
-                var fileInfo = new FileInfo(hintpath);
-                return fileInfo.Name.Equals(mapping, StringComparison.OrdinalIgnoreCase);
-            }
-
-            return false;
         }
 
         private IPackageRepository GetRepository()

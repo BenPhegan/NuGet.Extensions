@@ -69,6 +69,7 @@
     <Compile Include="Caches\MemoryBasedPackageCache.cs" />
     <Compile Include="Caches\NuGetCacheManager.cs" />
     <Compile Include="Commands\Audit.cs" />
+    <Compile Include="Commands\BinaryReferenceAdapter.cs" />
     <Compile Include="Commands\FixReferences.cs" />
     <Compile Include="Commands\IProjectAdapter.cs" />
     <Compile Include="Commands\ProjectAdapter.cs" />
