@@ -59,8 +59,8 @@ namespace NuGet.Extensions.Commands
                 var referenceMatch = references.FirstOrDefault(r => ResolveProjectReferenceItemByAssemblyName(r, mapping.Key));
                 if (referenceMatch != null)
                 {
-                    var includeName = referenceMatch.EvaluatedInclude.Contains(',') ? referenceMatch.EvaluatedInclude.Split(',')[0] : referenceMatch.EvaluatedInclude;
-                    var includeVersion = referenceMatch.EvaluatedInclude.Contains(',') ? referenceMatch.EvaluatedInclude.Split(',')[1].Split('=')[1] : null;
+                    var includeName = GetIncludeName(referenceMatch);
+                    var includeVersion = GetIncludeVersion(referenceMatch);
                     var package = mapping.Value.OrderBy(p => p.GetFiles().Count()).First();
 
                     LogHintPathRewriteMessage(package, includeName, includeVersion);
@@ -69,10 +69,35 @@ namespace NuGet.Extensions.Commands
                     var newHintPathFull  = Path.Combine(solutionRoot.FullName, "packages", package.Id, fileLocation);
                     var newHintPathRelative = String.Format(GetRelativePath(_projectFileInfo.FullName, newHintPathFull));
                     //TODO make version available, currently only works for non versioned package directories...
-                    referenceMatch.SetMetadataValue("HintPath", newHintPathRelative);
+                    SetHintPath(referenceMatch, newHintPathRelative);
                 }
             }
             _projectAdapter.Save();
+        }
+
+        private static string GetHintPath(ProjectItem reference)
+        {
+            return reference.GetMetadataValue("HintPath");
+        }
+
+        private static bool HasHintPath(ProjectItem reference)
+        {
+            return reference.HasMetadata("HintPath");
+        }
+
+        private static ProjectMetadata SetHintPath(ProjectItem referenceMatch, string newHintPathRelative)
+        {
+            return referenceMatch.SetMetadataValue("HintPath", newHintPathRelative);
+        }
+
+        private static string GetIncludeVersion(ProjectItem referenceMatch)
+        {
+            return referenceMatch.EvaluatedInclude.Contains(',') ? referenceMatch.EvaluatedInclude.Split(',')[1].Split('=')[1] : null;
+        }
+
+        private static string GetIncludeName(ProjectItem referenceMatch)
+        {
+            return referenceMatch.EvaluatedInclude.Contains(',') ? referenceMatch.EvaluatedInclude.Split(',')[0] : referenceMatch.EvaluatedInclude;
         }
 
         private void LogHintPathRewriteMessage(IPackage package, string includeName, string includeVersion)
@@ -194,9 +219,9 @@ namespace NuGet.Extensions.Commands
 
         private bool ResolveProjectReferenceItemByAssemblyName(ProjectItem reference, string mapping)
         {
-            if (reference.HasMetadata("HintPath"))
+            if (HasHintPath(reference))
             {
-                var hintpath = reference.GetMetadataValue("HintPath");
+                var hintpath = GetHintPath(reference);
                 var fileInfo = new FileInfo(hintpath);
                 return fileInfo.Name.Equals(mapping, StringComparison.OrdinalIgnoreCase);
             }
