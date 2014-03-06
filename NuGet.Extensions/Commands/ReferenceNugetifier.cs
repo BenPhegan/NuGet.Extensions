@@ -21,7 +21,7 @@ namespace NuGet.Extensions.Commands
         private readonly DirectoryInfo _solutionRoot;
         private readonly IFileSystem _projectFileSystem;
 
-        public ReferenceNugetifier(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider packageSourceProvider, IConsole console, bool nuspec, IEnumerable<string> source, FileInfo projectFileInfo, Project project, DirectoryInfo solutionRoot, PhysicalFileSystem projectFileSystem)
+        public ReferenceNugetifier(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider packageSourceProvider, IConsole console, bool nuspec, IEnumerable<string> source, FileInfo projectFileInfo, Project project, DirectoryInfo solutionRoot, IFileSystem projectFileSystem)
         {
             _repositoryFactory = packageRepositoryFactory;
             _sourceProvider = packageSourceProvider;
