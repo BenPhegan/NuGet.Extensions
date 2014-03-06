@@ -44,13 +44,13 @@ namespace NuGet.Extensions.Commands
 
             if (resolvedMappings != null && resolvedMappings.Any())
             {
-                UpdateProjectFileReferenceHintPaths(_solutionRoot, _project, resolvedMappings, references);
-                CreateNuGetScaffolding(sharedPackagesRepository, manifestDependencies, resolvedMappings, _projectFileInfo, _project, projectReferences);
+                UpdateProjectFileReferenceHintPaths(_solutionRoot, resolvedMappings, references);
+                CreateNuGetScaffolding(sharedPackagesRepository, manifestDependencies, resolvedMappings, _projectFileInfo, projectReferences);
             }
             return assemblyOutput;
         }
 
-        private void UpdateProjectFileReferenceHintPaths(DirectoryInfo solutionRoot, Project project, IEnumerable<KeyValuePair<string, List<IPackage>>> resolvedMappings, ICollection<ProjectItem> references)
+        private void UpdateProjectFileReferenceHintPaths(DirectoryInfo solutionRoot, IEnumerable<KeyValuePair<string, List<IPackage>>> resolvedMappings, ICollection<ProjectItem> references)
         {
             foreach (var mapping in resolvedMappings)
             {
@@ -70,7 +70,7 @@ namespace NuGet.Extensions.Commands
                     referenceMatch.SetMetadataValue("HintPath", newHintPathRelative);
                 }
             }
-            project.Save();
+            _project.Save();
         }
 
         private void LogHintPathRewriteMessage(IPackage package, string includeName, string includeVersion)
@@ -88,7 +88,7 @@ namespace NuGet.Extensions.Commands
             else _console.WriteWarning(message);
         }
 
-        private void CreateNuGetScaffolding(ISharedPackageRepository sharedPackagesRepository, List<ManifestDependency> manifestDependencies, IEnumerable<KeyValuePair<string, List<IPackage>>> resolvedMappings, FileInfo projectFileInfo, Project project, List<string> projectDependencies)
+        private void CreateNuGetScaffolding(ISharedPackageRepository sharedPackagesRepository, List<ManifestDependency> manifestDependencies, IEnumerable<KeyValuePair<string, List<IPackage>>> resolvedMappings, FileInfo projectFileInfo, List<string> projectDependencies)
         {
             //Now, create the packages.config for the resolved packages, and update the repositories.config
             _console.WriteLine("Creating packages.config");
@@ -122,10 +122,10 @@ namespace NuGet.Extensions.Commands
             sharedPackagesRepository.RegisterRepository(packagesConfigFilePath);
 
             //Add the packages.config to the project content, otherwise later versions of the VSIX fail...
-            if (!project.GetItems("None").Any(i => i.UnevaluatedInclude.Equals(_packagesConfigFilename)))
+            if (!_project.GetItems("None").Any(i => i.UnevaluatedInclude.Equals(_packagesConfigFilename)))
             {
-                project.Xml.AddItemGroup().AddItem("None", _packagesConfigFilename);
-                project.Save();
+                _project.Xml.AddItemGroup().AddItem("None", _packagesConfigFilename);
+                _project.Save();
             }
         }
 
