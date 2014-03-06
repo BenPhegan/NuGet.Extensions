@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
+using Microsoft.Build.Construction;
 using Microsoft.Build.Evaluation;
 using NuGet.Common;
 using NuGet.Extensions.Repositories;
@@ -36,9 +37,9 @@ namespace NuGet.Extensions.Commands
 
         public string NugetifyReferences(ISharedPackageRepository sharedPackagesRepository, string projectPath, List<ManifestDependency> manifestDependencies, List<string> projectReferences)
         {
-            var assemblyOutput = _project.GetPropertyValue("AssemblyName");
+            var assemblyOutput = GetAssemblyName();
 
-            var references = _project.GetItems("Reference");
+            var references = GetBinaryReferences();
 
             var resolvedMappings = ResolveReferenceMappings(references);
 
@@ -48,6 +49,16 @@ namespace NuGet.Extensions.Commands
                 CreateNuGetScaffolding(sharedPackagesRepository, manifestDependencies, resolvedMappings, _projectFileInfo, projectReferences);
             }
             return assemblyOutput;
+        }
+
+        private ICollection<ProjectItem> GetBinaryReferences()
+        {
+            return _project.GetItems("Reference");
+        }
+
+        private string GetAssemblyName()
+        {
+            return _project.GetPropertyValue("AssemblyName");
         }
 
         private void UpdateProjectFileReferenceHintPaths(DirectoryInfo solutionRoot, IEnumerable<KeyValuePair<string, List<IPackage>>> resolvedMappings, ICollection<ProjectItem> references)
@@ -70,6 +81,11 @@ namespace NuGet.Extensions.Commands
                     referenceMatch.SetMetadataValue("HintPath", newHintPathRelative);
                 }
             }
+            Save();
+        }
+
+        private void Save()
+        {
             _project.Save();
         }
 
@@ -121,12 +137,26 @@ namespace NuGet.Extensions.Commands
             var packagesConfigFilePath = Path.Combine(projectFileInfo.Directory.FullName + "\\", _packagesConfigFilename);
             sharedPackagesRepository.RegisterRepository(packagesConfigFilePath);
 
-            //Add the packages.config to the project content, otherwise later versions of the VSIX fail...
-            if (!_project.GetItems("None").Any(i => i.UnevaluatedInclude.Equals(_packagesConfigFilename)))
+            AddPackagesConfig();
+        }
+
+        private void AddPackagesConfig()
+        { //Add the packages.config to the project content, otherwise later versions of the VSIX fail...
+            if (!HasPackagesConfig())
             {
-                _project.Xml.AddItemGroup().AddItem("None", _packagesConfigFilename);
-                _project.Save();
+                AddPackagesConfigInner();
+                Save();
             }
+        }
+
+        private ProjectItemElement AddPackagesConfigInner()
+        {
+            return _project.Xml.AddItemGroup().AddItem("None", _packagesConfigFilename);
+        }
+
+        private bool HasPackagesConfig()
+        {
+            return _project.GetItems("None").Any(i => i.UnevaluatedInclude.Equals(_packagesConfigFilename));
         }
 
         private IEnumerable<KeyValuePair<string, List<IPackage>>> ResolveReferenceMappings(ICollection<ProjectItem> references)
