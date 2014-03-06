@@ -13,12 +13,12 @@ namespace NuGet.Extensions.Commands
             _reference = reference;
         }
 
-        private string GetHintPath()
+        public string GetHintPath()
         {
             return _reference.GetMetadataValue("HintPath");
         }
 
-        private bool HasHintPath()
+        public bool HasHintPath()
         {
             return _reference.HasMetadata("HintPath");
         }
