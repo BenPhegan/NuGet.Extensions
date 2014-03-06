@@ -128,7 +128,7 @@ namespace NuGet.Extensions.Commands
 
         private IEnumerable<KeyValuePair<string, List<IPackage>>> ResolveReferenceMappings(ICollection<ProjectItem> references)
         {
-            var referenceList = GetReferencedAssemblies(references);
+            var referenceList = ProjectAdapter.GetReferencedAssemblies(references);
             if (referenceList.Any())
             {
                 var referenceMappings = ResolveAssembliesToPackagesConfigFile(referenceList);
@@ -190,22 +190,6 @@ namespace NuGet.Extensions.Commands
                 _console.WriteWarning("No references found to resolve (all GAC?)");
             }
             return results;
-        }
-
-        private static List<string> GetReferencedAssemblies(IEnumerable<ProjectItem> references)
-        {
-            var referenceFiles = new List<string>();
-
-            foreach (ProjectItem reference in references)
-            {
-                //TODO deal with GAC assemblies that we want to replace as well....
-                if (reference.HasMetadata("HintPath"))
-                {
-                    var hintPath = reference.GetMetadataValue("HintPath");
-                    referenceFiles.Add(Path.GetFileName(hintPath));
-                }
-            }
-            return referenceFiles;
         }
 
         private bool ResolveProjectReferenceItemByAssemblyName(ProjectItem reference, string mapping)

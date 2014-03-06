@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Microsoft.Build.Evaluation;
 
@@ -42,6 +43,22 @@ namespace NuGet.Extensions.Commands
         private bool HasPackagesConfig()
         {
             return _project.GetItems("None").Any(i => i.UnevaluatedInclude.Equals(_packagesConfigFilename));
+        }
+
+        public static List<string> GetReferencedAssemblies(IEnumerable<ProjectItem> references)
+        {
+            var referenceFiles = new List<string>();
+
+            foreach (ProjectItem reference in references)
+            {
+                //TODO deal with GAC assemblies that we want to replace as well....
+                if (reference.HasMetadata("HintPath"))
+                {
+                    var hintPath = reference.GetMetadataValue("HintPath");
+                    referenceFiles.Add(Path.GetFileName(hintPath));
+                }
+            }
+            return referenceFiles;
         }
     }
 }
