@@ -9,7 +9,8 @@ using NuGet.Extensions.Repositories;
 
 namespace NuGet.Extensions.ReferenceAnalysers
 {
-    public class ReferenceNugetifier {
+    public class ReferenceNugetifier
+    {
         public const string _packagesConfigFilename = "packages.config";
         private readonly IConsole _console;
         private readonly bool _nuspec;
@@ -61,7 +62,7 @@ namespace NuGet.Extensions.ReferenceAnalysers
                     LogHintPathRewriteMessage(package, includeName, includeVersion);
 
                     var fileLocation = GetFileLocationFromPackage(package, mapping.Key);
-                    var newHintPathFull  = Path.Combine(_solutionRoot.FullName, "packages", package.Id, fileLocation);
+                    var newHintPathFull = Path.Combine(_solutionRoot.FullName, "packages", package.Id, fileLocation);
                     var newHintPathRelative = String.Format(GetRelativePath(_projectFileInfo.FullName, newHintPathFull));
                     //TODO make version available, currently only works for non versioned package directories...
                     referenceMatch.SetHintPath(newHintPathRelative);
@@ -180,10 +181,7 @@ namespace NuGet.Extensions.ReferenceAnalysers
                 results = assemblyResolver.ResolveAssemblies(false);
                 assemblyResolver.OutputPackageConfigFile();
             }
-            else
-            {
-                _console.WriteWarning("No references found to resolve (all GAC?)");
-            }
+            else _console.WriteWarning("No references found to resolve (all GAC?)");
             return results;
         }
     }
