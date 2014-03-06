@@ -82,39 +82,7 @@ namespace NuGet.Extensions.Commands
                     Console.WriteLine("Processing {0} projects in solution {1}...", simpleProjectObjects.Count, solutionFile.Name);
                     foreach (var simpleProject in simpleProjectObjects)
                     {
-                        var manifestDependencies = new List<ManifestDependency>();
-                        var projectPath = Path.Combine(solutionFile.Directory.FullName, simpleProject.RelativePath);
-                        if (File.Exists(projectPath))
-                        {
-                            Console.WriteLine();
-                            Console.WriteLine("Processing Project: {0}", simpleProject.ProjectName);
-                            var projectFileInfo = new FileInfo(projectPath);
-                            var project = new Project(projectPath,new Dictionary<string, string>(),null,new ProjectCollection());
-                            var assemblyOutput = project.GetPropertyValue("AssemblyName");
-
-                            var references = project.GetItems("Reference");
-
-                            var resolvedMappings = ResolveReferenceMappings(references, projectFileInfo);
-
-                            if (resolvedMappings != null && resolvedMappings.Any())
-                            {
-                                UpdateProjectFileReferenceHintPaths(solutionRoot, project, projectPath, resolvedMappings, references);
-                                var projectReferences = ParseProjectReferences(project);
-                                CreateNuGetScaffolding(sharedPackagesRepository, manifestDependencies, resolvedMappings, projectFileInfo, project, projectReferences);
-                            }
-
-                            //Create nuspec regardless of whether we have added dependencies
-                            if (NuSpec)
-                            {
-                                CreateAndOutputNuSpecFile(assemblyOutput, manifestDependencies);
-                            }
-
-                            Console.WriteLine("Project completed!");
-                        }
-                        else
-                        {
-                            Console.WriteWarning("Project: {0} was not found on disk", simpleProject.ProjectName);
-                        }
+                        NugetifyProject(solutionFile, simpleProject, solutionRoot, sharedPackagesRepository);
                     }
                     Console.WriteLine("Complete!");
                 }
@@ -123,6 +91,37 @@ namespace NuGet.Extensions.Commands
                     Console.WriteError("Could not find solution file : {0}", solutionFile);
                 }
             }
+        }
+
+        private void NugetifyProject(FileInfo solutionFile, SolutionProject simpleProject, DirectoryInfo solutionRoot, SharedPackageRepository sharedPackagesRepository)
+        {
+            var manifestDependencies = new List<ManifestDependency>();
+            var projectPath = Path.Combine(solutionFile.Directory.FullName, simpleProject.RelativePath);
+            if (File.Exists(projectPath))
+            {
+                Console.WriteLine();
+                Console.WriteLine("Processing Project: {0}", simpleProject.ProjectName);
+                var projectFileInfo = new FileInfo(projectPath);
+                var project = new Project(projectPath, new Dictionary<string, string>(), null, new ProjectCollection());
+                var assemblyOutput = project.GetPropertyValue("AssemblyName");
+
+                var references = project.GetItems("Reference");
+
+                var resolvedMappings = ResolveReferenceMappings(references, projectFileInfo);
+
+                if (resolvedMappings != null && resolvedMappings.Any())
+                {
+                    UpdateProjectFileReferenceHintPaths(solutionRoot, project, projectPath, resolvedMappings, references);
+                    var projectReferences = ParseProjectReferences(project);
+                    CreateNuGetScaffolding(sharedPackagesRepository, manifestDependencies, resolvedMappings, projectFileInfo, project, projectReferences);
+                }
+
+                //Create nuspec regardless of whether we have added dependencies
+                if (NuSpec) CreateAndOutputNuSpecFile(assemblyOutput, manifestDependencies);
+
+                Console.WriteLine("Project completed!");
+            }
+            else Console.WriteWarning("Project: {0} was not found on disk", simpleProject.ProjectName);
         }
 
         private List<string> ParseProjectReferences(Project project)
