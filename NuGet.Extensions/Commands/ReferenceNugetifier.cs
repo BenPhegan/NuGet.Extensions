@@ -18,10 +18,10 @@ namespace NuGet.Extensions.Commands
         private readonly FileInfo _projectFileInfo;
         private readonly DirectoryInfo _solutionRoot;
         private readonly IFileSystem _projectFileSystem;
-        private readonly IProjectAdapter _projectAdapter;
+        private readonly IVsProject _vsProject;
         private readonly PackageReferenceFile _packageReferenceFile;
 
-        public ReferenceNugetifier(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider packageSourceProvider, IConsole console, bool nuspec, IEnumerable<string> source, FileInfo projectFileInfo, DirectoryInfo solutionRoot, IFileSystem projectFileSystem, ProjectAdapter projectAdapter, PackageReferenceFile packageReferenceFile)
+        public ReferenceNugetifier(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider packageSourceProvider, IConsole console, bool nuspec, IEnumerable<string> source, FileInfo projectFileInfo, DirectoryInfo solutionRoot, IFileSystem projectFileSystem, ProjectAdapter vsProject, PackageReferenceFile packageReferenceFile)
         {
             _repositoryFactory = packageRepositoryFactory;
             _sourceProvider = packageSourceProvider;
@@ -31,15 +31,15 @@ namespace NuGet.Extensions.Commands
             _projectFileInfo = projectFileInfo;
             _solutionRoot = solutionRoot;
             _projectFileSystem = projectFileSystem;
-            _projectAdapter = projectAdapter;
+            _vsProject = vsProject;
             _packageReferenceFile = packageReferenceFile;
         }
 
         public string NugetifyReferences(ISharedPackageRepository sharedPackagesRepository, string projectPath, List<ManifestDependency> manifestDependencies, List<string> projectReferences)
         {
-            var assemblyOutput = _projectAdapter.GetAssemblyName();
+            var assemblyOutput = _vsProject.GetAssemblyName();
 
-            var references = _projectAdapter.GetBinaryReferences();
+            var references = _vsProject.GetBinaryReferences();
 
             var resolvedMappings = ResolveReferenceMappings(references);
 
@@ -71,7 +71,7 @@ namespace NuGet.Extensions.Commands
                     referenceMatch.SetHintPath(newHintPathRelative);
                 }
             }
-            _projectAdapter.Save();
+            _vsProject.Save();
         }
 
         private void LogHintPathRewriteMessage(IPackage package, string includeName, string includeVersion)
@@ -122,7 +122,7 @@ namespace NuGet.Extensions.Commands
             var packagesConfigFilePath = Path.Combine(projectFileInfo.Directory.FullName + "\\", _packagesConfigFilename);
             sharedPackagesRepository.RegisterRepository(packagesConfigFilePath);
 
-            _projectAdapter.AddPackagesConfig();
+            _vsProject.AddPackagesConfig();
         }
 
         private IEnumerable<KeyValuePair<string, List<IPackage>>> ResolveReferenceMappings(IEnumerable<IBinaryReference> references)

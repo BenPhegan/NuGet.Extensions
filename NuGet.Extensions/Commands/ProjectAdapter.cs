@@ -5,7 +5,7 @@ using Microsoft.Build.Evaluation;
 
 namespace NuGet.Extensions.Commands
 {
-    public class ProjectAdapter : IProjectAdapter
+    public class ProjectAdapter : IVsProject
     {
         private readonly Project _project;
         private readonly string _packagesConfigFilename;

@@ -72,7 +72,7 @@
     <Compile Include="Commands\BinaryReferenceAdapter.cs" />
     <Compile Include="Commands\FixReferences.cs" />
     <Compile Include="Commands\IBinaryReference.cs" />
-    <Compile Include="Commands\IProjectAdapter.cs" />
+    <Compile Include="Commands\IVsProject.cs" />
     <Compile Include="Commands\ProjectAdapter.cs" />
     <Compile Include="Commands\ReferenceNugetifier.cs" />
     <Compile Include="Comparers\LambdaComparer.cs" />

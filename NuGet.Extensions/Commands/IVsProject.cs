@@ -3,7 +3,7 @@ using Microsoft.Build.Evaluation;
 
 namespace NuGet.Extensions.Commands
 {
-    public interface IProjectAdapter {
+    public interface IVsProject {
         IEnumerable<IBinaryReference> GetBinaryReferences();
         string GetAssemblyName();
         void Save();
