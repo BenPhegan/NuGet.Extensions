@@ -10,6 +10,7 @@ using NuGet.Extensions.Repositories;
 namespace NuGet.Extensions.Commands
 {
     public class ReferenceNugetifier {
+        private const string _packagesConfigFilename = "packages.config";
         private readonly IPackageRepositoryFactory _repositoryFactory;
         private readonly IPackageSourceProvider _sourceProvider;
         private readonly IConsole _console;
@@ -91,8 +92,7 @@ namespace NuGet.Extensions.Commands
         {
             //Now, create the packages.config for the resolved packages, and update the repositories.config
             _console.WriteLine("Creating packages.config");
-            var packagesConfigFilePath = Path.Combine(projectFileInfo.Directory.FullName + "\\", "packages.config");
-            var packagesConfig = new PackageReferenceFile(packagesConfigFilePath);
+            var packagesConfig = new PackageReferenceFile(_physicalFileSystem, _packagesConfigFilename);
             foreach (var referenceMapping in resolvedMappings)
             {
                 //TODO We shouldnt need to resolve this twice....
@@ -118,12 +118,13 @@ namespace NuGet.Extensions.Commands
                 }
             }
             //Register the packages.config
+            var packagesConfigFilePath = Path.Combine(projectFileInfo.Directory.FullName + "\\", _packagesConfigFilename);
             sharedPackagesRepository.RegisterRepository(packagesConfigFilePath);
 
             //Add the packages.config to the project content, otherwise later versions of the VSIX fail...
-            if (!project.GetItems("None").Any(i => i.UnevaluatedInclude.Equals("packages.config")))
+            if (!project.GetItems("None").Any(i => i.UnevaluatedInclude.Equals(_packagesConfigFilename)))
             {
-                project.Xml.AddItemGroup().AddItem("None", "packages.config");
+                project.Xml.AddItemGroup().AddItem("None", _packagesConfigFilename);
                 project.Save();
             }
         }
