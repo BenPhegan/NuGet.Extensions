@@ -34,7 +34,7 @@ namespace NuGet.Extensions.Commands
         public void NugetifyReferences(ISharedPackageRepository sharedPackagesRepository, string projectPath, List<ManifestDependency> manifestDependencies, List<string> projectReferences)
         {
 
-            var references = _vsProject.GetBinaryReferences();
+            var references = _vsProject.GetBinaryReferences().ToList();
 
             var resolvedMappings = ResolveReferenceMappings(references);
 
