@@ -41,13 +41,13 @@ namespace NuGet.Extensions.Commands
 
             if (resolvedMappings != null && resolvedMappings.Any())
             {
-                UpdateProjectFileReferenceHintPaths(_solutionRoot, resolvedMappings, references);
-                CreateNuGetScaffolding(sharedPackagesRepository, manifestDependencies, resolvedMappings, _projectFileInfo, projectReferences);
+                UpdateProjectFileReferenceHintPaths(resolvedMappings, references);
+                CreateNuGetScaffolding(sharedPackagesRepository, manifestDependencies, resolvedMappings, projectReferences);
             }
             return assemblyOutput;
         }
 
-        private void UpdateProjectFileReferenceHintPaths(DirectoryInfo solutionRoot, IEnumerable<KeyValuePair<string, List<IPackage>>> resolvedMappings, IEnumerable<IBinaryReference> references)
+        private void UpdateProjectFileReferenceHintPaths(IEnumerable<KeyValuePair<string, List<IPackage>>> resolvedMappings, IEnumerable<IBinaryReference> references)
         {
             foreach (var mapping in resolvedMappings)
             {
@@ -61,7 +61,7 @@ namespace NuGet.Extensions.Commands
                     LogHintPathRewriteMessage(package, includeName, includeVersion);
 
                     var fileLocation = GetFileLocationFromPackage(package, mapping.Key);
-                    var newHintPathFull  = Path.Combine(solutionRoot.FullName, "packages", package.Id, fileLocation);
+                    var newHintPathFull  = Path.Combine(_solutionRoot.FullName, "packages", package.Id, fileLocation);
                     var newHintPathRelative = String.Format(GetRelativePath(_projectFileInfo.FullName, newHintPathFull));
                     //TODO make version available, currently only works for non versioned package directories...
                     referenceMatch.SetHintPath(newHintPathRelative);
@@ -85,7 +85,7 @@ namespace NuGet.Extensions.Commands
             else _console.WriteWarning(message);
         }
 
-        private void CreateNuGetScaffolding(ISharedPackageRepository sharedPackagesRepository, List<ManifestDependency> manifestDependencies, IEnumerable<KeyValuePair<string, List<IPackage>>> resolvedMappings, FileInfo projectFileInfo, List<string> projectDependencies)
+        private void CreateNuGetScaffolding(ISharedPackageRepository sharedPackagesRepository, List<ManifestDependency> manifestDependencies, IEnumerable<KeyValuePair<string, List<IPackage>>> resolvedMappings, List<string> projectDependencies)
         {
             //Now, create the packages.config for the resolved packages, and update the repositories.config
             _console.WriteLine("Creating packages.config");
@@ -115,7 +115,7 @@ namespace NuGet.Extensions.Commands
                 }
             }
             //Register the packages.config
-            var packagesConfigFilePath = Path.Combine(projectFileInfo.Directory.FullName + "\\", _packagesConfigFilename);
+            var packagesConfigFilePath = Path.Combine(_projectFileInfo.Directory.FullName + "\\", _packagesConfigFilename);
             sharedPackagesRepository.RegisterRepository(packagesConfigFilePath);
 
             _vsProject.AddPackagesConfig();
