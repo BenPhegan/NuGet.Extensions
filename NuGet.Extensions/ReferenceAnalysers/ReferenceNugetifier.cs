@@ -39,7 +39,7 @@ namespace NuGet.Extensions.ReferenceAnalysers
             var resolvedMappings = ResolveReferenceMappings(references);
             var nugettedDependencies = new List<ManifestDependency>();
 
-            if (resolvedMappings != null && resolvedMappings.Any())
+            if (resolvedMappings.Any())
             {
                 UpdateProjectFileReferenceHintPaths(resolvedMappings, references);
                 CreateNuGetScaffolding(sharedPackagesRepository, nugettedDependencies, resolvedMappings, projectReferences);
@@ -139,7 +139,7 @@ namespace NuGet.Extensions.ReferenceAnalysers
             }
 
             _console.WriteLine("No references found to resolve (all GAC?)");
-            return null;
+            return Enumerable.Empty<KeyValuePair<string, List<IPackage>>>();
         }
 
         private string GetFileLocationFromPackage(IPackage package, string key)
