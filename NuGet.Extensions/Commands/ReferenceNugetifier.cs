@@ -31,9 +31,8 @@ namespace NuGet.Extensions.Commands
             _packageRepository = packageRepository;
         }
 
-        public string NugetifyReferences(ISharedPackageRepository sharedPackagesRepository, string projectPath, List<ManifestDependency> manifestDependencies, List<string> projectReferences)
+        public void NugetifyReferences(ISharedPackageRepository sharedPackagesRepository, string projectPath, List<ManifestDependency> manifestDependencies, List<string> projectReferences)
         {
-            var assemblyOutput = _vsProject.GetAssemblyName();
 
             var references = _vsProject.GetBinaryReferences();
 
@@ -44,7 +43,6 @@ namespace NuGet.Extensions.Commands
                 UpdateProjectFileReferenceHintPaths(resolvedMappings, references);
                 CreateNuGetScaffolding(sharedPackagesRepository, manifestDependencies, resolvedMappings, projectReferences);
             }
-            return assemblyOutput;
         }
 
         private void UpdateProjectFileReferenceHintPaths(IEnumerable<KeyValuePair<string, List<IPackage>>> resolvedMappings, IEnumerable<IBinaryReference> references)

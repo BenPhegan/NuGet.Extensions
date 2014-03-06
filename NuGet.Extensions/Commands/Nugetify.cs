@@ -109,10 +109,10 @@ namespace NuGet.Extensions.Commands
                 var packageRepository = GetRepository();
                 var referenceNugetifier = new ReferenceNugetifier(Console, NuSpec, projectFileInfo, solutionRoot, projectFileSystem, projectAdapter, packageReferenceFile, packageRepository);
                 var projectReferences = ParseProjectReferences(project, Console);
-                var assemblyOutput = referenceNugetifier.NugetifyReferences(sharedPackagesRepository, projectPath, manifestDependencies, projectReferences);
+                referenceNugetifier.NugetifyReferences(sharedPackagesRepository, projectPath, manifestDependencies, projectReferences);
 
                 //Create nuspec regardless of whether we have added dependencies
-                if (NuSpec) CreateAndOutputNuSpecFile(assemblyOutput, manifestDependencies);
+                if (NuSpec) CreateAndOutputNuSpecFile(projectAdapter.GetAssemblyName(), manifestDependencies);
 
                 Console.WriteLine("Project completed!");
             }
