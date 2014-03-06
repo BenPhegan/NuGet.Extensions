@@ -6,38 +6,43 @@ using Microsoft.Build.Evaluation;
 namespace NuGet.Extensions.Commands
 {
     public class BinaryReferenceAdapter {
-        public BinaryReferenceAdapter() {}
+        private readonly ProjectItem _reference;
 
-        private static string GetHintPath(ProjectItem reference)
+        public BinaryReferenceAdapter(ProjectItem reference)
         {
-            return reference.GetMetadataValue("HintPath");
+            _reference = reference;
         }
 
-        private static bool HasHintPath(ProjectItem reference)
+        private string GetHintPath()
         {
-            return reference.HasMetadata("HintPath");
+            return _reference.GetMetadataValue("HintPath");
         }
 
-        public static ProjectMetadata SetHintPath(ProjectItem referenceMatch, string newHintPathRelative)
+        private bool HasHintPath()
         {
-            return referenceMatch.SetMetadataValue("HintPath", newHintPathRelative);
+            return _reference.HasMetadata("HintPath");
         }
 
-        public static string GetIncludeVersion(ProjectItem referenceMatch)
+        public ProjectMetadata SetHintPath(string newHintPathRelative)
         {
-            return referenceMatch.EvaluatedInclude.Contains(',') ? referenceMatch.EvaluatedInclude.Split(',')[1].Split('=')[1] : null;
+            return _reference.SetMetadataValue("HintPath", newHintPathRelative);
         }
 
-        public static string GetIncludeName(ProjectItem referenceMatch)
+        public string GetIncludeVersion()
         {
-            return referenceMatch.EvaluatedInclude.Contains(',') ? referenceMatch.EvaluatedInclude.Split(',')[0] : referenceMatch.EvaluatedInclude;
+            return _reference.EvaluatedInclude.Contains(',') ? _reference.EvaluatedInclude.Split(',')[1].Split('=')[1] : null;
         }
 
-        public bool ResolveProjectReferenceItemByAssemblyName(ProjectItem reference, string mapping)
+        public string GetIncludeName()
         {
-            if (HasHintPath(reference))
+            return _reference.EvaluatedInclude.Contains(',') ? _reference.EvaluatedInclude.Split(',')[0] : _reference.EvaluatedInclude;
+        }
+
+        public bool ResolveProjectReferenceItemByAssemblyName(string mapping)
+        {
+            if (HasHintPath())
             {
-                var hintpath = GetHintPath(reference);
+                var hintpath = GetHintPath();
                 var fileInfo = new FileInfo(hintpath);
                 return fileInfo.Name.Equals(mapping, StringComparison.OrdinalIgnoreCase);
             }

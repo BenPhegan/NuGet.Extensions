@@ -21,7 +21,6 @@ namespace NuGet.Extensions.Commands
         private readonly IFileSystem _projectFileSystem;
         private readonly IProjectAdapter _projectAdapter;
         private readonly PackageReferenceFile _packageReferenceFile;
-        private readonly BinaryReferenceAdapter _binaryReferenceAdapter;
 
         public ReferenceNugetifier(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider packageSourceProvider, IConsole console, bool nuspec, IEnumerable<string> source, FileInfo projectFileInfo, DirectoryInfo solutionRoot, IFileSystem projectFileSystem, ProjectAdapter projectAdapter, PackageReferenceFile packageReferenceFile)
         {
@@ -35,7 +34,6 @@ namespace NuGet.Extensions.Commands
             _projectFileSystem = projectFileSystem;
             _projectAdapter = projectAdapter;
             _packageReferenceFile = packageReferenceFile;
-            _binaryReferenceAdapter = new BinaryReferenceAdapter();
         }
 
         public string NugetifyReferences(ISharedPackageRepository sharedPackagesRepository, string projectPath, List<ManifestDependency> manifestDependencies, List<string> projectReferences)
@@ -48,21 +46,21 @@ namespace NuGet.Extensions.Commands
 
             if (resolvedMappings != null && resolvedMappings.Any())
             {
-                UpdateProjectFileReferenceHintPaths(_solutionRoot, resolvedMappings, references);
+                UpdateProjectFileReferenceHintPaths(_solutionRoot, resolvedMappings, references.Select(r => new BinaryReferenceAdapter(r)));
                 CreateNuGetScaffolding(sharedPackagesRepository, manifestDependencies, resolvedMappings, _projectFileInfo, projectReferences);
             }
             return assemblyOutput;
         }
 
-        private void UpdateProjectFileReferenceHintPaths(DirectoryInfo solutionRoot, IEnumerable<KeyValuePair<string, List<IPackage>>> resolvedMappings, ICollection<ProjectItem> references)
+        private void UpdateProjectFileReferenceHintPaths(DirectoryInfo solutionRoot, IEnumerable<KeyValuePair<string, List<IPackage>>> resolvedMappings, IEnumerable<BinaryReferenceAdapter> references)
         {
             foreach (var mapping in resolvedMappings)
             {
-                var referenceMatch = references.FirstOrDefault(r => _binaryReferenceAdapter.ResolveProjectReferenceItemByAssemblyName(r, mapping.Key));
+                var referenceMatch = references.FirstOrDefault(r => r.ResolveProjectReferenceItemByAssemblyName(mapping.Key));
                 if (referenceMatch != null)
                 {
-                    var includeName = BinaryReferenceAdapter.GetIncludeName(referenceMatch);
-                    var includeVersion = BinaryReferenceAdapter.GetIncludeVersion(referenceMatch);
+                    var includeName = referenceMatch.GetIncludeName();
+                    var includeVersion = referenceMatch.GetIncludeVersion();
                     var package = mapping.Value.OrderBy(p => p.GetFiles().Count()).First();
 
                     LogHintPathRewriteMessage(package, includeName, includeVersion);
@@ -71,7 +69,7 @@ namespace NuGet.Extensions.Commands
                     var newHintPathFull  = Path.Combine(solutionRoot.FullName, "packages", package.Id, fileLocation);
                     var newHintPathRelative = String.Format(GetRelativePath(_projectFileInfo.FullName, newHintPathFull));
                     //TODO make version available, currently only works for non versioned package directories...
-                    BinaryReferenceAdapter.SetHintPath(referenceMatch, newHintPathRelative);
+                    referenceMatch.SetHintPath(newHintPathRelative);
                 }
             }
             _projectAdapter.Save();
