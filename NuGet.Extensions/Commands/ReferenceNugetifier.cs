@@ -19,9 +19,9 @@ namespace NuGet.Extensions.Commands
         private readonly FileInfo _projectFileInfo;
         private readonly Project _project;
         private readonly DirectoryInfo _solutionRoot;
-        private readonly IFileSystem _physicalFileSystem;
+        private readonly IFileSystem _projectFileSystem;
 
-        public ReferenceNugetifier(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider packageSourceProvider, IConsole console, bool nuspec, IEnumerable<string> source, FileInfo projectFileInfo, Project project, DirectoryInfo solutionRoot, PhysicalFileSystem physicalFileSystem)
+        public ReferenceNugetifier(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider packageSourceProvider, IConsole console, bool nuspec, IEnumerable<string> source, FileInfo projectFileInfo, Project project, DirectoryInfo solutionRoot, PhysicalFileSystem projectFileSystem)
         {
             _repositoryFactory = packageRepositoryFactory;
             _sourceProvider = packageSourceProvider;
@@ -31,7 +31,7 @@ namespace NuGet.Extensions.Commands
             _projectFileInfo = projectFileInfo;
             _project = project;
             _solutionRoot = solutionRoot;
-            _physicalFileSystem = physicalFileSystem;
+            _projectFileSystem = projectFileSystem;
         }
 
         public string NugetifyReferences(SharedPackageRepository sharedPackagesRepository, string projectPath, List<ManifestDependency> manifestDependencies, List<string> projectReferences)
@@ -92,7 +92,7 @@ namespace NuGet.Extensions.Commands
         {
             //Now, create the packages.config for the resolved packages, and update the repositories.config
             _console.WriteLine("Creating packages.config");
-            var packagesConfig = new PackageReferenceFile(_physicalFileSystem, _packagesConfigFilename);
+            var packagesConfig = new PackageReferenceFile(_projectFileSystem, _packagesConfigFilename);
             foreach (var referenceMapping in resolvedMappings)
             {
                 //TODO We shouldnt need to resolve this twice....
@@ -184,7 +184,7 @@ namespace NuGet.Extensions.Commands
 
                 var assemblyResolver = new RepositoryAssemblyResolver(referenceFiles,
                     packageSource,
-                    _physicalFileSystem, _console);
+                    _projectFileSystem, _console);
                 results = assemblyResolver.ResolveAssemblies(false);
                 assemblyResolver.OutputPackageConfigFile();
             }
