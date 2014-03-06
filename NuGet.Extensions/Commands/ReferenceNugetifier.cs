@@ -21,7 +21,7 @@ namespace NuGet.Extensions.Commands
         private readonly DirectoryInfo _solutionRoot;
         private readonly IFileSystem _physicalFileSystem;
 
-        public ReferenceNugetifier(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider packageSourceProvider, IConsole console, bool nuspec, IEnumerable<string> source, FileInfo projectFileInfo, Project project, DirectoryInfo solutionRoot)
+        public ReferenceNugetifier(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider packageSourceProvider, IConsole console, bool nuspec, IEnumerable<string> source, FileInfo projectFileInfo, Project project, DirectoryInfo solutionRoot, PhysicalFileSystem physicalFileSystem)
         {
             _repositoryFactory = packageRepositoryFactory;
             _sourceProvider = packageSourceProvider;
@@ -31,7 +31,7 @@ namespace NuGet.Extensions.Commands
             _projectFileInfo = projectFileInfo;
             _project = project;
             _solutionRoot = solutionRoot;
-            _physicalFileSystem = new PhysicalFileSystem(_projectFileInfo.Directory.ToString());
+            _physicalFileSystem = physicalFileSystem;
         }
 
         public string NugetifyReferences(SharedPackageRepository sharedPackagesRepository, string projectPath, List<ManifestDependency> manifestDependencies, List<string> projectReferences)

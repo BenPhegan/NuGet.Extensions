@@ -102,7 +102,8 @@ namespace NuGet.Extensions.Commands
                 Console.WriteLine("Processing Project: {0}", simpleProject.ProjectName);
                 var projectFileInfo = new FileInfo(projectPath);
                 var project = new Project(projectPath, new Dictionary<string, string>(), null, new ProjectCollection());
-                var referenceNugetifier = new ReferenceNugetifier(RepositoryFactory, SourceProvider, Console, NuSpec, Source, projectFileInfo, project, solutionRoot);
+                var physicalFileSystem = new PhysicalFileSystem(projectFileInfo.Directory.ToString());
+                var referenceNugetifier = new ReferenceNugetifier(RepositoryFactory, SourceProvider, Console, NuSpec, Source, projectFileInfo, project, solutionRoot, physicalFileSystem);
                 var projectReferences = ParseProjectReferences(project, Console);
                 var assemblyOutput = referenceNugetifier.NugetifyReferences(sharedPackagesRepository, projectPath, manifestDependencies, projectReferences);
 
