@@ -6,7 +6,8 @@ using System.Text.RegularExpressions;
 using Microsoft.Build.Evaluation;
 using NuGet.Commands;
 using NuGet.Common;
-using NuGet.Extensions.GetLatest.MSBuild;
+using NuGet.Extensions.MSBuild;
+using NuGet.Extensions.ReferenceAnalysers;
 
 namespace NuGet.Extensions.Commands
 {

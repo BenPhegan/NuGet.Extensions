@@ -1,7 +1,6 @@
 using System.Collections.Generic;
-using Microsoft.Build.Evaluation;
 
-namespace NuGet.Extensions.Commands
+namespace NuGet.Extensions.MSBuild
 {
     public interface IVsProject {
         IEnumerable<IBinaryReference> GetBinaryReferences();

@@ -1,6 +1,4 @@
-using Microsoft.Build.Evaluation;
-
-namespace NuGet.Extensions.Commands
+namespace NuGet.Extensions.MSBuild
 {
     public interface IBinaryReference {
         string GetHintPath();

@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using Microsoft.Build.Evaluation;
 
-namespace NuGet.Extensions.Commands
+namespace NuGet.Extensions.MSBuild
 {
     public class BinaryReferenceAdapter : IBinaryReference
     {

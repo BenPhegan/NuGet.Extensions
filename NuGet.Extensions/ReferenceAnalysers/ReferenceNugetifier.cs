@@ -4,9 +4,10 @@ using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using NuGet.Common;
+using NuGet.Extensions.MSBuild;
 using NuGet.Extensions.Repositories;
 
-namespace NuGet.Extensions.Commands
+namespace NuGet.Extensions.ReferenceAnalysers
 {
     public class ReferenceNugetifier {
         public const string _packagesConfigFilename = "packages.config";
