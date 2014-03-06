@@ -29,21 +29,7 @@ namespace NuGet.Extensions.Tests.PackageReferences
             l.Add(new PackageReference("test", SemanticVersion.Parse("1.1.1.1"), VersionUtility.ParseVersionSpec(v1), new FrameworkName(".NET Framework, Version=4.0"), false));
             l.Add(new PackageReference("test", SemanticVersion.Parse("1.1.1.1"), VersionUtility.ParseVersionSpec(v2), new FrameworkName(".NET Framework, Version=4.0"), false));
             var resolvedVs = t.ResolveValidVersionSpec(l);
-            if (expected == null)
-            {
-                Assert.IsNull(resolvedVs);
-            }
-            else
-            {
-                var expectedVs = VersionUtility.ParseVersionSpec(expected);
-                var iSpec = resolvedVs.VersionConstraint as IVersionSpec;
-
-                //TODO Equality comparer, anyone?  This is pretty crappy....
-                Assert.AreEqual(expectedVs.IsMaxInclusive, iSpec.IsMaxInclusive);
-                Assert.AreEqual(expectedVs.IsMinInclusive, iSpec.IsMinInclusive);
-                Assert.AreEqual(expectedVs.MaxVersion, iSpec.MaxVersion);
-                Assert.AreEqual(expectedVs.MinVersion, iSpec.MinVersion);
-            }
+            AssertAreEqual(expected, resolvedVs);
         }
 
         [TestCase("(1.1, 1.3)", "(1.2,1.3)", "(1.3,1.4)", null)]
@@ -59,10 +45,12 @@ namespace NuGet.Extensions.Tests.PackageReferences
             l.Add(new PackageReference("test", SemanticVersion.Parse("1.1.1.1"), VersionUtility.ParseVersionSpec(v2), new FrameworkName(".NET Framework, Version=4.0"), false));
             l.Add(new PackageReference("test", SemanticVersion.Parse("1.1.1.1"), VersionUtility.ParseVersionSpec(v3), new FrameworkName(".NET Framework, Version=4.0"), false));
             var resolvedVs = t.ResolveValidVersionSpec(l);
-            if (expected == null)
-            {
-                Assert.IsNull(resolvedVs);
-            }
+            AssertAreEqual(expected, resolvedVs);
+        }
+
+        private static void AssertAreEqual(string expected, PackageReference resolvedVs)
+        {
+            if (expected == null) Assert.IsNull(resolvedVs);
             else
             {
                 var expectedVs = VersionUtility.ParseVersionSpec(expected);
