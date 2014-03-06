@@ -107,7 +107,7 @@ namespace NuGet.Extensions.Commands
                 var packageReferenceFile = new PackageReferenceFile(projectFileSystem, packagesConfigFilename);
                 var projectAdapter = new ProjectAdapter(project, packagesConfigFilename);
                 var packageRepository = GetRepository();
-                var referenceNugetifier = new ReferenceNugetifier(RepositoryFactory, SourceProvider, Console, NuSpec, Source, projectFileInfo, solutionRoot, projectFileSystem, projectAdapter, packageReferenceFile, packageRepository);
+                var referenceNugetifier = new ReferenceNugetifier(Console, NuSpec, projectFileInfo, solutionRoot, projectFileSystem, projectAdapter, packageReferenceFile, packageRepository);
                 var projectReferences = ParseProjectReferences(project, Console);
                 var assemblyOutput = referenceNugetifier.NugetifyReferences(sharedPackagesRepository, projectPath, manifestDependencies, projectReferences);
 

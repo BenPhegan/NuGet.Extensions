@@ -10,11 +10,8 @@ namespace NuGet.Extensions.Commands
 {
     public class ReferenceNugetifier {
         public const string _packagesConfigFilename = "packages.config";
-        private readonly IPackageRepositoryFactory _repositoryFactory;
-        private readonly IPackageSourceProvider _sourceProvider;
         private readonly IConsole _console;
         private readonly bool _nuspec;
-        private readonly IEnumerable<string> _packageSources;
         private readonly FileInfo _projectFileInfo;
         private readonly DirectoryInfo _solutionRoot;
         private readonly IFileSystem _projectFileSystem;
@@ -22,13 +19,10 @@ namespace NuGet.Extensions.Commands
         private readonly PackageReferenceFile _packageReferenceFile;
         private readonly IPackageRepository _packageRepository;
 
-        public ReferenceNugetifier(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider packageSourceProvider, IConsole console, bool nuspec, IEnumerable<string> packageSources, FileInfo projectFileInfo, DirectoryInfo solutionRoot, IFileSystem projectFileSystem, IVsProject vsProject, PackageReferenceFile packageReferenceFile, IPackageRepository packageRepository)
+        public ReferenceNugetifier(IConsole console, bool nuspec, FileInfo projectFileInfo, DirectoryInfo solutionRoot, IFileSystem projectFileSystem, IVsProject vsProject, PackageReferenceFile packageReferenceFile, IPackageRepository packageRepository)
         {
-            _repositoryFactory = packageRepositoryFactory;
-            _sourceProvider = packageSourceProvider;
             _console = console;
             _nuspec = nuspec;
-            _packageSources = packageSources;
             _projectFileInfo = projectFileInfo;
             _solutionRoot = solutionRoot;
             _projectFileSystem = projectFileSystem;
