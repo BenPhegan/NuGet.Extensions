@@ -32,7 +32,10 @@ namespace NuGet.Extensions.FeedAudit
             return assemblyNames.Select(GetGacAssemblyPath).SkipWhile(String.IsNullOrEmpty).FirstOrDefault();
         }
 
-        // If assemblyName is not fully qualified, a random matching may be 
+        /// <summary>
+        /// If assemblyName is not fully qualified, an incorrect match may be returned
+        /// </summary>
+        /// <remarks>This method may return differently depending on what is loaded in the current AppDomain - see GacResolverTests</remarks>
         private static String GetGacAssemblyPath(string assemblyName)
         {
             var assembyInfo = new AssemblyInfo {cchBuf = 512};
