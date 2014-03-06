@@ -101,20 +101,7 @@ namespace NuGet.Extensions.Commands
             {
                 Console.WriteLine();
                 Console.WriteLine("Processing Project: {0}", simpleProject.ProjectName);
-                var projectFileInfo = new FileInfo(projectPath);
-                var project = new Project(projectPath, new Dictionary<string, string>(), null, new ProjectCollection());
-                var assemblyOutput = project.GetPropertyValue("AssemblyName");
-
-                var references = project.GetItems("Reference");
-
-                var resolvedMappings = ResolveReferenceMappings(references, projectFileInfo);
-
-                if (resolvedMappings != null && resolvedMappings.Any())
-                {
-                    UpdateProjectFileReferenceHintPaths(solutionRoot, project, projectPath, resolvedMappings, references);
-                    var projectReferences = ParseProjectReferences(project);
-                    CreateNuGetScaffolding(sharedPackagesRepository, manifestDependencies, resolvedMappings, projectFileInfo, project, projectReferences);
-                }
+                var assemblyOutput = NugetifyReferences(solutionRoot, sharedPackagesRepository, projectPath, manifestDependencies);
 
                 //Create nuspec regardless of whether we have added dependencies
                 if (NuSpec) CreateAndOutputNuSpecFile(assemblyOutput, manifestDependencies);
@@ -122,6 +109,25 @@ namespace NuGet.Extensions.Commands
                 Console.WriteLine("Project completed!");
             }
             else Console.WriteWarning("Project: {0} was not found on disk", simpleProject.ProjectName);
+        }
+
+        private string NugetifyReferences(DirectoryInfo solutionRoot, SharedPackageRepository sharedPackagesRepository, string projectPath, List<ManifestDependency> manifestDependencies)
+        {
+            var projectFileInfo = new FileInfo(projectPath);
+            var project = new Project(projectPath, new Dictionary<string, string>(), null, new ProjectCollection());
+            var assemblyOutput = project.GetPropertyValue("AssemblyName");
+
+            var references = project.GetItems("Reference");
+
+            var resolvedMappings = ResolveReferenceMappings(references, projectFileInfo);
+
+            if (resolvedMappings != null && resolvedMappings.Any())
+            {
+                UpdateProjectFileReferenceHintPaths(solutionRoot, project, projectPath, resolvedMappings, references);
+                var projectReferences = ParseProjectReferences(project);
+                CreateNuGetScaffolding(sharedPackagesRepository, manifestDependencies, resolvedMappings, projectFileInfo, project, projectReferences);
+            }
+            return assemblyOutput;
         }
 
         private List<string> ParseProjectReferences(Project project)
