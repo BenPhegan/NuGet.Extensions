@@ -74,7 +74,7 @@
     <Compile Include="MSBuild\IBinaryReference.cs" />
     <Compile Include="MSBuild\IVsProject.cs" />
     <Compile Include="MSBuild\ProjectAdapter.cs" />
-    <Compile Include="Commands\ReferenceNugetifier.cs" />
+    <Compile Include="ReferenceAnalysers\ReferenceNugetifier.cs" />
     <Compile Include="Comparers\LambdaComparer.cs" />
     <Compile Include="Comparers\PackageReferenceEqualityComparer.cs" />
     <Compile Include="Comparers\VersionSpecEqualityComparer.cs" />
