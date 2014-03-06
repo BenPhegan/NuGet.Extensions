@@ -37,13 +37,13 @@ namespace NuGet.Extensions.Commands
 
             if (resolvedMappings != null && resolvedMappings.Any())
             {
-                UpdateProjectFileReferenceHintPaths(solutionRoot, project, projectPath, resolvedMappings, references);
+                UpdateProjectFileReferenceHintPaths(solutionRoot, project, resolvedMappings, references);
                 CreateNuGetScaffolding(sharedPackagesRepository, manifestDependencies, resolvedMappings, _projectFileInfo, project, projectReferences);
             }
             return assemblyOutput;
         }
 
-        private void UpdateProjectFileReferenceHintPaths(DirectoryInfo solutionRoot, Project project, string projectPath, IEnumerable<KeyValuePair<string, List<IPackage>>> resolvedMappings, ICollection<ProjectItem> references)
+        private void UpdateProjectFileReferenceHintPaths(DirectoryInfo solutionRoot, Project project, IEnumerable<KeyValuePair<string, List<IPackage>>> resolvedMappings, ICollection<ProjectItem> references)
         {
             foreach (var mapping in resolvedMappings)
             {
@@ -58,7 +58,7 @@ namespace NuGet.Extensions.Commands
 
                     var fileLocation = GetFileLocationFromPackage(package, mapping.Key);
                     var newHintPathFull  = Path.Combine(solutionRoot.FullName, "packages", package.Id, fileLocation);
-                    var newHintPathRelative = String.Format(GetRelativePath(projectPath, newHintPathFull));
+                    var newHintPathRelative = String.Format(GetRelativePath(_projectFileInfo.FullName, newHintPathFull));
                     //TODO make version available, currently only works for non versioned package directories...
                     referenceMatch.SetMetadataValue("HintPath", newHintPathRelative);
                 }
