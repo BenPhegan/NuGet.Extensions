@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
-using Microsoft.Build.Construction;
 using Microsoft.Build.Evaluation;
 using NuGet.Common;
 using NuGet.Extensions.Repositories;
@@ -23,7 +22,7 @@ namespace NuGet.Extensions.Commands
         private readonly IProjectAdapter _projectAdapter;
         private readonly PackageReferenceFile _packageReferenceFile;
 
-        public ReferenceNugetifier(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider packageSourceProvider, IConsole console, bool nuspec, IEnumerable<string> source, FileInfo projectFileInfo, Project project, DirectoryInfo solutionRoot, IFileSystem projectFileSystem, ProjectAdapter projectAdapter, PackageReferenceFile packageReferenceFile)
+        public ReferenceNugetifier(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider packageSourceProvider, IConsole console, bool nuspec, IEnumerable<string> source, FileInfo projectFileInfo, DirectoryInfo solutionRoot, IFileSystem projectFileSystem, ProjectAdapter projectAdapter, PackageReferenceFile packageReferenceFile)
         {
             _repositoryFactory = packageRepositoryFactory;
             _sourceProvider = packageSourceProvider;
