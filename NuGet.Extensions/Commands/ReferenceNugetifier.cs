@@ -16,8 +16,10 @@ namespace NuGet.Extensions.Commands
         private readonly bool _nuspec;
         private readonly IEnumerable<string> _source;
         private readonly FileInfo _projectFileInfo;
+        private readonly Project _project;
+        private readonly DirectoryInfo _solutionRoot;
 
-        public ReferenceNugetifier(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider packageSourceProvider, IConsole console, bool nuspec, IEnumerable<string> source, FileInfo projectFileInfo)
+        public ReferenceNugetifier(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider packageSourceProvider, IConsole console, bool nuspec, IEnumerable<string> source, FileInfo projectFileInfo, Project project, DirectoryInfo solutionRoot)
         {
             _repositoryFactory = packageRepositoryFactory;
             _sourceProvider = packageSourceProvider;
@@ -25,20 +27,22 @@ namespace NuGet.Extensions.Commands
             _nuspec = nuspec;
             _source = source;
             _projectFileInfo = projectFileInfo;
+            _project = project;
+            _solutionRoot = solutionRoot;
         }
 
-        public string NugetifyReferences(Project project, DirectoryInfo solutionRoot, SharedPackageRepository sharedPackagesRepository, string projectPath, List<ManifestDependency> manifestDependencies, List<string> projectReferences)
+        public string NugetifyReferences(SharedPackageRepository sharedPackagesRepository, string projectPath, List<ManifestDependency> manifestDependencies, List<string> projectReferences)
         {
-            var assemblyOutput = project.GetPropertyValue("AssemblyName");
+            var assemblyOutput = _project.GetPropertyValue("AssemblyName");
 
-            var references = project.GetItems("Reference");
+            var references = _project.GetItems("Reference");
 
             var resolvedMappings = ResolveReferenceMappings(references, _projectFileInfo);
 
             if (resolvedMappings != null && resolvedMappings.Any())
             {
-                UpdateProjectFileReferenceHintPaths(solutionRoot, project, resolvedMappings, references);
-                CreateNuGetScaffolding(sharedPackagesRepository, manifestDependencies, resolvedMappings, _projectFileInfo, project, projectReferences);
+                UpdateProjectFileReferenceHintPaths(_solutionRoot, _project, resolvedMappings, references);
+                CreateNuGetScaffolding(sharedPackagesRepository, manifestDependencies, resolvedMappings, _projectFileInfo, _project, projectReferences);
             }
             return assemblyOutput;
         }
