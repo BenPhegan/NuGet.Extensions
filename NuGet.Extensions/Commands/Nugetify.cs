@@ -94,7 +94,6 @@ namespace NuGet.Extensions.Commands
 
         private void NugetifyProject(FileInfo solutionFile, SolutionProject simpleProject, DirectoryInfo solutionRoot, ISharedPackageRepository sharedPackagesRepository)
         {
-            var manifestDependencies = new List<ManifestDependency>();
             var projectPath = Path.Combine(solutionFile.Directory.FullName, simpleProject.RelativePath);
             if (File.Exists(projectPath))
             {
@@ -109,7 +108,7 @@ namespace NuGet.Extensions.Commands
                 var packageRepository = GetRepository();
                 var referenceNugetifier = new ReferenceNugetifier(Console, NuSpec, projectFileInfo, solutionRoot, projectFileSystem, projectAdapter, packageReferenceFile, packageRepository);
                 var projectReferences = ParseProjectReferences(project, Console);
-                referenceNugetifier.NugetifyReferences(sharedPackagesRepository, projectPath, manifestDependencies, projectReferences);
+                var manifestDependencies = referenceNugetifier.NugetifyReferences(sharedPackagesRepository, projectPath, projectReferences);
 
                 //Create nuspec regardless of whether we have added dependencies
                 if (NuSpec) CreateAndOutputNuSpecFile(projectAdapter.GetAssemblyName(), manifestDependencies);

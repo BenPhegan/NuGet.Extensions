@@ -31,18 +31,19 @@ namespace NuGet.Extensions.Commands
             _packageRepository = packageRepository;
         }
 
-        public void NugetifyReferences(ISharedPackageRepository sharedPackagesRepository, string projectPath, List<ManifestDependency> manifestDependencies, List<string> projectReferences)
+        public List<ManifestDependency> NugetifyReferences(ISharedPackageRepository sharedPackagesRepository, string projectPath, List<string> projectReferences)
         {
-
             var references = _vsProject.GetBinaryReferences().ToList();
-
             var resolvedMappings = ResolveReferenceMappings(references);
+            var nugettedDependencies = new List<ManifestDependency>();
 
             if (resolvedMappings != null && resolvedMappings.Any())
             {
                 UpdateProjectFileReferenceHintPaths(resolvedMappings, references);
-                CreateNuGetScaffolding(sharedPackagesRepository, manifestDependencies, resolvedMappings, projectReferences);
+                CreateNuGetScaffolding(sharedPackagesRepository, nugettedDependencies, resolvedMappings, projectReferences);
             }
+
+            return nugettedDependencies;
         }
 
         private void UpdateProjectFileReferenceHintPaths(IEnumerable<KeyValuePair<string, List<IPackage>>> resolvedMappings, IEnumerable<IBinaryReference> references)
