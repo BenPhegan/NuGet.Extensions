@@ -21,6 +21,7 @@ namespace NuGet.Extensions.Commands
         private readonly DirectoryInfo _solutionRoot;
         private readonly IFileSystem _projectFileSystem;
         private readonly IProjectAdapter _projectAdapter;
+        private readonly PackageReferenceFile _packageReferenceFile;
 
         public ReferenceNugetifier(IPackageRepositoryFactory packageRepositoryFactory, IPackageSourceProvider packageSourceProvider, IConsole console, bool nuspec, IEnumerable<string> source, FileInfo projectFileInfo, Project project, DirectoryInfo solutionRoot, IFileSystem projectFileSystem)
         {
@@ -33,6 +34,7 @@ namespace NuGet.Extensions.Commands
             _solutionRoot = solutionRoot;
             _projectFileSystem = projectFileSystem;
             _projectAdapter = new ProjectAdapter(project, _packagesConfigFilename);
+            _packageReferenceFile = new PackageReferenceFile(_projectFileSystem, _packagesConfigFilename);
         }
 
         public string NugetifyReferences(ISharedPackageRepository sharedPackagesRepository, string projectPath, List<ManifestDependency> manifestDependencies, List<string> projectReferences)
@@ -93,7 +95,7 @@ namespace NuGet.Extensions.Commands
         {
             //Now, create the packages.config for the resolved packages, and update the repositories.config
             _console.WriteLine("Creating packages.config");
-            var packagesConfig = new PackageReferenceFile(_projectFileSystem, _packagesConfigFilename);
+            var packagesConfig = _packageReferenceFile;
             foreach (var referenceMapping in resolvedMappings)
             {
                 //TODO We shouldnt need to resolve this twice....
