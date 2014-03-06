@@ -45,16 +45,16 @@ namespace NuGet.Extensions.Commands
             return _project.GetItems("None").Any(i => i.UnevaluatedInclude.Equals(_packagesConfigFilename));
         }
 
-        public static List<string> GetReferencedAssemblies(IEnumerable<ProjectItem> references)
+        public static List<string> GetReferencedAssemblies(ICollection<ProjectItem> references)
         {
             var referenceFiles = new List<string>();
 
-            foreach (ProjectItem reference in references)
+            foreach (var reference in references.Select(r => new BinaryReferenceAdapter(r)))
             {
                 //TODO deal with GAC assemblies that we want to replace as well....
-                if (reference.HasMetadata("HintPath"))
+                if (reference.HasHintPath())
                 {
-                    var hintPath = reference.GetMetadataValue("HintPath");
+                    var hintPath = reference.GetHintPath();
                     referenceFiles.Add(Path.GetFileName(hintPath));
                 }
             }
