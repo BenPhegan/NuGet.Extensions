@@ -4,7 +4,7 @@ using Microsoft.Build.Evaluation;
 namespace NuGet.Extensions.Commands
 {
     public interface IProjectAdapter {
-        IEnumerable<BinaryReferenceAdapter> GetBinaryReferences();
+        IEnumerable<IBinaryReference> GetBinaryReferences();
         string GetAssemblyName();
         void Save();
         void AddPackagesConfig();

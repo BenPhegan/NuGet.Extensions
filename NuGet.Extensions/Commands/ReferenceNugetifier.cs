@@ -51,7 +51,7 @@ namespace NuGet.Extensions.Commands
             return assemblyOutput;
         }
 
-        private void UpdateProjectFileReferenceHintPaths(DirectoryInfo solutionRoot, IEnumerable<KeyValuePair<string, List<IPackage>>> resolvedMappings, IEnumerable<BinaryReferenceAdapter> references)
+        private void UpdateProjectFileReferenceHintPaths(DirectoryInfo solutionRoot, IEnumerable<KeyValuePair<string, List<IPackage>>> resolvedMappings, IEnumerable<IBinaryReference> references)
         {
             foreach (var mapping in resolvedMappings)
             {
@@ -125,7 +125,7 @@ namespace NuGet.Extensions.Commands
             _projectAdapter.AddPackagesConfig();
         }
 
-        private IEnumerable<KeyValuePair<string, List<IPackage>>> ResolveReferenceMappings(IEnumerable<BinaryReferenceAdapter> references)
+        private IEnumerable<KeyValuePair<string, List<IPackage>>> ResolveReferenceMappings(IEnumerable<IBinaryReference> references)
         {
             var referenceList = ProjectAdapter.GetReferencedAssemblies(references);
             if (referenceList.Any())

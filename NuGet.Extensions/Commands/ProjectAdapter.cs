@@ -16,7 +16,7 @@ namespace NuGet.Extensions.Commands
             _packagesConfigFilename = packagesConfigFilename;
         }
 
-        public IEnumerable<BinaryReferenceAdapter> GetBinaryReferences()
+        public IEnumerable<IBinaryReference> GetBinaryReferences()
         {
             return _project.GetItems("Reference").Select(r => new BinaryReferenceAdapter(r));
         }
@@ -45,7 +45,7 @@ namespace NuGet.Extensions.Commands
             return _project.GetItems("None").Any(i => i.UnevaluatedInclude.Equals(_packagesConfigFilename));
         }
 
-        public static List<string> GetReferencedAssemblies(IEnumerable<BinaryReferenceAdapter> references)
+        public static List<string> GetReferencedAssemblies(IEnumerable<IBinaryReference> references)
         {
             var referenceFiles = new List<string>();
 
