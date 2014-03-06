@@ -70,6 +70,7 @@
     <Compile Include="Caches\NuGetCacheManager.cs" />
     <Compile Include="Commands\Audit.cs" />
     <Compile Include="Commands\FixReferences.cs" />
+    <Compile Include="Commands\ReferenceNugetifier.cs" />
     <Compile Include="Comparers\LambdaComparer.cs" />
     <Compile Include="Comparers\PackageReferenceEqualityComparer.cs" />
     <Compile Include="Comparers\VersionSpecEqualityComparer.cs" />
