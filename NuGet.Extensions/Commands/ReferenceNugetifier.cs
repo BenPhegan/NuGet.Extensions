@@ -55,7 +55,7 @@ namespace NuGet.Extensions.Commands
         {
             foreach (var mapping in resolvedMappings)
             {
-                var referenceMatch = references.FirstOrDefault(r => r.ResolveProjectReferenceItemByAssemblyName(mapping.Key));
+                var referenceMatch = references.FirstOrDefault(r => r.IsForAssembly(mapping.Key));
                 if (referenceMatch != null)
                 {
                     var includeName = referenceMatch.GetIncludeName();

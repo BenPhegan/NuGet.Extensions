@@ -38,13 +38,13 @@ namespace NuGet.Extensions.Commands
             return _reference.EvaluatedInclude.Contains(',') ? _reference.EvaluatedInclude.Split(',')[0] : _reference.EvaluatedInclude;
         }
 
-        public bool ResolveProjectReferenceItemByAssemblyName(string mapping)
+        public bool IsForAssembly(string assemblyFilename)
         {
             if (HasHintPath())
             {
                 var hintpath = GetHintPath();
                 var fileInfo = new FileInfo(hintpath);
-                return fileInfo.Name.Equals(mapping, StringComparison.OrdinalIgnoreCase);
+                return fileInfo.Name.Equals(assemblyFilename, StringComparison.OrdinalIgnoreCase);
             }
 
             return false;
