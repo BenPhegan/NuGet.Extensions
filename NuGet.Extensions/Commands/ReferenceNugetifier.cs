@@ -25,7 +25,7 @@ namespace NuGet.Extensions.Commands
             _source = source;
         }
 
-        public string NugetifyReferences(Project project, DirectoryInfo solutionRoot, SharedPackageRepository sharedPackagesRepository, string projectPath, List<ManifestDependency> manifestDependencies)
+        public string NugetifyReferences(Project project, DirectoryInfo solutionRoot, SharedPackageRepository sharedPackagesRepository, string projectPath, List<ManifestDependency> manifestDependencies, List<string> projectReferences)
         {
             var projectFileInfo = new FileInfo(projectPath);
             var assemblyOutput = project.GetPropertyValue("AssemblyName");
@@ -37,23 +37,9 @@ namespace NuGet.Extensions.Commands
             if (resolvedMappings != null && resolvedMappings.Any())
             {
                 UpdateProjectFileReferenceHintPaths(solutionRoot, project, projectPath, resolvedMappings, references);
-                var projectReferences = ParseProjectReferences(project, _console);
                 CreateNuGetScaffolding(sharedPackagesRepository, manifestDependencies, resolvedMappings, projectFileInfo, project, projectReferences);
             }
             return assemblyOutput;
-        }
-
-        public static List<string> ParseProjectReferences(Project project, IConsole console)
-        {
-            console.WriteLine("Checking for any project References for packages.config...");
-            var refs = new List<string>();
-            var references = project.GetItems("ProjectReference");
-            foreach (var reference in references)
-            {
-                var refProject = new Project(Path.Combine(project.DirectoryPath, reference.UnevaluatedInclude),new Dictionary<string, string>(),null,new ProjectCollection());
-                refs.Add(refProject.GetPropertyValue("AssemblyName"));
-            }
-            return refs;
         }
 
         private void UpdateProjectFileReferenceHintPaths(DirectoryInfo solutionRoot, Project project, string projectPath, IEnumerable<KeyValuePair<string, List<IPackage>>> resolvedMappings, ICollection<ProjectItem> references)

@@ -5,6 +5,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 using Microsoft.Build.Evaluation;
 using NuGet.Commands;
+using NuGet.Common;
 using NuGet.Extensions.GetLatest.MSBuild;
 
 namespace NuGet.Extensions.Commands
@@ -100,7 +101,9 @@ namespace NuGet.Extensions.Commands
                 Console.WriteLine();
                 Console.WriteLine("Processing Project: {0}", simpleProject.ProjectName);
                 var referenceNugetifier = new ReferenceNugetifier(RepositoryFactory, SourceProvider, Console, NuSpec, Source);
-                var assemblyOutput = referenceNugetifier.NugetifyReferences(new Project(projectPath, new Dictionary<string, string>(), null, new ProjectCollection()), solutionRoot, sharedPackagesRepository, projectPath, manifestDependencies);
+                Project project = new Project(projectPath, new Dictionary<string, string>(), null, new ProjectCollection());
+                var projectReferences = ParseProjectReferences(project, Console);
+                var assemblyOutput = referenceNugetifier.NugetifyReferences(project, solutionRoot, sharedPackagesRepository, projectPath, manifestDependencies, projectReferences);
 
                 //Create nuspec regardless of whether we have added dependencies
                 if (NuSpec) CreateAndOutputNuSpecFile(assemblyOutput, manifestDependencies);
@@ -118,7 +121,7 @@ namespace NuGet.Extensions.Commands
                                        {
                                            //TODO need to revisit and get the TargetFramework from the assembly...
                                            DependencySets = new List<ManifestDependencySet>
-                                               {
+                                                            {
                                                    new ManifestDependencySet{Dependencies = manifestDependencies,TargetFramework = targetFramework}
                                                },
                                            Id = Id ?? assemblyOutput,
@@ -135,7 +138,7 @@ namespace NuGet.Extensions.Commands
                                            Owners = Owners ?? Author ?? "$author$"                                          
                                        },
                                    Files = new List<ManifestFile>
-                                               {
+                                           {
                                                    new ManifestFile
                                                        {
                                                            Source = assemblyOutput + ".dll",
@@ -147,7 +150,7 @@ namespace NuGet.Extensions.Commands
             string nuspecFile = assemblyOutput + Constants.ManifestExtension;
             
             //Dont add a releasenotes node if we dont have any to add...
-            if (!string.IsNullOrEmpty(ReleaseNotes))
+            if (!String.IsNullOrEmpty(ReleaseNotes))
                 manifest.Metadata.ReleaseNotes = ReleaseNotes;
 
             try
@@ -172,6 +175,19 @@ namespace NuGet.Extensions.Commands
         {
             // This seems to be the only way to clear out xml namespaces.
             return Regex.Replace(content, @"(xmlns:?[^=]*=[""][^""]*[""])", String.Empty, RegexOptions.IgnoreCase | RegexOptions.Multiline);
+        }
+
+        public static List<string> ParseProjectReferences(Project project, IConsole console)
+        {
+            console.WriteLine("Checking for any project References for packages.config...");
+            var refs = new List<string>();
+            var references = project.GetItems("ProjectReference");
+            foreach (var reference in references)
+            {
+                var refProject = new Project(Path.Combine(project.DirectoryPath, reference.UnevaluatedInclude),new Dictionary<string, string>(),null,new ProjectCollection());
+                refs.Add(refProject.GetPropertyValue("AssemblyName"));
+            }
+            return refs;
         }
     }
 }
