@@ -25,10 +25,9 @@ namespace NuGet.Extensions.Commands
             _source = source;
         }
 
-        public string NugetifyReferences(DirectoryInfo solutionRoot, SharedPackageRepository sharedPackagesRepository, string projectPath, List<ManifestDependency> manifestDependencies)
+        public string NugetifyReferences(Project project, DirectoryInfo solutionRoot, SharedPackageRepository sharedPackagesRepository, string projectPath, List<ManifestDependency> manifestDependencies)
         {
             var projectFileInfo = new FileInfo(projectPath);
-            var project = new Project(projectPath, new Dictionary<string, string>(), null, new ProjectCollection());
             var assemblyOutput = project.GetPropertyValue("AssemblyName");
 
             var references = project.GetItems("Reference");

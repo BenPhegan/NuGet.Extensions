@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Text.RegularExpressions;
+using Microsoft.Build.Evaluation;
 using NuGet.Commands;
 using NuGet.Extensions.GetLatest.MSBuild;
 
@@ -99,7 +100,7 @@ namespace NuGet.Extensions.Commands
                 Console.WriteLine();
                 Console.WriteLine("Processing Project: {0}", simpleProject.ProjectName);
                 var referenceNugetifier = new ReferenceNugetifier(RepositoryFactory, SourceProvider, Console, NuSpec, Source);
-                var assemblyOutput = referenceNugetifier.NugetifyReferences(solutionRoot, sharedPackagesRepository, projectPath, manifestDependencies);
+                var assemblyOutput = referenceNugetifier.NugetifyReferences(new Project(projectPath, new Dictionary<string, string>(), null, new ProjectCollection()), solutionRoot, sharedPackagesRepository, projectPath, manifestDependencies);
 
                 //Create nuspec regardless of whether we have added dependencies
                 if (NuSpec) CreateAndOutputNuSpecFile(assemblyOutput, manifestDependencies);
