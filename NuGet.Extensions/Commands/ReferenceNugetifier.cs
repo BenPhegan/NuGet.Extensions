@@ -37,15 +37,15 @@ namespace NuGet.Extensions.Commands
             if (resolvedMappings != null && resolvedMappings.Any())
             {
                 UpdateProjectFileReferenceHintPaths(solutionRoot, project, projectPath, resolvedMappings, references);
-                var projectReferences = ParseProjectReferences(project);
+                var projectReferences = ParseProjectReferences(project, _console);
                 CreateNuGetScaffolding(sharedPackagesRepository, manifestDependencies, resolvedMappings, projectFileInfo, project, projectReferences);
             }
             return assemblyOutput;
         }
 
-        private List<string> ParseProjectReferences(Project project)
+        public static List<string> ParseProjectReferences(Project project, IConsole console)
         {
-            _console.WriteLine("Checking for any project References for packages.config...");
+            console.WriteLine("Checking for any project References for packages.config...");
             var refs = new List<string>();
             var references = project.GetItems("ProjectReference");
             foreach (var reference in references)
