@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
-using Microsoft.Build.Evaluation;
 using NuGet.Common;
 using NuGet.Extensions.Repositories;
 
@@ -46,7 +45,7 @@ namespace NuGet.Extensions.Commands
 
             if (resolvedMappings != null && resolvedMappings.Any())
             {
-                UpdateProjectFileReferenceHintPaths(_solutionRoot, resolvedMappings, references.Select(r => new BinaryReferenceAdapter(r)));
+                UpdateProjectFileReferenceHintPaths(_solutionRoot, resolvedMappings, references);
                 CreateNuGetScaffolding(sharedPackagesRepository, manifestDependencies, resolvedMappings, _projectFileInfo, projectReferences);
             }
             return assemblyOutput;
@@ -126,7 +125,7 @@ namespace NuGet.Extensions.Commands
             _projectAdapter.AddPackagesConfig();
         }
 
-        private IEnumerable<KeyValuePair<string, List<IPackage>>> ResolveReferenceMappings(ICollection<ProjectItem> references)
+        private IEnumerable<KeyValuePair<string, List<IPackage>>> ResolveReferenceMappings(IEnumerable<BinaryReferenceAdapter> references)
         {
             var referenceList = ProjectAdapter.GetReferencedAssemblies(references);
             if (referenceList.Any())

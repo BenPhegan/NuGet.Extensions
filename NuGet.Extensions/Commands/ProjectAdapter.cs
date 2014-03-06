@@ -16,9 +16,9 @@ namespace NuGet.Extensions.Commands
             _packagesConfigFilename = packagesConfigFilename;
         }
 
-        public ICollection<ProjectItem> GetBinaryReferences()
+        public IEnumerable<BinaryReferenceAdapter> GetBinaryReferences()
         {
-            return _project.GetItems("Reference");
+            return _project.GetItems("Reference").Select(r => new BinaryReferenceAdapter(r));
         }
 
         public string GetAssemblyName()
@@ -45,11 +45,11 @@ namespace NuGet.Extensions.Commands
             return _project.GetItems("None").Any(i => i.UnevaluatedInclude.Equals(_packagesConfigFilename));
         }
 
-        public static List<string> GetReferencedAssemblies(ICollection<ProjectItem> references)
+        public static List<string> GetReferencedAssemblies(IEnumerable<BinaryReferenceAdapter> references)
         {
             var referenceFiles = new List<string>();
 
-            foreach (var reference in references.Select(r => new BinaryReferenceAdapter(r)))
+            foreach (var reference in references)
             {
                 //TODO deal with GAC assemblies that we want to replace as well....
                 if (reference.HasHintPath())
