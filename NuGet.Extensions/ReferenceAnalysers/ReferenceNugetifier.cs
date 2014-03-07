@@ -43,17 +43,15 @@ namespace NuGet.Extensions.ReferenceAnalysers
             var resolvedMappings = _resolveReferenceMappings;
             var nugettedDependencies = new List<ManifestDependency>();
 
-            if (resolvedMappings.Value.Any())
-            {
-                UpdateProjectFileReferenceHintPaths(resolvedMappings.Value, _references.Value);
-                CreateNuGetScaffolding(sharedPackagesRepository, nugettedDependencies, resolvedMappings.Value, projectReferences);
-            }
+            UpdateProjectFileReferenceHintPaths(resolvedMappings.Value, _references.Value);
+            CreateNuGetScaffolding(sharedPackagesRepository, nugettedDependencies, resolvedMappings.Value, projectReferences);
 
             return nugettedDependencies;
         }
 
         private void UpdateProjectFileReferenceHintPaths(IEnumerable<KeyValuePair<string, List<IPackage>>> resolvedMappings, IEnumerable<IBinaryReference> references)
         {
+            if (!resolvedMappings.Any()) return;
             foreach (var mapping in resolvedMappings)
             {
                 var referenceMatch = references.FirstOrDefault(r => r.IsForAssembly(mapping.Key));
@@ -92,6 +90,7 @@ namespace NuGet.Extensions.ReferenceAnalysers
 
         private void CreateNuGetScaffolding(ISharedPackageRepository sharedPackagesRepository, List<ManifestDependency> manifestDependencies, IEnumerable<KeyValuePair<string, List<IPackage>>> resolvedMappings, List<string> projectDependencies)
         {
+            if (!resolvedMappings.Any()) return;
             //Now, create the packages.config for the resolved packages, and update the repositories.config
             _console.WriteLine("Creating {0}", _packagesConfigFilename);
             var packagesConfig = _packageReferenceFile;
