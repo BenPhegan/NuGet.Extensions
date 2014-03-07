@@ -9,11 +9,11 @@ namespace NuGet.Extensions.Tests.ReferenceAnalysers
         private const string AssemblyInPackageRepository = "Assembly11.dll";
         public const string PackageInRepository = "Test1";
 
-        public static Mock<IVsProject> ConstructMockProject(IBinaryReference[] binaryReferences)
+        public static Mock<IVsProject> ConstructMockProject(IBinaryReference[] binaryReferences = null)
         {
-            var projectWithSingleDependency = new Mock<IVsProject>();
-            projectWithSingleDependency.Setup(proj => proj.GetBinaryReferences()).Returns(binaryReferences);
-            return projectWithSingleDependency;
+            var project = new Mock<IVsProject>();
+            project.Setup(proj => proj.GetBinaryReferences()).Returns(binaryReferences ?? new IBinaryReference[0]);
+            return project;
         }
 
         public static Mock<IBinaryReference> ConstructMockDependency(string includeName = null, string includeVersion = null)
