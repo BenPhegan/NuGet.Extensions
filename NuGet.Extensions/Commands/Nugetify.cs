@@ -112,7 +112,7 @@ namespace NuGet.Extensions.Commands
                 var manifestDependencies = referenceNugetifier.NugetifyReferences(sharedPackagesRepository, projectPath, projectReferences);
 
                 //Create nuspec regardless of whether we have added dependencies
-                if (NuSpec) CreateAndOutputNuSpecFile(projectAdapter.GetAssemblyName(), manifestDependencies);
+                if (NuSpec) CreateAndOutputNuSpecFile(projectAdapter.AssemblyName, manifestDependencies);
 
                 Console.WriteLine("Project completed!");
             }

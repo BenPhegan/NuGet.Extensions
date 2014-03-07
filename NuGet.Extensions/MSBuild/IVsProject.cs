@@ -4,7 +4,7 @@ namespace NuGet.Extensions.MSBuild
 {
     public interface IVsProject {
         IEnumerable<IBinaryReference> GetBinaryReferences();
-        string GetAssemblyName();
+        string AssemblyName { get; }
         void Save();
         void AddPackagesConfig();
     }

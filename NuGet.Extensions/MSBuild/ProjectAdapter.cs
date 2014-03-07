@@ -21,9 +21,9 @@ namespace NuGet.Extensions.MSBuild
             return _project.GetItems("Reference").Select(r => new BinaryReferenceAdapter(r));
         }
 
-        public string GetAssemblyName()
+        public string AssemblyName
         {
-            return _project.GetPropertyValue("AssemblyName");
+            get { return _project.GetPropertyValue("AssemblyName"); }
         }
 
         public void Save()
