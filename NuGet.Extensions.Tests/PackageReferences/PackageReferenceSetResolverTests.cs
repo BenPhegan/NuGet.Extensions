@@ -113,7 +113,7 @@ namespace NuGet.Extensions.Tests.PackageReferences
 
         private PackageResolverTestObject GetTestObjectFromDataFile(string sample)
         {
-            XDocument xDoc = XDocument.Load(Path.Combine(".","TestData","PackageReferenceSetResolverTestData.xml"));
+            XDocument xDoc = XDocument.Load(Paths.PackageReferenceSetResolverXml);
             var testData = xDoc.Elements("Tests").Elements("Test").Where(x => x.Attribute("name").Value == sample).First();
             if (testData != null)
             {
