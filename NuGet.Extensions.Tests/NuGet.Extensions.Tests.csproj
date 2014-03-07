@@ -80,6 +80,10 @@
     <Compile Include="Repositories\RepositoryGroupManagerTests.cs" />
     <Compile Include="Repositories\RepositoryManagerTests.cs" />
     <Compile Include="TestData\PackageResolverTestObject.cs" />
+    <Content Include="TestData\TestSolutionForAdapter\ProjectWithDependencies\CsFile.cs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Compile Include="TestData\Paths.cs" />
     <Compile Include="TestObjects\EventMemoryStream.cs" />
     <Compile Include="TestObjects\GetCommandTestsBase.cs" />
     <Compile Include="Mocks\FileSystemExtensions.cs" />
@@ -97,6 +101,9 @@
     <None Include="packages.config">
       <SubType>Designer</SubType>
     </None>
+    <Content Include="TestData\TestSolutionForAdapter\ProjectWithDependencies\packages.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\NuGet.Extensions\NuGet.Extensions.csproj">
@@ -106,6 +113,15 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="TestData\PackageReferenceSetResolverTestData.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestData\TestSolutionForAdapter\ProjectDependency\ProjectDependency.csproj">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestData\TestSolutionForAdapter\ProjectWithDependencies\ProjectWithDependencies.csproj">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestData\TestSolutionForAdapter\TestSolutionForAdapter.sln">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
