@@ -9,6 +9,6 @@ namespace NuGet.Extensions.MSBuild
         /// <summary>
         /// Note: The parent project must be saved in order for this change to persist
         /// </summary>
-        void SetHintPath(string value);
+        void ConvertToNugetReferenceWithHintPath(string value);
     }
 }

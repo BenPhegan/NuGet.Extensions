@@ -22,7 +22,7 @@ namespace NuGet.Extensions.MSBuild
             return hasHintPath;
         }
 
-        public void SetHintPath(string value)
+        public void ConvertToNugetReferenceWithHintPath(string value)
         {
             _reference.SetMetadataValue("HintPath", value);
         }
