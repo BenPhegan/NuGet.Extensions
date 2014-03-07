@@ -7,9 +7,9 @@
     <ProjectGuid>{5F49060A-3F64-4227-90C4-09F54783F1EC}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>ProjectWithDependency</RootNamespace>
-    <AssemblyName>ProjectWithDependency</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <RootNamespace>ProjectWithDependencies</RootNamespace>
+    <AssemblyName>ProjectWithDependencies</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">

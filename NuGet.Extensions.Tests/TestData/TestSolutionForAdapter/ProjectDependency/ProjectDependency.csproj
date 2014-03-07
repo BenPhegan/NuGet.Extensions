@@ -7,9 +7,9 @@
     <ProjectGuid>{B741A39D-D1B7-46E1-8078-E2ED778EB284}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>TestSolutionForAdapter</RootNamespace>
-    <AssemblyName>TestSolutionForAdapter</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <RootNamespace>ProjectDependency</RootNamespace>
+    <AssemblyName>ProjectDependency</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
