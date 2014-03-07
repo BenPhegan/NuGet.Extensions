@@ -73,6 +73,26 @@ namespace NuGet.Extensions.Tests.MSBuild
             Assert.That(hintpath, Is.EqualTo(nonPersistedHintPath));
         }
 
+        [Test]
+        public void BinaryReferenceForExpectedAssembly()
+        {
+            var binaryDependency = _projectBinaryReferenceAdapters.Single(IsExpectedBinaryDependency);
+
+            var isForCorrespondingAssembly = binaryDependency.IsForAssembly(_expectedBinaryDependencyAssemblyName + ".dll");
+
+            Assert.That(isForCorrespondingAssembly, Is.True);
+        }
+
+        [Test]
+        public void BinaryReferenceNotForEmptyAssemblyName()
+        {
+            var binaryDependency = _projectBinaryReferenceAdapters.Single(IsExpectedBinaryDependency);
+
+            var isForBlankAssemblyName = binaryDependency.IsForAssembly("") || binaryDependency.IsForAssembly(".dll");
+
+            Assert.That(isForBlankAssemblyName, Is.False);
+        }
+
         private static bool IsExpectedBinaryDependency(IBinaryReference r)
         {
             return r.IncludeName == _expectedBinaryDependencyAssemblyName;
