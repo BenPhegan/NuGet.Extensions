@@ -60,6 +60,23 @@ namespace NuGet.Extensions.Tests.MSBuild
             Assert.That(hintpath, new EndsWithConstraint(expectedHintPathEnd));
         }
 
+        [Test]
+        public void BinaryReferenceSetHintPathCanBeRetrieved()
+        {
+            var projectAdapter = CreateProjectAdapter(Paths.ProjectWithDependencies);
+
+            var binaryReferences = projectAdapter.GetBinaryReferences();
+            var binaryDependency = binaryReferences.Single(IsExpectedBinaryDependency);
+
+            const string nonPersistedHintPath = "a different string that won't be persisted";
+            binaryDependency.SetHintPath(nonPersistedHintPath);
+            string hintpath;
+            var hasHintPath = binaryDependency.TryGetHintPath(out hintpath);
+
+            Assert.That(hasHintPath, Is.True);
+            Assert.That(hintpath, Is.EqualTo(nonPersistedHintPath));
+        }
+
         private static bool IsExpectedBinaryDependency(IBinaryReference r)
         {
             return r.IncludeName == _expectedBinaryDependencyAssemblyName;
