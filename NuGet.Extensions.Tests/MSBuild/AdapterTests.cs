@@ -38,8 +38,13 @@ namespace NuGet.Extensions.Tests.MSBuild
 
             var binaryReferences = projectAdapter.GetBinaryReferences();
 
-            var newtonsoft = binaryReferences.Single(r => r.IncludeName == _expectedBinaryDependencyAssemblyName);
-            Assert.That(newtonsoft.IncludeVersion, Is.EqualTo(_expectedBinaryDependencyVersion));
+            var binaryDependency = binaryReferences.Single(IsExpectedBinaryDependency);
+            Assert.That(binaryDependency.IncludeVersion, Is.EqualTo(_expectedBinaryDependencyVersion));
+        }
+
+        private static bool IsExpectedBinaryDependency(IBinaryReference r)
+        {
+            return r.IncludeName == _expectedBinaryDependencyAssemblyName;
         }
 
         private static ProjectAdapter CreateProjectAdapter(string projectWithDependencies)
