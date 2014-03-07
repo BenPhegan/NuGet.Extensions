@@ -12,17 +12,15 @@ namespace NuGet.Extensions.ReferenceAnalysers
     public class ReferenceNugetifier
     {
         private readonly IConsole _console;
-        private readonly FileInfo _projectFileInfo;
         private readonly IFileSystem _projectFileSystem;
         private readonly IVsProject _vsProject;
         private readonly IPackageRepository _packageRepository;
         private readonly Lazy<IList<IReference>> _references;
         private readonly Lazy<IList<KeyValuePair<string, List<IPackage>>>> _resolveReferenceMappings;
 
-        public ReferenceNugetifier(IConsole console, FileInfo projectFileInfo, IFileSystem projectFileSystem, IVsProject vsProject, IPackageRepository packageRepository)
+        public ReferenceNugetifier(IConsole console, IFileSystem projectFileSystem, IVsProject vsProject, IPackageRepository packageRepository)
         {
             _console = console;
-            _projectFileInfo = projectFileInfo;
             _projectFileSystem = projectFileSystem;
             _vsProject = vsProject;
             _packageRepository = packageRepository;
@@ -47,7 +45,7 @@ namespace NuGet.Extensions.ReferenceAnalysers
 
                     var fileLocation = GetFileLocationFromPackage(package, mapping.Key);
                     var newHintPathFull = Path.Combine(solutionDir.FullName, "packages", package.Id, fileLocation);
-                    var newHintPathRelative = String.Format(GetRelativePath(_projectFileInfo.FullName, newHintPathFull));
+                    var newHintPathRelative = String.Format(GetRelativePath(_vsProject.ProjectFile.FullName, newHintPathFull));
                     //TODO make version available, currently only works for non versioned package directories...
                     referenceMatch.ConvertToNugetReferenceWithHintPath(newHintPathRelative);
                 }
@@ -103,7 +101,7 @@ namespace NuGet.Extensions.ReferenceAnalysers
                 }
             }
             //Register the packages.config
-            var packagesConfigFilePath = Path.Combine(_projectFileInfo.Directory.FullName + "\\", packagesConfigFilename);
+            var packagesConfigFilePath = Path.Combine(_vsProject.ProjectFile.Directory.FullName + "\\", packagesConfigFilename);
             sharedPackagesRepository.RegisterRepository(packagesConfigFilePath);
 
             _vsProject.AddPackagesConfig();

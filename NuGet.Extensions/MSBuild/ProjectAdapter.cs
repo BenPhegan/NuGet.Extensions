@@ -26,6 +26,11 @@ namespace NuGet.Extensions.MSBuild
             get { return _project.GetPropertyValue("AssemblyName"); }
         }
 
+        public FileInfo ProjectFile
+        {
+            get { return new FileInfo(_project.FullPath); }
+        }
+
         public void Save()
         {
             _project.Save();

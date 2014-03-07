@@ -27,7 +27,7 @@ namespace NuGet.Extensions.Tests.ReferenceAnalysers
             projectFileSystem = projectFileSystem ?? GetMockFileSystem(solutionRoot);
             vsProject = vsProject ?? new Mock<IVsProject>().Object;
             packageRepository = packageRepository ?? new MockPackageRepository();
-            return new ReferenceNugetifier(console.Object, projectFileInfo, projectFileSystem, vsProject, packageRepository);
+            return new ReferenceNugetifier(console.Object, projectFileSystem, vsProject, packageRepository);
         }
 
         private static PackageReferenceFile GetPackageReferenceFile(IFileSystem projectFileSystem)
