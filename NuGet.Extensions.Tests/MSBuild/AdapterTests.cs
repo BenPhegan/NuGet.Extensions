@@ -17,6 +17,7 @@ namespace NuGet.Extensions.Tests.MSBuild
         
         private const string _expectedBinaryDependencyAssemblyName = "Newtonsoft.Json";
         private const string _expectedBinaryDependencyVersion = "6.0.0.0";
+        private const string _expectedProjectDependencyName = "ProjectDependency";
 
         [SetUp]
         public void SetUpProjectAdapterAndBinaryDependencies()
@@ -94,6 +95,16 @@ namespace NuGet.Extensions.Tests.MSBuild
 
             Assert.That(isForBlankAssemblyName, Is.False);
         }
+
+        [Test]
+        public void GetProjectReferencesHasAssemblyNameInIncludeName()
+        {
+            var projReferences = _projectWithDependenciesAdapter.GetProjectReferences().ToList();
+
+            Assert.That(projReferences.Count(), Is.EqualTo(1));
+            Assert.That(projReferences.Single().IncludeName, Contains.Substring(_expectedProjectDependencyName));
+        }
+
 
         private static bool IsExpectedBinaryDependency(IReference r)
         {

@@ -60,5 +60,10 @@ namespace NuGet.Extensions.MSBuild
             }
             return referenceFiles;
         }
+
+        public IEnumerable<IReference> GetProjectReferences()
+        {
+            return _project.GetItems("ProjectReference").Select(r => new BinaryReferenceAdapter(r));
+        }
     }
 }
