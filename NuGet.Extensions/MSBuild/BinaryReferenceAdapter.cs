@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using Microsoft.Build.Evaluation;
 
 namespace NuGet.Extensions.MSBuild
@@ -22,9 +23,9 @@ namespace NuGet.Extensions.MSBuild
             return hasHintPath;
         }
 
-        public void ConvertToNugetReferenceWithHintPath(string value)
+        public void ConvertToNugetReferenceWithHintPath(string hintPath)
         {
-            _reference.SetMetadataValue("HintPath", value);
+            _reference.SetMetadataValue("HintPath", hintPath);
         }
 
         public string IncludeVersion

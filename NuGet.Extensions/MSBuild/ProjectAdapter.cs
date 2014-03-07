@@ -63,7 +63,17 @@ namespace NuGet.Extensions.MSBuild
 
         public IEnumerable<IReference> GetProjectReferences()
         {
-            return _project.GetItems("ProjectReference").Select(r => new BinaryReferenceAdapter(r));
+            return _project.GetItems("ProjectReference").Select(GetProjectReferenceAdapter);
+        }
+
+        private ProjectReferenceAdapter GetProjectReferenceAdapter(ProjectItem r)
+        {
+            return new ProjectReferenceAdapter(() => _project.RemoveItem(r), AddBinaryReference, r);
+        }
+
+        private void AddBinaryReference(string includePath, KeyValuePair<string, string> metadata)
+        {
+            _project.AddItem("Reference", includePath, new[]{metadata});
         }
     }
 }
