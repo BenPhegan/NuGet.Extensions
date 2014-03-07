@@ -103,14 +103,14 @@ namespace NuGet.Extensions.Commands
                 Console.WriteLine("Processing Project: {0}", simpleProject.ProjectName);
                 var projectFileInfo = new FileInfo(projectPath);
                 var project = new Project(projectPath, new Dictionary<string, string>(), null, new ProjectCollection());
+                var projectAdapter = new ProjectAdapter(project, PackagesConfigFilename);
                 var projectFileSystem = new PhysicalFileSystem(projectFileInfo.Directory.ToString());
                 var packageReferenceFile = new PackageReferenceFile(projectFileSystem, PackagesConfigFilename);
-                var projectAdapter = new ProjectAdapter(project, PackagesConfigFilename);
                 var packageRepository = GetRepository();
-                var referenceNugetifier = new ReferenceNugetifier(Console, NuSpec, projectFileInfo, solutionRoot, projectFileSystem, projectAdapter, packageReferenceFile, packageRepository, PackagesConfigFilename);
+                var referenceNugetifier = new ReferenceNugetifier(Console, projectFileInfo, projectFileSystem, projectAdapter, packageRepository);
                 var projectReferences = ParseProjectReferences(project, Console);
-                referenceNugetifier.NugetifyReferencesInProject();
-                var manifestDependencies = referenceNugetifier.AddNugetMetadataForReferences(sharedPackagesRepository, projectReferences);
+                referenceNugetifier.NugetifyReferencesInProject(solutionRoot);
+                var manifestDependencies = referenceNugetifier.AddNugetMetadataForReferences(sharedPackagesRepository, projectReferences, packageReferenceFile, PackagesConfigFilename, NuSpec);
 
                 //Create nuspec regardless of whether we have added dependencies
                 if (NuSpec) CreateAndOutputNuSpecFile(projectAdapter.AssemblyName, manifestDependencies);

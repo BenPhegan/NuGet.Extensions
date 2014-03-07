@@ -11,24 +11,38 @@ namespace NuGet.Extensions.Tests.ReferenceAnalysers
     public class ReferenceNugetifierTester {
         private const string DefaultProjectPath = "c:\\isany.csproj";
 
-        public static List<ManifestDependency> GetManifestDependencies(ReferenceNugetifier nugetifier, ISharedPackageRepository sharedPackageRepository = null, string defaultProjectPath = null, List<string> projectReferences = null)
+        public static List<ManifestDependency> GetManifestDependencies(ReferenceNugetifier nugetifier, ISharedPackageRepository sharedPackageRepository = null, List<string> projectReferences = null, PackageReferenceFile packageReferenceFile = null)
         {
             sharedPackageRepository = sharedPackageRepository ?? new Mock<ISharedPackageRepository>().Object;
-            defaultProjectPath = defaultProjectPath ?? DefaultProjectPath;
             projectReferences = projectReferences ?? new List<string>();
-            return nugetifier.AddNugetMetadataForReferences(sharedPackageRepository, projectReferences);
+            packageReferenceFile = packageReferenceFile ?? GetPackageReferenceFile(GetMockFileSystem(GetMockSolutionRoot()));
+            return nugetifier.AddNugetMetadataForReferences(sharedPackageRepository, projectReferences, packageReferenceFile, "packages.config", true);
         }
 
-        public static ReferenceNugetifier BuildNugetifier(IFileSystem projectFileSystem = null, IVsProject vsProject = null, PackageReferenceFile packageReferenceFile = null, IPackageRepository packageRepository = null)
+        public static ReferenceNugetifier BuildNugetifier(IFileSystem projectFileSystem = null, IVsProject vsProject = null, IPackageRepository packageRepository = null)
         {
             var console = new Mock<IConsole>();
             var projectFileInfo = new FileInfo(DefaultProjectPath);
-            var solutionRoot = new DirectoryInfo("c:\\isAnyFolder");
-            projectFileSystem = projectFileSystem ?? new MockFileSystem(solutionRoot.FullName);
+            var solutionRoot = GetMockSolutionRoot();
+            projectFileSystem = projectFileSystem ?? GetMockFileSystem(solutionRoot);
             vsProject = vsProject ?? new Mock<IVsProject>().Object;
-            packageReferenceFile = packageReferenceFile ?? new PackageReferenceFile(projectFileSystem, solutionRoot.FullName);
             packageRepository = packageRepository ?? new MockPackageRepository();
-            return new ReferenceNugetifier(console.Object, true, projectFileInfo, solutionRoot, projectFileSystem, vsProject, packageReferenceFile, packageRepository, "packages.config");
+            return new ReferenceNugetifier(console.Object, projectFileInfo, projectFileSystem, vsProject, packageRepository);
+        }
+
+        private static PackageReferenceFile GetPackageReferenceFile(IFileSystem projectFileSystem)
+        {
+            return new PackageReferenceFile(projectFileSystem, projectFileSystem.Root);
+        }
+
+        private static MockFileSystem GetMockFileSystem(DirectoryInfo solutionRoot)
+        {
+            return new MockFileSystem(solutionRoot.FullName);
+        }
+
+        private static DirectoryInfo GetMockSolutionRoot()
+        {
+            return new DirectoryInfo("c:\\isAnyFolder");
         }
     }
 }

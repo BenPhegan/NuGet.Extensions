@@ -12,33 +12,25 @@ namespace NuGet.Extensions.ReferenceAnalysers
     public class ReferenceNugetifier
     {
         private readonly IConsole _console;
-        private readonly bool _nuspec;
         private readonly FileInfo _projectFileInfo;
-        private readonly DirectoryInfo _solutionRoot;
         private readonly IFileSystem _projectFileSystem;
         private readonly IVsProject _vsProject;
-        private readonly PackageReferenceFile _packageReferenceFile;
         private readonly IPackageRepository _packageRepository;
-        private readonly string _packagesConfigFilename;
         private readonly Lazy<IList<IReference>> _references;
         private readonly Lazy<IList<KeyValuePair<string, List<IPackage>>>> _resolveReferenceMappings;
 
-        public ReferenceNugetifier(IConsole console, bool nuspec, FileInfo projectFileInfo, DirectoryInfo solutionRoot, IFileSystem projectFileSystem, IVsProject vsProject, PackageReferenceFile packageReferenceFile, IPackageRepository packageRepository, string packagesConfigFilename)
+        public ReferenceNugetifier(IConsole console, FileInfo projectFileInfo, IFileSystem projectFileSystem, IVsProject vsProject, IPackageRepository packageRepository)
         {
             _console = console;
-            _nuspec = nuspec;
             _projectFileInfo = projectFileInfo;
-            _solutionRoot = solutionRoot;
             _projectFileSystem = projectFileSystem;
             _vsProject = vsProject;
-            _packageReferenceFile = packageReferenceFile;
             _packageRepository = packageRepository;
-            _packagesConfigFilename = packagesConfigFilename;
             _references = new Lazy<IList<IReference>>(() => _vsProject.GetBinaryReferences().ToList());
             _resolveReferenceMappings = new Lazy<IList<KeyValuePair<string, List<IPackage>>>>(() => ResolveReferenceMappings(_references.Value).ToList());
         }
 
-        public void NugetifyReferencesInProject()
+        public void NugetifyReferencesInProject(DirectoryInfo solutionDir)
         {
             var resolvedMappings = _resolveReferenceMappings.Value;
             if (!resolvedMappings.Any()) return;
@@ -54,7 +46,7 @@ namespace NuGet.Extensions.ReferenceAnalysers
                     LogHintPathRewriteMessage(package, includeName, includeVersion);
 
                     var fileLocation = GetFileLocationFromPackage(package, mapping.Key);
-                    var newHintPathFull = Path.Combine(_solutionRoot.FullName, "packages", package.Id, fileLocation);
+                    var newHintPathFull = Path.Combine(solutionDir.FullName, "packages", package.Id, fileLocation);
                     var newHintPathRelative = String.Format(GetRelativePath(_projectFileInfo.FullName, newHintPathFull));
                     //TODO make version available, currently only works for non versioned package directories...
                     referenceMatch.ConvertToNugetReferenceWithHintPath(newHintPathRelative);
@@ -78,21 +70,21 @@ namespace NuGet.Extensions.ReferenceAnalysers
             else _console.WriteWarning(message);
         }
 
-        public List<ManifestDependency> AddNugetMetadataForReferences(ISharedPackageRepository sharedPackagesRepository, List<string> projectDependencies)
+        public List<ManifestDependency> AddNugetMetadataForReferences(ISharedPackageRepository sharedPackagesRepository, List<string> projectDependencies, PackageReferenceFile packageReferenceFile, string packagesConfigFilename, bool nuspec)
         {
             var resolvedMappings = _resolveReferenceMappings.Value;
             var manifestDependencies = new List<ManifestDependency>();
             if (!resolvedMappings.Any()) return manifestDependencies;
             //Now, create the packages.config for the resolved packages, and update the repositories.config
-            _console.WriteLine("Creating {0}", _packagesConfigFilename);
-            var packagesConfig = _packageReferenceFile;
+            _console.WriteLine("Creating {0}", packagesConfigFilename);
+            var packagesConfig = packageReferenceFile;
             foreach (var referenceMapping in resolvedMappings)
             {
                 //TODO We shouldnt need to resolve this twice....
                 var package = referenceMapping.Value.OrderBy(p => p.GetFiles().Count()).First();
                 if (!packagesConfig.EntryExists(package.Id, package.Version))
                     packagesConfig.AddEntry(package.Id, package.Version);
-                if (_nuspec && manifestDependencies.All(m => m.Id != package.Id))
+                if (nuspec && manifestDependencies.All(m => m.Id != package.Id))
                 {
                     manifestDependencies.Add(new ManifestDependency {Id = package.Id});
                 }
@@ -100,7 +92,7 @@ namespace NuGet.Extensions.ReferenceAnalysers
 
             //This is messy...refactor
             //For any resolved project dependencies, add a manifest dependency if we are doing nuspecs
-            if (_nuspec)
+            if (nuspec)
             {
                 foreach (var projectDependency in projectDependencies)
                 {
@@ -111,7 +103,7 @@ namespace NuGet.Extensions.ReferenceAnalysers
                 }
             }
             //Register the packages.config
-            var packagesConfigFilePath = Path.Combine(_projectFileInfo.Directory.FullName + "\\", _packagesConfigFilename);
+            var packagesConfigFilePath = Path.Combine(_projectFileInfo.Directory.FullName + "\\", packagesConfigFilename);
             sharedPackagesRepository.RegisterRepository(packagesConfigFilePath);
 
             _vsProject.AddPackagesConfig();
