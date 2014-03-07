@@ -15,6 +15,7 @@ namespace NuGet.Extensions.Commands
                          " packages.config files as it goes.", MinArgs = 1, MaxArgs = 1)]
     public class Nugetify : Command
     {
+        private const string PackagesConfigFilename = "packages.config";
         private readonly List<string> _sources = new List<string>();
 
         [ImportingConstructor]
@@ -103,11 +104,10 @@ namespace NuGet.Extensions.Commands
                 var projectFileInfo = new FileInfo(projectPath);
                 var project = new Project(projectPath, new Dictionary<string, string>(), null, new ProjectCollection());
                 var projectFileSystem = new PhysicalFileSystem(projectFileInfo.Directory.ToString());
-                var packagesConfigFilename = "packages.config";
-                var packageReferenceFile = new PackageReferenceFile(projectFileSystem, packagesConfigFilename);
-                var projectAdapter = new ProjectAdapter(project, packagesConfigFilename);
+                var packageReferenceFile = new PackageReferenceFile(projectFileSystem, PackagesConfigFilename);
+                var projectAdapter = new ProjectAdapter(project, PackagesConfigFilename);
                 var packageRepository = GetRepository();
-                var referenceNugetifier = new ReferenceNugetifier(Console, NuSpec, projectFileInfo, solutionRoot, projectFileSystem, projectAdapter, packageReferenceFile, packageRepository, packagesConfigFilename);
+                var referenceNugetifier = new ReferenceNugetifier(Console, NuSpec, projectFileInfo, solutionRoot, projectFileSystem, projectAdapter, packageReferenceFile, packageRepository, PackagesConfigFilename);
                 var projectReferences = ParseProjectReferences(project, Console);
                 referenceNugetifier.NugetifyReferencesInProject();
                 var manifestDependencies = referenceNugetifier.AddNugetMetadataForReferences(sharedPackagesRepository, projectReferences);
