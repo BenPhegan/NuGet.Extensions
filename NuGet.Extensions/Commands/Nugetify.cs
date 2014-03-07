@@ -106,7 +106,7 @@ namespace NuGet.Extensions.Commands
                 var projectFileSystem = new PhysicalFileSystem(projectAdapter.ProjectFile.Directory.ToString());
                 var packageReferenceFile = new PackageReferenceFile(projectFileSystem, PackagesConfigFilename);
                 var packageRepository = GetRepository();
-                var referenceNugetifier = new ReferenceNugetifier(Console, projectFileSystem, projectAdapter, packageRepository);
+                var referenceNugetifier = new ReferenceNugetifier(projectAdapter, packageRepository, projectFileSystem, Console);
                 var projectReferences = ParseProjectReferences(project, Console);
                 referenceNugetifier.NugetifyReferencesInProject(solutionRoot);
                 var manifestDependencies = referenceNugetifier.AddNugetMetadataForReferences(sharedPackagesRepository, projectReferences, packageReferenceFile, PackagesConfigFilename, NuSpec);
