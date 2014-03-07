@@ -94,7 +94,7 @@ namespace NuGet.Extensions.Commands
             }
         }
 
-        private void NugetifyProject(FileInfo solutionFile, SolutionProject simpleProject, DirectoryInfo solutionRoot, ISharedPackageRepository sharedPackagesRepository)
+        private void NugetifyProject(FileInfo solutionFile, SolutionProject simpleProject, DirectoryInfo solutionRoot, ISharedPackageRepository existingSolutionPackagesRepo)
         {
             var projectPath = Path.Combine(solutionFile.Directory.FullName, simpleProject.RelativePath);
             if (File.Exists(projectPath))
@@ -109,7 +109,7 @@ namespace NuGet.Extensions.Commands
                 var referenceNugetifier = new ReferenceNugetifier(projectAdapter, packageRepository, projectFileSystem, Console);
                 var projectReferences = ParseProjectReferences(projectAdapter, Console);
                 referenceNugetifier.NugetifyReferencesInProject(solutionRoot);
-                var manifestDependencies = referenceNugetifier.AddNugetMetadataForReferences(sharedPackagesRepository, projectReferences, packageReferenceFile, PackagesConfigFilename, NuSpec);
+                var manifestDependencies = referenceNugetifier.AddNugetMetadataForReferences(existingSolutionPackagesRepo, projectReferences, packageReferenceFile, PackagesConfigFilename, NuSpec);
 
                 //Create nuspec regardless of whether we have added dependencies
                 if (NuSpec) CreateAndOutputNuSpecFile(projectAdapter.AssemblyName, manifestDependencies);
