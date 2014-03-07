@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using Moq;
 using NuGet.Extensions.MSBuild;
 using NuGet.Extensions.Tests.Mocks;
@@ -9,10 +10,12 @@ namespace NuGet.Extensions.Tests.ReferenceAnalysers
         private const string AssemblyInPackageRepository = "Assembly11.dll";
         public const string PackageInRepository = "Test1";
 
-        public static Mock<IVsProject> ConstructMockProject(IBinaryReference[] binaryReferences = null)
+        public static Mock<IVsProject> ConstructMockProject(IBinaryReference[] binaryReferences = null, string outputAssembly = null)
         {
             var project = new Mock<IVsProject>();
             project.Setup(proj => proj.GetBinaryReferences()).Returns(binaryReferences ?? new IBinaryReference[0]);
+            outputAssembly = outputAssembly ?? "randomAssemblyName" + Path.GetTempFileName();
+            project.SetupGet(p => p.AssemblyName).Returns(outputAssembly);
             return project;
         }
 
