@@ -8,7 +8,7 @@ using NUnit.Framework;
 namespace NuGet.Extensions.Tests.MSBuild
 {
     [TestFixture]
-    public class ProjectAdapterTests
+    public class AdapterTests
     {
         private const string _expectedBinaryDependencyAssemblyName = "Newtonsoft.Json";
         private const string _expectedBinaryDependencyVersion = "6.0.0.0";
