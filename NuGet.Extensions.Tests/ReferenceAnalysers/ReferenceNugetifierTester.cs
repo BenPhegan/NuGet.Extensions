@@ -15,19 +15,19 @@ namespace NuGet.Extensions.Tests.ReferenceAnalysers
         {
             sharedPackageRepository = sharedPackageRepository ?? new Mock<ISharedPackageRepository>().Object;
             projectReferences = projectReferences ?? new List<string>();
-            packageReferenceFile = packageReferenceFile ?? GetPackageReferenceFile(GetMockFileSystem(GetMockSolutionRoot()));
+            packageReferenceFile = packageReferenceFile ?? GetPackageReferenceFile(GetMockFileSystem(GetMockDirectory()));
             return nugetifier.AddNugetMetadataForReferences(sharedPackageRepository, projectReferences, packageReferenceFile, "packages.config", true);
         }
 
-        public static ReferenceNugetifier BuildNugetifier(IFileSystem projectFileSystem = null, IVsProject vsProject = null, IPackageRepository packageRepository = null)
+        public static ReferenceNugetifier BuildNugetifier(IFileSystem projectFileSystem = null, Mock<IVsProject> vsProject = null, IPackageRepository packageRepository = null)
         {
             var console = new Mock<IConsole>();
-            var projectFileInfo = new FileInfo(DefaultProjectPath);
-            var solutionRoot = GetMockSolutionRoot();
+            var solutionRoot = GetMockDirectory();
             projectFileSystem = projectFileSystem ?? GetMockFileSystem(solutionRoot);
-            vsProject = vsProject ?? new Mock<IVsProject>().Object;
+            vsProject = vsProject ?? new Mock<IVsProject>();
+            vsProject.SetupGet(p => p.ProjectDirectory).Returns(GetMockDirectory());
             packageRepository = packageRepository ?? new MockPackageRepository();
-            return new ReferenceNugetifier(vsProject, packageRepository, projectFileSystem, console.Object);
+            return new ReferenceNugetifier(vsProject.Object, packageRepository, projectFileSystem, console.Object);
         }
 
         private static PackageReferenceFile GetPackageReferenceFile(IFileSystem projectFileSystem)
@@ -40,7 +40,7 @@ namespace NuGet.Extensions.Tests.ReferenceAnalysers
             return new MockFileSystem(solutionRoot.FullName);
         }
 
-        private static DirectoryInfo GetMockSolutionRoot()
+        private static DirectoryInfo GetMockDirectory()
         {
             return new DirectoryInfo("c:\\isAnyFolder");
         }

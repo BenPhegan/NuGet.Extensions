@@ -45,7 +45,7 @@ namespace NuGet.Extensions.ReferenceAnalysers
 
                     var fileLocation = GetFileLocationFromPackage(package, mapping.Key);
                     var newHintPathFull = Path.Combine(solutionDir.FullName, "packages", package.Id, fileLocation);
-                    var newHintPathRelative = String.Format(GetRelativePath(_vsProject.ProjectFile.FullName, newHintPathFull));
+                    var newHintPathRelative = String.Format(GetRelativePath(_vsProject.ProjectDirectory.FullName, newHintPathFull));
                     //TODO make version available, currently only works for non versioned package directories...
                     referenceMatch.ConvertToNugetReferenceWithHintPath(newHintPathRelative);
                 }
@@ -101,7 +101,7 @@ namespace NuGet.Extensions.ReferenceAnalysers
                 }
             }
             //Register the packages.config
-            var packagesConfigFilePath = Path.Combine(_vsProject.ProjectFile.Directory.FullName + "\\", packagesConfigFilename);
+            var packagesConfigFilePath = Path.Combine(_vsProject.ProjectDirectory.FullName + "\\", packagesConfigFilename);
             sharedPackagesRepository.RegisterRepository(packagesConfigFilePath);
 
             _vsProject.AddPackagesConfig();

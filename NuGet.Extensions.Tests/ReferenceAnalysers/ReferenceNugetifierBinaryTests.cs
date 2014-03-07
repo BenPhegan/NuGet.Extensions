@@ -22,7 +22,7 @@ namespace NuGet.Extensions.Tests.ReferenceAnalysers
             var projectWithSingleDependency = ProjectReferenceTestData.ConstructMockProject(new[] {singleDependency.Object});
             var packageRepositoryWithOnePackage = ProjectReferenceTestData.CreateMockRepository();
 
-            var nugetifier = ReferenceNugetifierTester.BuildNugetifier(vsProject: projectWithSingleDependency.Object, packageRepository: packageRepositoryWithOnePackage);
+            var nugetifier = ReferenceNugetifierTester.BuildNugetifier(vsProject: projectWithSingleDependency, packageRepository: packageRepositoryWithOnePackage);
             var nugettedDependencies = ReferenceNugetifierTester.GetManifestDependencies(nugetifier);
 
             Assert.That(nugettedDependencies, Is.Not.Empty);
