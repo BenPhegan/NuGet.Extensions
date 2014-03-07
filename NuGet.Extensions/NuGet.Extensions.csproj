@@ -71,7 +71,7 @@
     <Compile Include="Commands\Audit.cs" />
     <Compile Include="MSBuild\BinaryReferenceAdapter.cs" />
     <Compile Include="Commands\FixReferences.cs" />
-    <Compile Include="MSBuild\IBinaryReference.cs" />
+    <Compile Include="MSBuild\IReference.cs" />
     <Compile Include="MSBuild\IVsProject.cs" />
     <Compile Include="MSBuild\ProjectAdapter.cs" />
     <Compile Include="ReferenceAnalysers\ReferenceNugetifier.cs" />

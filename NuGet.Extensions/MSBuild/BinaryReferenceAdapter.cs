@@ -5,7 +5,7 @@ using Microsoft.Build.Evaluation;
 
 namespace NuGet.Extensions.MSBuild
 {
-    public class BinaryReferenceAdapter : IBinaryReference
+    public class BinaryReferenceAdapter : IReference
     {
         private readonly ProjectItem _reference;
 

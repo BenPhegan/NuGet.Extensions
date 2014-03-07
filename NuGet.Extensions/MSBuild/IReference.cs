@@ -1,6 +1,6 @@
 namespace NuGet.Extensions.MSBuild
 {
-    public interface IBinaryReference {
+    public interface IReference {
         string IncludeVersion { get; }
         string IncludeName { get; }
         bool IsForAssembly(string assemblyFilename);

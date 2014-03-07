@@ -16,7 +16,7 @@ namespace NuGet.Extensions.MSBuild
             _packagesConfigFilename = packagesConfigFilename;
         }
 
-        public IEnumerable<IBinaryReference> GetBinaryReferences()
+        public IEnumerable<IReference> GetBinaryReferences()
         {
             return _project.GetItems("Reference").Select(r => new BinaryReferenceAdapter(r));
         }
@@ -45,7 +45,7 @@ namespace NuGet.Extensions.MSBuild
             return _project.GetItems("None").Any(i => i.UnevaluatedInclude.Equals(_packagesConfigFilename));
         }
 
-        public static List<string> GetReferencedAssemblies(IEnumerable<IBinaryReference> references)
+        public static List<string> GetReferencedAssemblies(IEnumerable<IReference> references)
         {
             var referenceFiles = new List<string>();
 

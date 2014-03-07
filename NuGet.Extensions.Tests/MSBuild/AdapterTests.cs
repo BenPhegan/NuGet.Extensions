@@ -13,7 +13,7 @@ namespace NuGet.Extensions.Tests.MSBuild
     public class AdapterTests
     {
         private ProjectAdapter _projectWithDependenciesAdapter;
-        private IEnumerable<IBinaryReference> _projectBinaryReferenceAdapters;
+        private IEnumerable<IReference> _projectBinaryReferenceAdapters;
         
         private const string _expectedBinaryDependencyAssemblyName = "Newtonsoft.Json";
         private const string _expectedBinaryDependencyVersion = "6.0.0.0";
@@ -93,7 +93,7 @@ namespace NuGet.Extensions.Tests.MSBuild
             Assert.That(isForBlankAssemblyName, Is.False);
         }
 
-        private static bool IsExpectedBinaryDependency(IBinaryReference r)
+        private static bool IsExpectedBinaryDependency(IReference r)
         {
             return r.IncludeName == _expectedBinaryDependencyAssemblyName;
         }

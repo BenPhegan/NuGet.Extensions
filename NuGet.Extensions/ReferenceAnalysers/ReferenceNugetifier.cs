@@ -20,7 +20,7 @@ namespace NuGet.Extensions.ReferenceAnalysers
         private readonly PackageReferenceFile _packageReferenceFile;
         private readonly IPackageRepository _packageRepository;
         private readonly string _packagesConfigFilename;
-        private readonly Lazy<IList<IBinaryReference>> _references;
+        private readonly Lazy<IList<IReference>> _references;
         private readonly Lazy<IList<KeyValuePair<string, List<IPackage>>>> _resolveReferenceMappings;
 
         public ReferenceNugetifier(IConsole console, bool nuspec, FileInfo projectFileInfo, DirectoryInfo solutionRoot, IFileSystem projectFileSystem, IVsProject vsProject, PackageReferenceFile packageReferenceFile, IPackageRepository packageRepository, string packagesConfigFilename)
@@ -34,7 +34,7 @@ namespace NuGet.Extensions.ReferenceAnalysers
             _packageReferenceFile = packageReferenceFile;
             _packageRepository = packageRepository;
             _packagesConfigFilename = packagesConfigFilename;
-            _references = new Lazy<IList<IBinaryReference>>(() => _vsProject.GetBinaryReferences().ToList());
+            _references = new Lazy<IList<IReference>>(() => _vsProject.GetBinaryReferences().ToList());
             _resolveReferenceMappings = new Lazy<IList<KeyValuePair<string, List<IPackage>>>>(() => ResolveReferenceMappings(_references.Value).ToList());
         }
 
@@ -119,7 +119,7 @@ namespace NuGet.Extensions.ReferenceAnalysers
             return manifestDependencies;
         }
 
-        private IEnumerable<KeyValuePair<string, List<IPackage>>> ResolveReferenceMappings(IEnumerable<IBinaryReference> references)
+        private IEnumerable<KeyValuePair<string, List<IPackage>>> ResolveReferenceMappings(IEnumerable<IReference> references)
         {
             var referenceList = ProjectAdapter.GetReferencedAssemblies(references);
             if (referenceList.Any())

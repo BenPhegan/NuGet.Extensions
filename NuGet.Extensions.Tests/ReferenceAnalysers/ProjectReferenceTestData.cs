@@ -10,20 +10,20 @@ namespace NuGet.Extensions.Tests.ReferenceAnalysers
         private const string AssemblyInPackageRepository = "Assembly11.dll";
         public const string PackageInRepository = "Test1";
 
-        public static Mock<IVsProject> ConstructMockProject(IBinaryReference[] binaryReferences = null, string outputAssembly = null)
+        public static Mock<IVsProject> ConstructMockProject(IReference[] references = null, string outputAssembly = null)
         {
             var project = new Mock<IVsProject>();
-            project.Setup(proj => proj.GetBinaryReferences()).Returns(binaryReferences ?? new IBinaryReference[0]);
+            project.Setup(proj => proj.GetBinaryReferences()).Returns(references ?? new IReference[0]);
             outputAssembly = outputAssembly ?? "randomAssemblyName" + Path.GetTempFileName();
             project.SetupGet(p => p.AssemblyName).Returns(outputAssembly);
             return project;
         }
 
-        public static Mock<IBinaryReference> ConstructMockDependency(string includeName = null, string includeVersion = null)
+        public static Mock<IReference> ConstructMockDependency(string includeName = null, string includeVersion = null)
         {
             includeName = includeName ?? AssemblyInPackageRepository;
 
-            var dependency = new Mock<IBinaryReference>();
+            var dependency = new Mock<IReference>();
             dependency.SetupGet(d => d.IncludeName).Returns(includeName);
             dependency.SetupGet(d => d.IncludeVersion).Returns(includeVersion ?? "0.0.0.0");
             dependency.Setup(d => d.IsForAssembly(It.IsAny<string>())).Returns(true);
