@@ -12,7 +12,7 @@ using NUnit.Framework;
 namespace NuGet.Extensions.Tests.ReferenceAnalysers
 {
     [TestFixture]
-    public class ReferenceNugetifierTests
+    public class ReferenceNugetifierBinaryTests
     {
         private const string DefaultProjectPath = "c:\\isany.csproj";
         private const string AssemblyInPackageRepository = "Assembly11.dll";
@@ -40,28 +40,6 @@ namespace NuGet.Extensions.Tests.ReferenceAnalysers
             Assert.That(nugettedDependencies.Single().Id, Contains.Substring(PackageInRepository));
         }
 
-        private static Mock<IVsProject> ConstructMockProject(IBinaryReference[] binaryReferences)
-        {
-            var projectWithSingleDependency = new Mock<IVsProject>();
-            projectWithSingleDependency.Setup(proj => proj.GetBinaryReferences()).Returns(binaryReferences);
-            return projectWithSingleDependency;
-        }
-
-        private static Mock<IBinaryReference> ConstructMockDependency(string includeName = null, string includeVersion = null)
-        {
-            includeName = includeName ?? AssemblyInPackageRepository;
-            
-            var dependency = new Mock<IBinaryReference>();
-            dependency.SetupGet(d => d.IncludeName).Returns(includeName);
-            dependency.SetupGet(d => d.IncludeVersion).Returns(includeVersion ?? "0.0.0.0");
-            dependency.Setup(d => d.IsForAssembly(It.IsAny<string>())).Returns(true);
-
-            string anydependencyHintpath = includeName;
-            dependency.Setup(d => d.TryGetHintPath(out anydependencyHintpath)).Returns(true);
-
-            return dependency;
-        }
-
         private static List<ManifestDependency> CallNugetifyReferences(ReferenceNugetifier nugetifier, ISharedPackageRepository sharedPackageRepository = null, string defaultProjectPath = null, List<string> projectReferences = null)
         {
             sharedPackageRepository = sharedPackageRepository ?? new Mock<ISharedPackageRepository>().Object;
@@ -82,6 +60,27 @@ namespace NuGet.Extensions.Tests.ReferenceAnalysers
             return new ReferenceNugetifier(console.Object, true, projectFileInfo, solutionRoot, projectFileSystem, vsProject, packageReferenceFile, packageRepository);
         }
 
+        private static Mock<IVsProject> ConstructMockProject(IBinaryReference[] binaryReferences)
+        {
+            var projectWithSingleDependency = new Mock<IVsProject>();
+            projectWithSingleDependency.Setup(proj => proj.GetBinaryReferences()).Returns(binaryReferences);
+            return projectWithSingleDependency;
+        }
+
+        private static Mock<IBinaryReference> ConstructMockDependency(string includeName = null, string includeVersion = null)
+        {
+            includeName = includeName ?? AssemblyInPackageRepository;
+
+            var dependency = new Mock<IBinaryReference>();
+            dependency.SetupGet(d => d.IncludeName).Returns(includeName);
+            dependency.SetupGet(d => d.IncludeVersion).Returns(includeVersion ?? "0.0.0.0");
+            dependency.Setup(d => d.IsForAssembly(It.IsAny<string>())).Returns(true);
+
+            string anydependencyHintpath = includeName;
+            dependency.Setup(d => d.TryGetHintPath(out anydependencyHintpath)).Returns(true);
+
+            return dependency;
+        }
 
         private static MockPackageRepository CreateMockRepository()
         {
