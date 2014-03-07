@@ -54,7 +54,7 @@ namespace NuGet.Extensions.MSBuild
                 //TODO deal with GAC assemblies that we want to replace as well....
                 if (reference.HasHintPath())
                 {
-                    var hintPath = reference.GetHintPath();
+                    var hintPath = reference.HintPath;
                     referenceFiles.Add(Path.GetFileName(hintPath));
                 }
             }

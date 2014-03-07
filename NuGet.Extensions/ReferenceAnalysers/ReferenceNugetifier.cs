@@ -55,8 +55,8 @@ namespace NuGet.Extensions.ReferenceAnalysers
                 var referenceMatch = references.FirstOrDefault(r => r.IsForAssembly(mapping.Key));
                 if (referenceMatch != null)
                 {
-                    var includeName = referenceMatch.GetIncludeName();
-                    var includeVersion = referenceMatch.GetIncludeVersion();
+                    var includeName = referenceMatch.IncludeName;
+                    var includeVersion = referenceMatch.IncludeVersion;
                     var package = mapping.Value.OrderBy(p => p.GetFiles().Count()).First();
 
                     LogHintPathRewriteMessage(package, includeName, includeVersion);
@@ -65,7 +65,7 @@ namespace NuGet.Extensions.ReferenceAnalysers
                     var newHintPathFull = Path.Combine(_solutionRoot.FullName, "packages", package.Id, fileLocation);
                     var newHintPathRelative = String.Format(GetRelativePath(_projectFileInfo.FullName, newHintPathFull));
                     //TODO make version available, currently only works for non versioned package directories...
-                    referenceMatch.SetHintPath(newHintPathRelative);
+                    referenceMatch.HintPath = newHintPathRelative;
                 }
             }
             _vsProject.Save();

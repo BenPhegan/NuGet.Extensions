@@ -14,36 +14,32 @@ namespace NuGet.Extensions.MSBuild
             _reference = reference;
         }
 
-        public string GetHintPath()
-        {
-            return _reference.GetMetadataValue("HintPath");
-        }
-
         public bool HasHintPath()
         {
             return _reference.HasMetadata("HintPath");
         }
 
-        public void SetHintPath(string newHintPathRelative)
+        public string HintPath
         {
-            _reference.SetMetadataValue("HintPath", newHintPathRelative);
+            set { _reference.SetMetadataValue("HintPath", value); }
+            get { return _reference.GetMetadataValue("HintPath"); }
         }
 
-        public string GetIncludeVersion()
+        public string IncludeVersion
         {
-            return _reference.EvaluatedInclude.Contains(',') ? _reference.EvaluatedInclude.Split(',')[1].Split('=')[1] : null;
+            get { return _reference.EvaluatedInclude.Contains(',') ? _reference.EvaluatedInclude.Split(',')[1].Split('=')[1] : null; }
         }
 
-        public string GetIncludeName()
+        public string IncludeName
         {
-            return _reference.EvaluatedInclude.Contains(',') ? _reference.EvaluatedInclude.Split(',')[0] : _reference.EvaluatedInclude;
+            get { return _reference.EvaluatedInclude.Contains(',') ? _reference.EvaluatedInclude.Split(',')[0] : _reference.EvaluatedInclude; }
         }
 
         public bool IsForAssembly(string assemblyFilename)
         {
             if (HasHintPath())
             {
-                var hintpath = GetHintPath();
+                var hintpath = HintPath;
                 var fileInfo = new FileInfo(hintpath);
                 return fileInfo.Name.Equals(assemblyFilename, StringComparison.OrdinalIgnoreCase);
             }

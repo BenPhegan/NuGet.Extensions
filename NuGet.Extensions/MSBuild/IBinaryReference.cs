@@ -1,11 +1,10 @@
 namespace NuGet.Extensions.MSBuild
 {
     public interface IBinaryReference {
-        string GetHintPath();
         bool HasHintPath();
-        void SetHintPath(string newHintPathRelative);
-        string GetIncludeVersion();
-        string GetIncludeName();
+        string HintPath { set; get; }
+        string IncludeVersion { get; }
+        string IncludeName { get; }
         bool IsForAssembly(string assemblyFilename);
     }
 }
