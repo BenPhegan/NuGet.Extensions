@@ -191,7 +191,8 @@ namespace NuGet.Extensions.Commands
             foreach (var reference in references)
             {
                 var refProject = new Project(Path.Combine(project.ProjectDirectory.FullName, reference.IncludeName),new Dictionary<string, string>(),null,new ProjectCollection());
-                refs.Add(refProject.GetPropertyValue("AssemblyName"));
+                var refProjectAdapter = new ProjectAdapter(refProject, PackagesConfigFilename);
+                refs.Add(refProjectAdapter.AssemblyName);
             }
             return refs;
         }
