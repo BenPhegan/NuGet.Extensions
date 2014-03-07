@@ -4,6 +4,7 @@ using Microsoft.Build.Evaluation;
 using NuGet.Extensions.MSBuild;
 using NuGet.Extensions.Tests.TestData;
 using NUnit.Framework;
+using NUnit.Framework.Constraints;
 
 namespace NuGet.Extensions.Tests.MSBuild
 {
@@ -40,6 +41,23 @@ namespace NuGet.Extensions.Tests.MSBuild
 
             var binaryDependency = binaryReferences.Single(IsExpectedBinaryDependency);
             Assert.That(binaryDependency.IncludeVersion, Is.EqualTo(_expectedBinaryDependencyVersion));
+        }
+
+        [Test]
+        public void BinaryReferenceHasHintPathContainingAssemblyNameAndVersion()
+        {
+            var projectAdapter = CreateProjectAdapter(Paths.ProjectWithDependencies);
+
+            var binaryReferences = projectAdapter.GetBinaryReferences();
+            var binaryDependency = binaryReferences.Single(IsExpectedBinaryDependency);
+            string hintpath;
+            var hasHintPath = binaryDependency.TryGetHintPath(out hintpath);
+
+            Assert.That(hasHintPath, Is.True);
+            const string expectedHintPathStart = "..\\packages\\" + _expectedBinaryDependencyAssemblyName;
+            const string expectedHintPathEnd = _expectedBinaryDependencyAssemblyName + ".dll";
+            Assert.That(hintpath, new StartsWithConstraint(expectedHintPathStart));
+            Assert.That(hintpath, new EndsWithConstraint(expectedHintPathEnd));
         }
 
         private static bool IsExpectedBinaryDependency(IBinaryReference r)
