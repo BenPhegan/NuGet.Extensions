@@ -73,6 +73,7 @@
     <Compile Include="Packages\PackageAggregatorTests.cs" />
     <Compile Include="Packages\PackageEnumeratorTests.cs" />
     <Compile Include="Packages\PackageResolutionManagerTests.cs" />
+    <Compile Include="ReferenceAnalysers\ReferenceNugetifierTests.cs" />
     <Compile Include="Repositories\RepositoryAssemblyResolverTests.cs" />
     <Compile Include="Repositories\RepositoryGroupManagerTests.cs" />
     <Compile Include="Repositories\RepositoryManagerTests.cs" />
