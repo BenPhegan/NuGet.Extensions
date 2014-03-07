@@ -38,7 +38,7 @@ namespace NuGet.Extensions.ReferenceAnalysers
             _resolveReferenceMappings = new Lazy<IList<KeyValuePair<string, List<IPackage>>>>(() => ResolveReferenceMappings(_references.Value).ToList());
         }
 
-        public List<ManifestDependency> NugetifyReferences(ISharedPackageRepository sharedPackagesRepository, string projectPath, List<string> projectReferences)
+        public List<ManifestDependency> NugetifyReferences(ISharedPackageRepository sharedPackagesRepository, List<string> projectReferences)
         {
             var nugettedDependencies = new List<ManifestDependency>();
 
