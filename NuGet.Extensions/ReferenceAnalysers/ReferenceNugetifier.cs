@@ -38,13 +38,7 @@ namespace NuGet.Extensions.ReferenceAnalysers
             _resolveReferenceMappings = new Lazy<IList<KeyValuePair<string, List<IPackage>>>>(() => ResolveReferenceMappings(_references.Value).ToList());
         }
 
-        public List<ManifestDependency> NugetifyReferences(ISharedPackageRepository sharedPackagesRepository, List<string> projectReferences)
-        {
-            UpdateProjectFileReferenceHintPaths();
-            return CreateNuGetScaffolding(sharedPackagesRepository, projectReferences);
-        }
-
-        private void UpdateProjectFileReferenceHintPaths()
+        public void UpdateProjectFileReferenceHintPaths()
         {
             var resolvedMappings = _resolveReferenceMappings.Value;
             if (!resolvedMappings.Any()) return;
@@ -84,7 +78,7 @@ namespace NuGet.Extensions.ReferenceAnalysers
             else _console.WriteWarning(message);
         }
 
-        private List<ManifestDependency> CreateNuGetScaffolding(ISharedPackageRepository sharedPackagesRepository, List<string> projectDependencies)
+        public List<ManifestDependency> CreateNuGetScaffolding(ISharedPackageRepository sharedPackagesRepository, List<string> projectDependencies)
         {
             var resolvedMappings = _resolveReferenceMappings.Value;
             var manifestDependencies = new List<ManifestDependency>();
