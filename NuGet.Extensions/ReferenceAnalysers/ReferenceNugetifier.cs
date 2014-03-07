@@ -20,6 +20,8 @@ namespace NuGet.Extensions.ReferenceAnalysers
         private readonly PackageReferenceFile _packageReferenceFile;
         private readonly IPackageRepository _packageRepository;
         private readonly string _packagesConfigFilename;
+        private Lazy<List<IBinaryReference>> _references;
+        private Lazy<IEnumerable<KeyValuePair<string, List<IPackage>>>> _resolveReferenceMappings;
 
         public ReferenceNugetifier(IConsole console, bool nuspec, FileInfo projectFileInfo, DirectoryInfo solutionRoot, IFileSystem projectFileSystem, IVsProject vsProject, PackageReferenceFile packageReferenceFile, IPackageRepository packageRepository, string packagesConfigFilename)
         {
@@ -32,18 +34,19 @@ namespace NuGet.Extensions.ReferenceAnalysers
             _packageReferenceFile = packageReferenceFile;
             _packageRepository = packageRepository;
             _packagesConfigFilename = packagesConfigFilename;
+            _references = new Lazy<List<IBinaryReference>>(() => _vsProject.GetBinaryReferences().ToList());
+            _resolveReferenceMappings = new Lazy<IEnumerable<KeyValuePair<string, List<IPackage>>>>(() => ResolveReferenceMappings(_references.Value));
         }
 
         public List<ManifestDependency> NugetifyReferences(ISharedPackageRepository sharedPackagesRepository, string projectPath, List<string> projectReferences)
         {
-            var references = _vsProject.GetBinaryReferences().ToList();
-            var resolvedMappings = ResolveReferenceMappings(references);
+            var resolvedMappings = _resolveReferenceMappings;
             var nugettedDependencies = new List<ManifestDependency>();
 
-            if (resolvedMappings.Any())
+            if (resolvedMappings.Value.Any())
             {
-                UpdateProjectFileReferenceHintPaths(resolvedMappings, references);
-                CreateNuGetScaffolding(sharedPackagesRepository, nugettedDependencies, resolvedMappings, projectReferences);
+                UpdateProjectFileReferenceHintPaths(resolvedMappings.Value, _references.Value);
+                CreateNuGetScaffolding(sharedPackagesRepository, nugettedDependencies, resolvedMappings.Value, projectReferences);
             }
 
             return nugettedDependencies;
