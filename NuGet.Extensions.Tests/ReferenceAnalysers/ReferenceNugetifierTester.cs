@@ -28,7 +28,7 @@ namespace NuGet.Extensions.Tests.ReferenceAnalysers
             vsProject = vsProject ?? new Mock<IVsProject>().Object;
             packageReferenceFile = packageReferenceFile ?? new PackageReferenceFile(projectFileSystem, solutionRoot.FullName);
             packageRepository = packageRepository ?? new MockPackageRepository();
-            return new ReferenceNugetifier(console.Object, true, projectFileInfo, solutionRoot, projectFileSystem, vsProject, packageReferenceFile, packageRepository);
+            return new ReferenceNugetifier(console.Object, true, projectFileInfo, solutionRoot, projectFileSystem, vsProject, packageReferenceFile, packageRepository, "packages.config");
         }
     }
 }

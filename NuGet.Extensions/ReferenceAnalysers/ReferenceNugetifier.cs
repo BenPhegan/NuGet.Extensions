@@ -11,7 +11,6 @@ namespace NuGet.Extensions.ReferenceAnalysers
 {
     public class ReferenceNugetifier
     {
-        public const string _packagesConfigFilename = "packages.config";
         private readonly IConsole _console;
         private readonly bool _nuspec;
         private readonly FileInfo _projectFileInfo;
@@ -20,8 +19,9 @@ namespace NuGet.Extensions.ReferenceAnalysers
         private readonly IVsProject _vsProject;
         private readonly PackageReferenceFile _packageReferenceFile;
         private readonly IPackageRepository _packageRepository;
+        private readonly string _packagesConfigFilename;
 
-        public ReferenceNugetifier(IConsole console, bool nuspec, FileInfo projectFileInfo, DirectoryInfo solutionRoot, IFileSystem projectFileSystem, IVsProject vsProject, PackageReferenceFile packageReferenceFile, IPackageRepository packageRepository)
+        public ReferenceNugetifier(IConsole console, bool nuspec, FileInfo projectFileInfo, DirectoryInfo solutionRoot, IFileSystem projectFileSystem, IVsProject vsProject, PackageReferenceFile packageReferenceFile, IPackageRepository packageRepository, string packagesConfigFilename)
         {
             _console = console;
             _nuspec = nuspec;
@@ -31,6 +31,7 @@ namespace NuGet.Extensions.ReferenceAnalysers
             _vsProject = vsProject;
             _packageReferenceFile = packageReferenceFile;
             _packageRepository = packageRepository;
+            _packagesConfigFilename = packagesConfigFilename;
         }
 
         public List<ManifestDependency> NugetifyReferences(ISharedPackageRepository sharedPackagesRepository, string projectPath, List<string> projectReferences)
@@ -89,7 +90,7 @@ namespace NuGet.Extensions.ReferenceAnalysers
         private void CreateNuGetScaffolding(ISharedPackageRepository sharedPackagesRepository, List<ManifestDependency> manifestDependencies, IEnumerable<KeyValuePair<string, List<IPackage>>> resolvedMappings, List<string> projectDependencies)
         {
             //Now, create the packages.config for the resolved packages, and update the repositories.config
-            _console.WriteLine("Creating packages.config");
+            _console.WriteLine("Creating {0}", _packagesConfigFilename);
             var packagesConfig = _packageReferenceFile;
             foreach (var referenceMapping in resolvedMappings)
             {
