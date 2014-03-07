@@ -14,15 +14,17 @@ namespace NuGet.Extensions.MSBuild
             _reference = reference;
         }
 
-        public bool HasHintPath()
+        public bool TryGetHintPath(out string hintPath)
         {
-            return _reference.HasMetadata("HintPath");
+            hintPath = null;
+            var hasHintPath = _reference.HasMetadata("HintPath");
+            if (hasHintPath) hintPath = _reference.GetMetadataValue("HintPath"); ;
+            return hasHintPath;
         }
 
-        public string HintPath
+        public void SetHintPath(string value)
         {
-            set { _reference.SetMetadataValue("HintPath", value); }
-            get { return _reference.GetMetadataValue("HintPath"); }
+            _reference.SetMetadataValue("HintPath", value);
         }
 
         public string IncludeVersion
@@ -37,9 +39,10 @@ namespace NuGet.Extensions.MSBuild
 
         public bool IsForAssembly(string assemblyFilename)
         {
-            if (HasHintPath())
+            string hintpath;
+
+            if (TryGetHintPath(out hintpath))
             {
-                var hintpath = HintPath;
                 var fileInfo = new FileInfo(hintpath);
                 return fileInfo.Name.Equals(assemblyFilename, StringComparison.OrdinalIgnoreCase);
             }

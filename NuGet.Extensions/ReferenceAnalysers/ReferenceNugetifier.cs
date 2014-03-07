@@ -65,7 +65,7 @@ namespace NuGet.Extensions.ReferenceAnalysers
                     var newHintPathFull = Path.Combine(_solutionRoot.FullName, "packages", package.Id, fileLocation);
                     var newHintPathRelative = String.Format(GetRelativePath(_projectFileInfo.FullName, newHintPathFull));
                     //TODO make version available, currently only works for non versioned package directories...
-                    referenceMatch.HintPath = newHintPathRelative;
+                    referenceMatch.SetHintPath(newHintPathRelative);
                 }
             }
             _vsProject.Save();

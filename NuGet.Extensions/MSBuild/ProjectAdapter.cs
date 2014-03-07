@@ -52,9 +52,9 @@ namespace NuGet.Extensions.MSBuild
             foreach (var reference in references)
             {
                 //TODO deal with GAC assemblies that we want to replace as well....
-                if (reference.HasHintPath())
+                string hintPath;
+                if (reference.TryGetHintPath(out hintPath))
                 {
-                    var hintPath = reference.HintPath;
                     referenceFiles.Add(Path.GetFileName(hintPath));
                 }
             }
