@@ -20,8 +20,8 @@ namespace NuGet.Extensions.ReferenceAnalysers
         private readonly PackageReferenceFile _packageReferenceFile;
         private readonly IPackageRepository _packageRepository;
         private readonly string _packagesConfigFilename;
-        private Lazy<List<IBinaryReference>> _references;
-        private Lazy<IEnumerable<KeyValuePair<string, List<IPackage>>>> _resolveReferenceMappings;
+        private readonly Lazy<IList<IBinaryReference>> _references;
+        private readonly Lazy<IList<KeyValuePair<string, List<IPackage>>>> _resolveReferenceMappings;
 
         public ReferenceNugetifier(IConsole console, bool nuspec, FileInfo projectFileInfo, DirectoryInfo solutionRoot, IFileSystem projectFileSystem, IVsProject vsProject, PackageReferenceFile packageReferenceFile, IPackageRepository packageRepository, string packagesConfigFilename)
         {
@@ -34,27 +34,27 @@ namespace NuGet.Extensions.ReferenceAnalysers
             _packageReferenceFile = packageReferenceFile;
             _packageRepository = packageRepository;
             _packagesConfigFilename = packagesConfigFilename;
-            _references = new Lazy<List<IBinaryReference>>(() => _vsProject.GetBinaryReferences().ToList());
-            _resolveReferenceMappings = new Lazy<IEnumerable<KeyValuePair<string, List<IPackage>>>>(() => ResolveReferenceMappings(_references.Value));
+            _references = new Lazy<IList<IBinaryReference>>(() => _vsProject.GetBinaryReferences().ToList());
+            _resolveReferenceMappings = new Lazy<IList<KeyValuePair<string, List<IPackage>>>>(() => ResolveReferenceMappings(_references.Value).ToList());
         }
 
         public List<ManifestDependency> NugetifyReferences(ISharedPackageRepository sharedPackagesRepository, string projectPath, List<string> projectReferences)
         {
-            var resolvedMappings = _resolveReferenceMappings;
             var nugettedDependencies = new List<ManifestDependency>();
 
-            UpdateProjectFileReferenceHintPaths(resolvedMappings.Value, _references.Value);
-            CreateNuGetScaffolding(sharedPackagesRepository, nugettedDependencies, resolvedMappings.Value, projectReferences);
+            UpdateProjectFileReferenceHintPaths();
+            CreateNuGetScaffolding(sharedPackagesRepository, nugettedDependencies, projectReferences);
 
             return nugettedDependencies;
         }
 
-        private void UpdateProjectFileReferenceHintPaths(IEnumerable<KeyValuePair<string, List<IPackage>>> resolvedMappings, IEnumerable<IBinaryReference> references)
+        private void UpdateProjectFileReferenceHintPaths()
         {
+            var resolvedMappings = _resolveReferenceMappings.Value;
             if (!resolvedMappings.Any()) return;
             foreach (var mapping in resolvedMappings)
             {
-                var referenceMatch = references.FirstOrDefault(r => r.IsForAssembly(mapping.Key));
+                var referenceMatch = _references.Value.FirstOrDefault(r => r.IsForAssembly(mapping.Key));
                 if (referenceMatch != null)
                 {
                     var includeName = referenceMatch.IncludeName;
@@ -88,8 +88,9 @@ namespace NuGet.Extensions.ReferenceAnalysers
             else _console.WriteWarning(message);
         }
 
-        private void CreateNuGetScaffolding(ISharedPackageRepository sharedPackagesRepository, List<ManifestDependency> manifestDependencies, IEnumerable<KeyValuePair<string, List<IPackage>>> resolvedMappings, List<string> projectDependencies)
+        private void CreateNuGetScaffolding(ISharedPackageRepository sharedPackagesRepository, List<ManifestDependency> manifestDependencies, List<string> projectDependencies)
         {
+            var resolvedMappings = _resolveReferenceMappings.Value;
             if (!resolvedMappings.Any()) return;
             //Now, create the packages.config for the resolved packages, and update the repositories.config
             _console.WriteLine("Creating {0}", _packagesConfigFilename);
