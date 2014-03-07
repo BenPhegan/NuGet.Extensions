@@ -16,7 +16,6 @@ namespace NuGet.Extensions.Tests.ReferenceAnalysers
             sharedPackageRepository = sharedPackageRepository ?? new Mock<ISharedPackageRepository>().Object;
             defaultProjectPath = defaultProjectPath ?? DefaultProjectPath;
             projectReferences = projectReferences ?? new List<string>();
-            nugetifier.UpdateProjectFileReferenceHintPaths();
             return nugetifier.CreateNuGetScaffolding(sharedPackageRepository, projectReferences);
         }
 
