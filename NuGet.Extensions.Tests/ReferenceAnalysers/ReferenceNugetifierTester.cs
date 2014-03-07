@@ -11,7 +11,7 @@ namespace NuGet.Extensions.Tests.ReferenceAnalysers
     public class ReferenceNugetifierTester {
         private const string DefaultProjectPath = "c:\\isany.csproj";
 
-        public static List<ManifestDependency> CallNugetifyReferences(ReferenceNugetifier nugetifier, ISharedPackageRepository sharedPackageRepository = null, string defaultProjectPath = null, List<string> projectReferences = null)
+        public static List<ManifestDependency> GetManifestDependencies(ReferenceNugetifier nugetifier, ISharedPackageRepository sharedPackageRepository = null, string defaultProjectPath = null, List<string> projectReferences = null)
         {
             sharedPackageRepository = sharedPackageRepository ?? new Mock<ISharedPackageRepository>().Object;
             defaultProjectPath = defaultProjectPath ?? DefaultProjectPath;

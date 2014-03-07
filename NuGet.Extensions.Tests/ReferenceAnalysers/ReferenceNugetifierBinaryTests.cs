@@ -11,7 +11,7 @@ namespace NuGet.Extensions.Tests.ReferenceAnalysers
         public void EmptyProjectHasNoNuggettedDependencies()
         {
             var nugetifier = ReferenceNugetifierTester.BuildNugetifier();
-            var nugettedDependencies = ReferenceNugetifierTester.CallNugetifyReferences(nugetifier);
+            var nugettedDependencies = ReferenceNugetifierTester.GetManifestDependencies(nugetifier);
             Assert.That(nugettedDependencies, Is.Empty);
         }
 
@@ -23,7 +23,7 @@ namespace NuGet.Extensions.Tests.ReferenceAnalysers
             var packageRepositoryWithOnePackage = ProjectReferenceTestData.CreateMockRepository();
 
             var nugetifier = ReferenceNugetifierTester.BuildNugetifier(vsProject: projectWithSingleDependency.Object, packageRepository: packageRepositoryWithOnePackage);
-            var nugettedDependencies = ReferenceNugetifierTester.CallNugetifyReferences(nugetifier);
+            var nugettedDependencies = ReferenceNugetifierTester.GetManifestDependencies(nugetifier);
 
             Assert.That(nugettedDependencies, Is.Not.Empty);
             Assert.That(nugettedDependencies.Single().Id, Contains.Substring(ProjectReferenceTestData.PackageInRepository));
