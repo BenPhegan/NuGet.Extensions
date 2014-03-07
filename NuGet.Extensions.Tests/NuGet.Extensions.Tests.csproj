@@ -36,6 +36,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.Build" />
     <Reference Include="Moq">
       <HintPath>..\packages\Moq.4.0.10827\lib\NET40\Moq.dll</HintPath>
     </Reference>
@@ -69,6 +70,7 @@
     <Compile Include="Extensions\IPackageManagerExtensionsTests.cs" />
     <Compile Include="FeedAudit\FeedAuditorTests.cs" />
     <Compile Include="FeedAudit\GacResolverTests.cs" />
+    <Compile Include="MSBuild\ProjectAdapterTests.cs" />
     <Compile Include="PackageReferences\PackageReferenceSetResolverTests.cs" />
     <Compile Include="Packages\PackageAggregatorTests.cs" />
     <Compile Include="Packages\PackageEnumeratorTests.cs" />
