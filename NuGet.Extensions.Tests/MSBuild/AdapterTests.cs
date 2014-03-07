@@ -67,7 +67,9 @@ namespace NuGet.Extensions.Tests.MSBuild
             const string nonPersistedHintPath = "a different string that won't be persisted";
             binaryDependency.ConvertToNugetReferenceWithHintPath(nonPersistedHintPath);
             string hintpath;
-            var hasHintPath = binaryDependency.TryGetHintPath(out hintpath);
+            //Don't constrain the implementation to modifying the existing reference
+            var newBinaryDepedency = _projectWithDependenciesAdapter.GetBinaryReferences().Single(IsExpectedBinaryDependency);
+            var hasHintPath = newBinaryDepedency.TryGetHintPath(out hintpath);
 
             Assert.That(hasHintPath, Is.True);
             Assert.That(hintpath, Is.EqualTo(nonPersistedHintPath));
