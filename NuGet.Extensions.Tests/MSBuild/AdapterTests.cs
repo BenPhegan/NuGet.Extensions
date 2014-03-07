@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Build.Evaluation;
 using NuGet.Extensions.MSBuild;
@@ -11,45 +12,43 @@ namespace NuGet.Extensions.Tests.MSBuild
     [TestFixture]
     public class AdapterTests
     {
+        private ProjectAdapter _projectWithDependenciesAdapter;
+        private IEnumerable<IBinaryReference> _projectBinaryReferenceAdapters;
+        
         private const string _expectedBinaryDependencyAssemblyName = "Newtonsoft.Json";
         private const string _expectedBinaryDependencyVersion = "6.0.0.0";
+
+        [SetUp]
+        public void SetUpProjectAdapterAndBinaryDependencies()
+        {
+            _projectWithDependenciesAdapter = CreateProjectAdapter(Paths.ProjectWithDependencies);
+            _projectBinaryReferenceAdapters = _projectWithDependenciesAdapter.GetBinaryReferences();
+        }
 
         [Test]
         public void ProjectWithDependenciesAssemblyNameIsProjectWithDependencies()
         {
-            var projectAdapter = CreateProjectAdapter(Paths.ProjectWithDependencies);
-            Assert.That(projectAdapter.AssemblyName, Is.EqualTo("ProjectWithDependencies"));
+            Assert.That(_projectWithDependenciesAdapter.AssemblyName, Is.EqualTo("ProjectWithDependencies"));
         }
 
         [Test]
         public void ProjectWithDependenciesDependsOnNewtonsoftJson()
         {
-            var projectAdapter = CreateProjectAdapter(Paths.ProjectWithDependencies);
-
-            var binaryReferences = projectAdapter.GetBinaryReferences();
-
-            var binaryReferenceIncludeNames = binaryReferences.Select(r => r.IncludeName).ToList();
+            var binaryReferenceIncludeNames = _projectBinaryReferenceAdapters.Select(r => r.IncludeName).ToList();
             Assert.That(binaryReferenceIncludeNames, Contains.Item(_expectedBinaryDependencyAssemblyName));
         }
 
         [Test]
         public void ProjectWithDependenciesDependsOnNewtonsoftJson6000()
         {
-            var projectAdapter = CreateProjectAdapter(Paths.ProjectWithDependencies);
-
-            var binaryReferences = projectAdapter.GetBinaryReferences();
-
-            var binaryDependency = binaryReferences.Single(IsExpectedBinaryDependency);
+            var binaryDependency = _projectBinaryReferenceAdapters.Single(IsExpectedBinaryDependency);
             Assert.That(binaryDependency.IncludeVersion, Is.EqualTo(_expectedBinaryDependencyVersion));
         }
 
         [Test]
         public void BinaryReferenceHasHintPathContainingAssemblyNameAndVersion()
         {
-            var projectAdapter = CreateProjectAdapter(Paths.ProjectWithDependencies);
-
-            var binaryReferences = projectAdapter.GetBinaryReferences();
-            var binaryDependency = binaryReferences.Single(IsExpectedBinaryDependency);
+            var binaryDependency = _projectBinaryReferenceAdapters.Single(IsExpectedBinaryDependency);
             string hintpath;
             var hasHintPath = binaryDependency.TryGetHintPath(out hintpath);
 
@@ -63,10 +62,7 @@ namespace NuGet.Extensions.Tests.MSBuild
         [Test]
         public void BinaryReferenceSetHintPathCanBeRetrieved()
         {
-            var projectAdapter = CreateProjectAdapter(Paths.ProjectWithDependencies);
-
-            var binaryReferences = projectAdapter.GetBinaryReferences();
-            var binaryDependency = binaryReferences.Single(IsExpectedBinaryDependency);
+            var binaryDependency = _projectBinaryReferenceAdapters.Single(IsExpectedBinaryDependency);
 
             const string nonPersistedHintPath = "a different string that won't be persisted";
             binaryDependency.SetHintPath(nonPersistedHintPath);
@@ -84,7 +80,7 @@ namespace NuGet.Extensions.Tests.MSBuild
 
         private static ProjectAdapter CreateProjectAdapter(string projectWithDependencies)
         {
-            var msBuildProject = new Project(projectWithDependencies, null, null);
+            var msBuildProject = new Project(projectWithDependencies, null, null, new ProjectCollection());
             var projectAdapter = new ProjectAdapter(msBuildProject, "packages.config");
             return projectAdapter;
         }
