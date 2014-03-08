@@ -62,22 +62,6 @@ namespace NuGet.Extensions.MSBuild
             return _project.GetItems("None").Any(i => i.UnevaluatedInclude.Equals(filename));
         }
 
-        public static List<string> GetReferencedAssemblies(IEnumerable<IReference> references)
-        {
-            var referenceFiles = new List<string>();
-
-            foreach (var reference in references)
-            {
-                //TODO deal with GAC assemblies that we want to replace as well....
-                string hintPath;
-                if (reference.TryGetHintPath(out hintPath))
-                {
-                    referenceFiles.Add(Path.GetFileName(hintPath));
-                }
-            }
-            return referenceFiles;
-        }
-
         public IEnumerable<IReference> GetProjectReferences()
         {
             return _project.GetItems("ProjectReference").Select(GetProjectReferenceAdapter);

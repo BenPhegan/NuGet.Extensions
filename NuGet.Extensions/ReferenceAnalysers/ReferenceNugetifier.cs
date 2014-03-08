@@ -110,7 +110,7 @@ namespace NuGet.Extensions.ReferenceAnalysers
 
         private IEnumerable<KeyValuePair<string, List<IPackage>>> ResolveReferenceMappings(IEnumerable<IReference> references)
         {
-            var referenceList = ProjectAdapter.GetReferencedAssemblies(references);
+            var referenceList = GetReferencedAssemblies(references);
             if (referenceList.Any())
             {
                 var referenceMappings = ResolveAssembliesToPackagesConfigFile(referenceList);
@@ -126,6 +126,22 @@ namespace NuGet.Extensions.ReferenceAnalysers
 
             _console.WriteLine("No references found to resolve (all GAC?)");
             return Enumerable.Empty<KeyValuePair<string, List<IPackage>>>();
+        }
+
+        private static List<string> GetReferencedAssemblies(IEnumerable<IReference> references)
+        {
+            var referenceFiles = new List<string>();
+
+            foreach (var reference in references)
+            {
+                //TODO deal with GAC assemblies that we want to replace as well....
+                string hintPath;
+                if (reference.TryGetHintPath(out hintPath))
+                {
+                    referenceFiles.Add(Path.GetFileName(hintPath));
+                }
+            }
+            return referenceFiles;
         }
 
         private string GetFileLocationFromPackage(IPackage package, string key)
