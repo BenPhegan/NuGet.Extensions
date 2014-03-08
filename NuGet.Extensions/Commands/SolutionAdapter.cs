@@ -44,5 +44,21 @@ namespace NuGet.Extensions.Commands
         {
             _projectCollection.Dispose();
         }
+
+        public static List<string> GetAssemblyNamesForProjectReferences(ProjectAdapter project)
+        {
+            var refs = new List<string>();
+            var references = project.GetProjectReferences();
+            using (var projectCollection = new ProjectCollection())
+            {
+                foreach (var reference in references)
+                {
+                    var newProjectPath = Path.Combine(project.ProjectDirectory.FullName, reference.IncludeName);
+                    var refProjectAdapter = new ProjectAdapter(newProjectPath, projectCollection: projectCollection);
+                    refs.Add(refProjectAdapter.AssemblyName);
+                }
+            }
+            return refs;
+        }
     }
 }

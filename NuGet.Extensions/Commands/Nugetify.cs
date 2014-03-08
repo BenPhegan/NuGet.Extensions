@@ -124,7 +124,7 @@ namespace NuGet.Extensions.Commands
             var packageReferenceFile = new PackageReferenceFile(projectFileSystem, PackageReferenceFilename);
             var packageRepository = GetRepository();
             var referenceNugetifier = new ReferenceNugetifier(projectAdapter, packageRepository, projectFileSystem, Console);
-            var projectReferences = ParseProjectReferences(projectAdapter, Console);
+            var projectReferences = GetProjectReferences(projectAdapter, Console);
             referenceNugetifier.NugetifyReferencesInProject(solutionRoot);
             var manifestDependencies = referenceNugetifier.AddNugetMetadataForReferences(existingSolutionPackagesRepo, projectReferences, packageReferenceFile, NuSpec);
             return manifestDependencies;
@@ -196,21 +196,10 @@ namespace NuGet.Extensions.Commands
             return Regex.Replace(content, @"(xmlns:?[^=]*=[""][^""]*[""])", String.Empty, RegexOptions.IgnoreCase | RegexOptions.Multiline);
         }
 
-        public static List<string> ParseProjectReferences(ProjectAdapter project, IConsole console)
+        public static List<string> GetProjectReferences(ProjectAdapter project, IConsole console)
         {
             console.WriteLine("Checking for any project references for {0}...", PackageReferenceFilename);
-            var refs = new List<string>();
-            var references = project.GetProjectReferences();
-            using (var projectCollection = new ProjectCollection())
-            {
-                foreach (var reference in references)
-                {
-                    var newProjectPath = Path.Combine(project.ProjectDirectory.FullName, reference.IncludeName);
-                    var refProjectAdapter = new ProjectAdapter(newProjectPath, projectCollection: projectCollection);
-                    refs.Add(refProjectAdapter.AssemblyName);
-                }
-            }
-            return refs;
+            return SolutionAdapter.GetAssemblyNamesForProjectReferences(project);
         }
 
         private IPackageRepository GetRepository()
