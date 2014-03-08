@@ -16,7 +16,7 @@ namespace NuGet.Extensions.Commands
                          " packages.config files as it goes.", MinArgs = 1, MaxArgs = 1)]
     public class Nugetify : Command
     {
-        private const string PackagesConfigFilename = "packages.config";
+        private static readonly string PackageReferenceFilename = Constants.PackageReferenceFile;
         private readonly List<string> _sources = new List<string>();
 
         [ImportingConstructor]
@@ -113,7 +113,7 @@ namespace NuGet.Extensions.Commands
             var projectPath = Path.Combine(solutionRoot.FullName, simpleProject.RelativePath);
             if (File.Exists(projectPath))
             {
-                return new ProjectAdapter(projectPath, PackagesConfigFilename);
+                return new ProjectAdapter(projectPath, PackageReferenceFilename);
             }
             else
             {
@@ -133,12 +133,12 @@ namespace NuGet.Extensions.Commands
         private List<ManifestDependency> NugetifyReferences(ProjectAdapter projectAdapter, DirectoryInfo solutionRoot, ISharedPackageRepository existingSolutionPackagesRepo)
         {
             var projectFileSystem = new PhysicalFileSystem(projectAdapter.ProjectDirectory.ToString());
-            var packageReferenceFile = new PackageReferenceFile(projectFileSystem, PackagesConfigFilename);
+            var packageReferenceFile = new PackageReferenceFile(projectFileSystem, PackageReferenceFilename);
             var packageRepository = GetRepository();
             var referenceNugetifier = new ReferenceNugetifier(projectAdapter, packageRepository, projectFileSystem, Console);
             var projectReferences = ParseProjectReferences(projectAdapter, Console);
             referenceNugetifier.NugetifyReferencesInProject(solutionRoot);
-            var manifestDependencies = referenceNugetifier.AddNugetMetadataForReferences(existingSolutionPackagesRepo, projectReferences, packageReferenceFile, PackagesConfigFilename, NuSpec);
+            var manifestDependencies = referenceNugetifier.AddNugetMetadataForReferences(existingSolutionPackagesRepo, projectReferences, packageReferenceFile, NuSpec);
             return manifestDependencies;
         }
 
@@ -208,13 +208,13 @@ namespace NuGet.Extensions.Commands
 
         public static List<string> ParseProjectReferences(ProjectAdapter project, IConsole console)
         {
-            console.WriteLine("Checking for any project References for packages.config...");
+            console.WriteLine("Checking for any project References for {0}...", PackageReferenceFilename);
             var refs = new List<string>();
             var references = project.GetProjectReferences();
             foreach (var reference in references)
             {
                 var newProjectPath = Path.Combine(project.ProjectDirectory.FullName, reference.IncludeName);
-                var refProjectAdapter = new ProjectAdapter(newProjectPath, PackagesConfigFilename);
+                var refProjectAdapter = new ProjectAdapter(newProjectPath, PackageReferenceFilename);
                 refs.Add(refProjectAdapter.AssemblyName);
             }
             return refs;

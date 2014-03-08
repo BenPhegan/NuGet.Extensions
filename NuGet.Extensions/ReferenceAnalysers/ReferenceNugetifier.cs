@@ -17,6 +17,7 @@ namespace NuGet.Extensions.ReferenceAnalysers
         private readonly IPackageRepository _packageRepository;
         private readonly Lazy<IList<IReference>> _references;
         private readonly Lazy<IList<KeyValuePair<string, List<IPackage>>>> _resolveReferenceMappings;
+        private static string PackageReferenceFilename = Constants.PackageReferenceFile;
 
         public ReferenceNugetifier(IVsProject vsProject, IPackageRepository packageRepository, IFileSystem projectFileSystem, IConsole console)
         {
@@ -67,13 +68,13 @@ namespace NuGet.Extensions.ReferenceAnalysers
             else _console.WriteWarning(message);
         }
 
-        public List<ManifestDependency> AddNugetMetadataForReferences(ISharedPackageRepository sharedPackagesRepository, List<string> projectDependencies, PackageReferenceFile packageReferenceFile, string packagesConfigFilename, bool nuspec)
+        public List<ManifestDependency> AddNugetMetadataForReferences(ISharedPackageRepository sharedPackagesRepository, List<string> projectDependencies, PackageReferenceFile packageReferenceFile, bool nuspec)
         {
             var resolvedMappings = _resolveReferenceMappings.Value;
             var manifestDependencies = new List<ManifestDependency>();
             if (!resolvedMappings.Any()) return manifestDependencies;
             //Now, create the packages.config for the resolved packages, and update the repositories.config
-            _console.WriteLine("Creating {0}", packagesConfigFilename);
+            _console.WriteLine("Creating {0}", PackageReferenceFilename);
             var packagesConfig = packageReferenceFile;
             foreach (var referenceMapping in resolvedMappings)
             {
@@ -100,9 +101,8 @@ namespace NuGet.Extensions.ReferenceAnalysers
                 }
             }
             //Register the packages.config
-            var packagesConfigFilePath = Path.Combine(_vsProject.ProjectDirectory.FullName + "\\", packagesConfigFilename);
+            var packagesConfigFilePath = Path.Combine(_vsProject.ProjectDirectory.FullName + "\\", PackageReferenceFilename);
             sharedPackagesRepository.RegisterRepository(packagesConfigFilePath);
-
             _vsProject.AddPackagesConfig();
 
             return manifestDependencies;
