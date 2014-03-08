@@ -74,25 +74,7 @@ namespace NuGet.Extensions.Commands
                 var solutionFile = new FileInfo(Arguments[0]);
                 if (solutionFile.Exists && solutionFile.Extension == ".sln")
                 {
-                    Console.WriteLine("Loading projects from solution {0}", solutionFile.Name);
-
-                    var existingSolutionPackagesRepo = new SharedPackageRepository(Path.Combine(solutionFile.Directory.FullName, "packages"));
-                    using (var solutionAdapter = new SolutionProjectLoader(solutionFile, Console))
-                    {
-                        var projectAdapters = solutionAdapter.GetProjects();
-
-                        Console.WriteLine("Processing {0} projects...", projectAdapters.Count);
-                        foreach (var projectAdapter in projectAdapters)
-                        {
-                            Console.WriteLine();
-                            Console.WriteLine("Processing project: {0}", projectAdapter.ProjectName);
-
-                            NugetifyProject(projectAdapter, solutionFile.Directory, existingSolutionPackagesRepo);
-
-                            Console.WriteLine("Project completed!");
-                        }
-                    }
-                    Console.WriteLine("Complete!");
+                    NugetifySolution(solutionFile);
                 }
                 else
                 {
@@ -101,10 +83,38 @@ namespace NuGet.Extensions.Commands
             }
         }
 
+        private void NugetifySolution(FileInfo solutionFile)
+        {
+            Console.WriteLine("Loading projects from solution {0}", solutionFile.Name);
+
+            var existingSolutionPackagesRepo = new SharedPackageRepository(Path.Combine(solutionFile.Directory.FullName, "packages"));
+            using (var solutionAdapter = new SolutionProjectLoader(solutionFile, Console))
+            {
+                var projectAdapters = solutionAdapter.GetProjects();
+
+                Console.WriteLine("Processing {0} projects...", projectAdapters.Count);
+                foreach (var projectAdapter in projectAdapters)
+                {
+                    Console.WriteLine();
+                    Console.WriteLine("Processing project: {0}", projectAdapter.ProjectName);
+
+                    NugetifyProject(projectAdapter, solutionFile.Directory, existingSolutionPackagesRepo);
+
+                    Console.WriteLine("Project completed!");
+                }
+            }
+            Console.WriteLine("Complete!");
+        }
+
         private void NugetifyProject(ProjectAdapter projectAdapter, DirectoryInfo solutionRoot, ISharedPackageRepository existingSolutionPackagesRepo)
         {
-            var manifestDependencies = NugetifyReferences(projectAdapter, solutionRoot, existingSolutionPackagesRepo);
+            var referenceNugetifier = CreateReferenceNugetifier(projectAdapter);
+            referenceNugetifier.NugetifyReferencesInProject(solutionRoot);
+
+            Console.WriteLine("Checking for any project references for {0}...", PackageReferenceFilename);
+            var manifestDependencies = referenceNugetifier.AddNugetMetadataForReferences(existingSolutionPackagesRepo, NuSpec);
             projectAdapter.Save();
+
             //Create nuspec regardless of whether we have added dependencies
             if (NuSpec)
             {
@@ -113,15 +123,6 @@ namespace NuGet.Extensions.Commands
                 string destination = assemblyOutput + Constants.ManifestExtension;
                 Save(manifest, destination);
             }
-        }
-
-        private List<ManifestDependency> NugetifyReferences(ProjectAdapter projectAdapter, DirectoryInfo solutionRoot, ISharedPackageRepository existingSolutionPackagesRepo)
-        {
-            var referenceNugetifier = CreateReferenceNugetifier(projectAdapter);
-            referenceNugetifier.NugetifyReferencesInProject(solutionRoot);
-            Console.WriteLine("Checking for any project references for {0}...", PackageReferenceFilename);
-            var manifestDependencies = referenceNugetifier.AddNugetMetadataForReferences(existingSolutionPackagesRepo, NuSpec);
-            return manifestDependencies;
         }
 
         private ReferenceNugetifier CreateReferenceNugetifier(ProjectAdapter projectAdapter)
