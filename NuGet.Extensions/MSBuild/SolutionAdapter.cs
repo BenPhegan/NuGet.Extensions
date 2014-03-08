@@ -55,22 +55,6 @@ namespace NuGet.Extensions.MSBuild
             return projectAdapter;
         }
 
-        public static List<string> GetAssemblyNamesForProjectReferences(ProjectAdapter project)
-        {
-            var assembliesReferenced = new List<string>();
-            var projectReferences = project.GetProjectReferences();
-            using (var projectCollection = new ProjectCollection())
-            {
-                foreach (var reference in projectReferences)
-                {
-                    var newProjectPath = Path.Combine(project.ProjectDirectory.FullName, reference.IncludeName);
-                    var refProjectAdapter = new ProjectAdapter(newProjectPath, projectCollection: projectCollection);
-                    assembliesReferenced.Add(refProjectAdapter.AssemblyName);
-                }
-            }
-            return assembliesReferenced;
-        }
-
         private ProjectAdapter ProjectAdapter(SolutionProject p)
         {
             return CreateProjectAdapter(p.RelativePath);

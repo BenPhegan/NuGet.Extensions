@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using NuGet.Commands;
 using NuGet.Common;
@@ -121,7 +122,8 @@ namespace NuGet.Extensions.Commands
             var packageReferenceFile = new PackageReferenceFile(projectFileSystem, PackageReferenceFilename);
             var packageRepository = GetRepository();
             var referenceNugetifier = new ReferenceNugetifier(projectAdapter, packageRepository, projectFileSystem, Console);
-            var projectReferences = GetProjectReferences(projectAdapter, Console);
+            Console.WriteLine("Checking for any project references for {0}...", PackageReferenceFilename);
+            var projectReferences = projectAdapter.GetProjectReferences().Select(pRef => pRef.IncludeName).ToList();
             referenceNugetifier.NugetifyReferencesInProject(solutionRoot);
             var manifestDependencies = referenceNugetifier.AddNugetMetadataForReferences(existingSolutionPackagesRepo, projectReferences, packageReferenceFile, NuSpec);
             return manifestDependencies;
@@ -191,12 +193,6 @@ namespace NuGet.Extensions.Commands
         {
             // This seems to be the only way to clear out xml namespaces.
             return Regex.Replace(content, @"(xmlns:?[^=]*=[""][^""]*[""])", String.Empty, RegexOptions.IgnoreCase | RegexOptions.Multiline);
-        }
-
-        public static List<string> GetProjectReferences(ProjectAdapter project, IConsole console)
-        {
-            console.WriteLine("Checking for any project references for {0}...", PackageReferenceFilename);
-            return SolutionAdapter.GetAssemblyNamesForProjectReferences(project);
         }
 
         private IPackageRepository GetRepository()
