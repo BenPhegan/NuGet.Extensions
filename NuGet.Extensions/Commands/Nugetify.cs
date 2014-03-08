@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
-using System.Linq;
 using System.Text.RegularExpressions;
 using NuGet.Commands;
 using NuGet.Common;
@@ -118,13 +117,19 @@ namespace NuGet.Extensions.Commands
 
         private List<ManifestDependency> NugetifyReferences(ProjectAdapter projectAdapter, DirectoryInfo solutionRoot, ISharedPackageRepository existingSolutionPackagesRepo)
         {
-            var projectFileSystem = new PhysicalFileSystem(projectAdapter.ProjectDirectory.ToString());
-            var packageRepository = GetRepository();
-            var referenceNugetifier = new ReferenceNugetifier(projectAdapter, packageRepository, projectFileSystem, Console);
+            var referenceNugetifier = CreateReferenceNugetifier(projectAdapter);
             Console.WriteLine("Checking for any project references for {0}...", PackageReferenceFilename);
             referenceNugetifier.NugetifyReferencesInProject(solutionRoot);
             var manifestDependencies = referenceNugetifier.AddNugetMetadataForReferences(existingSolutionPackagesRepo, NuSpec);
             return manifestDependencies;
+        }
+
+        private ReferenceNugetifier CreateReferenceNugetifier(ProjectAdapter projectAdapter)
+        {
+            var projectFileSystem = new PhysicalFileSystem(projectAdapter.ProjectDirectory.ToString());
+            var repository = AggregateRepositoryHelper.CreateAggregateRepositoryFromSources(RepositoryFactory, SourceProvider, Source);
+            repository.Logger = Console;
+            return new ReferenceNugetifier(projectAdapter, repository, projectFileSystem, Console);
         }
 
         private Manifest CreateNuspecManifest(string assemblyOutput, List<ManifestDependency> manifestDependencies, string targetFramework = ".NET Framework, Version=4.0")
@@ -191,13 +196,6 @@ namespace NuGet.Extensions.Commands
         {
             // This seems to be the only way to clear out xml namespaces.
             return Regex.Replace(content, @"(xmlns:?[^=]*=[""][^""]*[""])", String.Empty, RegexOptions.IgnoreCase | RegexOptions.Multiline);
-        }
-
-        private IPackageRepository GetRepository()
-        {
-            var repository = AggregateRepositoryHelper.CreateAggregateRepositoryFromSources(RepositoryFactory, SourceProvider, Source);
-            repository.Logger = Console;
-            return repository;
         }
     }
 }
