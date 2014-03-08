@@ -50,7 +50,7 @@ namespace NuGet.Extensions.Repositories
 
             foreach (var package in packageSource)
             {
-                Console.Write("\rChecking Package {1} of {2}", package.Id, current++, max);
+                Console.WriteLine("Checking package {1} of {2}", package.Id, current++, max);
                 var packageFiles = package.GetFiles();
                 foreach (var f in packageFiles)
                 {
@@ -89,7 +89,7 @@ namespace NuGet.Extensions.Repositories
                         if (assemblyToPackageMapping.Value.Count > 1)
                         {
                             smallestPackage = assemblyToPackageMapping.Value.OrderBy(l => l.GetFiles().Count()).FirstOrDefault();
-                            Console.WriteLine(String.Format("{0} : Choosing : {1} - {2} to choose from.", assemblyToPackageMapping.Key, smallestPackage.Id, assemblyToPackageMapping.Value.Count()));
+                            Console.WriteLine(String.Format("{0} : Choosing {1} from {2} choices.", assemblyToPackageMapping.Key, smallestPackage.Id, assemblyToPackageMapping.Value.Count()));
                         }
                         else
                         {
