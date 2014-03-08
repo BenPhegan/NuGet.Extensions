@@ -83,7 +83,7 @@ namespace NuGet.Extensions.Commands
                     var simpleProjectObjects = solution.Projects;
                     var projectAdapters = simpleProjectObjects.Select(p => GetProjectAdapterOrDefault(solutionRoot, p)).Where(p => p != null).ToList();
 
-                    Console.WriteLine("Processing {0} projects in solution {1}...", simpleProjectObjects.Count, solutionFile.Name);
+                    Console.WriteLine("Processing {0} projects...", projectAdapters.Count);
                     foreach (var projectAdapter in projectAdapters)
                     {
                         LogAndNugetifyProject(projectAdapter, solutionRoot, sharedPackagesRepository);
