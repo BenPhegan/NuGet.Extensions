@@ -99,23 +99,28 @@ namespace NuGet.Extensions.Commands
             var projectPath = Path.Combine(solutionFile.Directory.FullName, simpleProject.RelativePath);
             if (File.Exists(projectPath))
             {
+                var projectAdapter = new ProjectAdapter(projectPath, PackagesConfigFilename);
                 Console.WriteLine();
                 Console.WriteLine("Processing Project: {0}", simpleProject.ProjectName);
-                var projectAdapter = new ProjectAdapter(projectPath, PackagesConfigFilename);
-                var projectFileSystem = new PhysicalFileSystem(projectAdapter.ProjectDirectory.ToString());
-                var packageReferenceFile = new PackageReferenceFile(projectFileSystem, PackagesConfigFilename);
-                var packageRepository = GetRepository();
-                var referenceNugetifier = new ReferenceNugetifier(projectAdapter, packageRepository, projectFileSystem, Console);
-                var projectReferences = ParseProjectReferences(projectAdapter, Console);
-                referenceNugetifier.NugetifyReferencesInProject(solutionRoot);
-                var manifestDependencies = referenceNugetifier.AddNugetMetadataForReferences(existingSolutionPackagesRepo, projectReferences, packageReferenceFile, PackagesConfigFilename, NuSpec);
-
-                //Create nuspec regardless of whether we have added dependencies
-                if (NuSpec) CreateAndOutputNuSpecFile(projectAdapter.AssemblyName, manifestDependencies);
+                NugetifyProject(projectAdapter, solutionRoot, existingSolutionPackagesRepo);
 
                 Console.WriteLine("Project completed!");
             }
             else Console.WriteWarning("Project: {0} was not found on disk", simpleProject.ProjectName);
+        }
+
+        private void NugetifyProject(ProjectAdapter projectAdapter, DirectoryInfo solutionRoot, ISharedPackageRepository existingSolutionPackagesRepo)
+        {
+            var projectFileSystem = new PhysicalFileSystem(projectAdapter.ProjectDirectory.ToString());
+            var packageReferenceFile = new PackageReferenceFile(projectFileSystem, PackagesConfigFilename);
+            var packageRepository = GetRepository();
+            var referenceNugetifier = new ReferenceNugetifier(projectAdapter, packageRepository, projectFileSystem, Console);
+            var projectReferences = ParseProjectReferences(projectAdapter, Console);
+            referenceNugetifier.NugetifyReferencesInProject(solutionRoot);
+            var manifestDependencies = referenceNugetifier.AddNugetMetadataForReferences(existingSolutionPackagesRepo, projectReferences, packageReferenceFile, PackagesConfigFilename, NuSpec);
+
+            //Create nuspec regardless of whether we have added dependencies
+            if (NuSpec) CreateAndOutputNuSpecFile(projectAdapter.AssemblyName, manifestDependencies);
         }
 
         private void CreateAndOutputNuSpecFile(string assemblyOutput, List<ManifestDependency> manifestDependencies, string targetFramework = ".NET Framework, Version=4.0")
