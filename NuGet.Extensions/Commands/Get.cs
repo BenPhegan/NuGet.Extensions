@@ -19,9 +19,6 @@ using NuGet.Extensions.Packages;
 using NuGet.Extensions.Comparers;
 using NuGet.Extensions.Repositories;
 
-//HACK to enable us to test some of the Internal stuff more easily.  Still not sure how many kittens die when we use this.....
-[assembly: InternalsVisibleTo("NuGet.Extensions.Tests")]
-
 namespace NuGet.Extensions.Commands
 {
     [Command(typeof(GetResources), "get", "GetCommandDescription", MinArgs = 1)]
