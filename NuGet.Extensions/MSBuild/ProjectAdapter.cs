@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -8,15 +9,17 @@ namespace NuGet.Extensions.MSBuild
     public class ProjectAdapter : IVsProject
     {
         private readonly Project _project;
+        private readonly IProjectLoader _projectLoader;
 
-        public ProjectAdapter(string projectPath, ProjectCollection projectCollection, IDictionary<string, string> globalMsBuildProperties = null)
-            : this(CreateMsBuildProject(projectPath, projectCollection, globalMsBuildProperties))
+        public ProjectAdapter(string projectPath, ProjectCollection projectCollection, IProjectLoader projectLoader, IDictionary<string, string> globalMsBuildProperties = null)
+            : this(CreateMsBuildProject(projectPath, projectCollection, globalMsBuildProperties), projectLoader)
         {
         }
 
-        private ProjectAdapter(Project project)
+        private ProjectAdapter(Project project, IProjectLoader projectLoader)
         {
             _project = project;
+            _projectLoader = projectLoader;
         }
 
         private static Project CreateMsBuildProject(string projectPath, ProjectCollection projectCollection, IDictionary<string, string> globalMsBuildProperties)
@@ -69,7 +72,10 @@ namespace NuGet.Extensions.MSBuild
 
         private ProjectReferenceAdapter GetProjectReferenceAdapter(ProjectItem r)
         {
-            return new ProjectReferenceAdapter(() => _project.RemoveItem(r), AddBinaryReference, r);
+            var projectGuid = r.GetMetadataValue("Project");
+            var csprojRelativePath = r.EvaluatedInclude;
+            var referencedProjectAdapter = _projectLoader.GetProject(Guid.Parse(projectGuid), csprojRelativePath);
+            return new ProjectReferenceAdapter(referencedProjectAdapter, () => _project.RemoveItem(r), AddBinaryReference);
         }
 
         private void AddBinaryReference(string includePath, KeyValuePair<string, string> metadata)

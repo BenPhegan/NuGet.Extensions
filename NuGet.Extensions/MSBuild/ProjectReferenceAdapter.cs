@@ -1,22 +1,19 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using Microsoft.Build.Evaluation;
 
 namespace NuGet.Extensions.MSBuild
 {
     public class ProjectReferenceAdapter : IReference
     {
         private readonly Func<bool> _removeFromParentProject;
+        private readonly IVsProject _project;
         private readonly Action<string, KeyValuePair<string, string>> _addBinaryReferenceWithMetadata;
-        private readonly ProjectItem _reference;
-        private string _assemblyName;
 
-        public ProjectReferenceAdapter(Func<bool> removeFromParentProject, Action<string, KeyValuePair<string, string>> addBinaryReferenceWithMetadata, ProjectItem reference)
+        public ProjectReferenceAdapter(IVsProject project, Func<bool> removeFromParentProject, Action<string, KeyValuePair<string, string>> addBinaryReferenceWithMetadata)
         {
+            _project = project;
             _removeFromParentProject = removeFromParentProject;
             _addBinaryReferenceWithMetadata = addBinaryReferenceWithMetadata;
-            _reference = reference;
         }
 
         public bool TryGetHintPath(out string hintPath)
@@ -28,7 +25,7 @@ namespace NuGet.Extensions.MSBuild
         public void ConvertToNugetReferenceWithHintPath(string hintPath)
         {
             _removeFromParentProject();
-            _addBinaryReferenceWithMetadata(_assemblyName, new KeyValuePair<string, string>("HintPath", hintPath));
+            _addBinaryReferenceWithMetadata(_project.AssemblyName, new KeyValuePair<string, string>("HintPath", hintPath));
         }
 
         public string IncludeVersion
@@ -38,12 +35,12 @@ namespace NuGet.Extensions.MSBuild
 
         public string IncludeName
         {
-            get { return _reference.EvaluatedInclude.Contains(',') ? _reference.EvaluatedInclude.Split(',')[0] : _reference.EvaluatedInclude; }
+            get { return _project.AssemblyName; }
         }
 
         public bool IsForAssembly(string assemblyFilename)
         {
-            throw new NotImplementedException();
+            return (IncludeName + ".dll").Equals(assemblyFilename, StringComparison.OrdinalIgnoreCase);
         }
     }
 }

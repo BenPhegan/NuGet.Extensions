@@ -62,7 +62,7 @@ namespace NuGet.Extensions.MSBuild
 
         private ProjectAdapter CreateProjectAdapter(string relativePath)
         {
-            return new ProjectAdapter(GetAbsoluteProjectPath(relativePath), _projectCollection);
+            return new ProjectAdapter(GetAbsoluteProjectPath(relativePath), _projectCollection, this);
         }
 
         private static Guid ProjectGuid(SolutionProject p)
