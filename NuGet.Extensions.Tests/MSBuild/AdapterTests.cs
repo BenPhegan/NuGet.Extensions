@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Microsoft.Build.Evaluation;
+using Moq;
+using NuGet.Common;
 using NuGet.Extensions.MSBuild;
 using NuGet.Extensions.Tests.TestData;
 using NUnit.Framework;
@@ -14,7 +17,8 @@ namespace NuGet.Extensions.Tests.MSBuild
     {
         private ProjectAdapter _projectWithDependenciesAdapter;
         private IEnumerable<IReference> _projectBinaryReferenceAdapters;
-        
+        private SolutionAdapter _solutionAdapter;
+        private const string _projectWithDependenciesName = "ProjectWithDependencies";
         private const string _expectedBinaryDependencyAssemblyName = "Newtonsoft.Json";
         private const string _expectedBinaryDependencyVersion = "6.0.0.0";
         private const string _expectedProjectDependencyName = "ProjectDependency";
@@ -22,20 +26,16 @@ namespace NuGet.Extensions.Tests.MSBuild
         [SetUp]
         public void SetUpProjectAdapterAndBinaryDependencies()
         {
-            _projectWithDependenciesAdapter = CreateProjectAdapter(Paths.ProjectWithDependencies);
+            _solutionAdapter = new SolutionAdapter(new FileInfo(Paths.AdapterTestsSolutionFile), new Mock<IConsole>().Object);
+            var projectAdapters = _solutionAdapter.GetProjects();
+            _projectWithDependenciesAdapter = projectAdapters.Single(p => p.ProjectName == _projectWithDependenciesName);
             _projectBinaryReferenceAdapters = _projectWithDependenciesAdapter.GetBinaryReferences();
         }
 
         [Test]
         public void ProjectWithDependenciesAssemblyNameIsProjectWithDependencies()
         {
-            Assert.That(_projectWithDependenciesAdapter.AssemblyName, Is.EqualTo("ProjectWithDependencies"));
-        }
-
-        [Test]
-        public void ProjectWithDependenciesProjectyNameIsProjectWithDependencies()
-        {
-            Assert.That(_projectWithDependenciesAdapter.ProjectName, Is.EqualTo("ProjectWithDependencies"));
+            Assert.That(_projectWithDependenciesAdapter.AssemblyName, Is.EqualTo(_projectWithDependenciesName));
         }
 
         [Test]
@@ -115,11 +115,6 @@ namespace NuGet.Extensions.Tests.MSBuild
         private static bool IsExpectedBinaryDependency(IReference r)
         {
             return r.IncludeName == _expectedBinaryDependencyAssemblyName;
-        }
-
-        private static ProjectAdapter CreateProjectAdapter(string projectWithDependencies)
-        {
-            return new ProjectAdapter(projectWithDependencies, new ProjectCollection());
         }
     }
 }
