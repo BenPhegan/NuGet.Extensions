@@ -56,7 +56,6 @@ namespace NuGet.Extensions.MSBuild
             if (!HasPackagesConfig())
             {
                 _project.Xml.AddItemGroup().AddItem("None", _packagesConfigFilename);
-                Save();
             }
         }
 

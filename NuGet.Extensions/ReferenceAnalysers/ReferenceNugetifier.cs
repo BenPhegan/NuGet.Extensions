@@ -50,7 +50,6 @@ namespace NuGet.Extensions.ReferenceAnalysers
                     referenceMatch.ConvertToNugetReferenceWithHintPath(newHintPathRelative);
                 }
             }
-            _vsProject.Save();
         }
 
         private void LogHintPathRewriteMessage(IPackage package, string includeName, string includeVersion)

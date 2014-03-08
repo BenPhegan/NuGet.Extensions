@@ -125,6 +125,7 @@ namespace NuGet.Extensions.Commands
         private void NugetifyProject(ProjectAdapter projectAdapter, DirectoryInfo solutionRoot, ISharedPackageRepository existingSolutionPackagesRepo)
         {
             var manifestDependencies = NugetifyReferences(projectAdapter, solutionRoot, existingSolutionPackagesRepo);
+            projectAdapter.Save();
             //Create nuspec regardless of whether we have added dependencies
             if (NuSpec) CreateAndOutputNuSpecFile(projectAdapter.AssemblyName, manifestDependencies);
         }
