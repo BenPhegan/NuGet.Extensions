@@ -119,9 +119,7 @@ namespace NuGet.Extensions.Tests.MSBuild
 
         private static ProjectAdapter CreateProjectAdapter(string projectWithDependencies)
         {
-            var msBuildProject = new Project(projectWithDependencies, null, null, new ProjectCollection());
-            var projectAdapter = new ProjectAdapter(msBuildProject, "packages.config");
-            return projectAdapter;
+            return new ProjectAdapter(projectWithDependencies, "packages.config");
         }
     }
 }
