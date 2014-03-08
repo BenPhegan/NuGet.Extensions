@@ -44,5 +44,10 @@ namespace NuGet.Extensions.Tests.ReferenceAnalysers
         {
             return new DirectoryInfo("c:\\isAnyFolder");
         }
+
+        public static void NugetifyReferencesInProject(ReferenceNugetifier nugetifier)
+        {
+            nugetifier.NugetifyReferencesInProject(GetMockDirectory());
+        }
     }
 }
