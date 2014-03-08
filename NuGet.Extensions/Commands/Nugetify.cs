@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using Microsoft.Build.Evaluation;
 using NuGet.Commands;
@@ -75,15 +76,17 @@ namespace NuGet.Extensions.Commands
                 var solutionFile = new FileInfo(Arguments[0]);
                 if (solutionFile.Exists && solutionFile.Extension == ".sln")
                 {
+                    Console.WriteLine("Loading projects from solution {0}", solutionFile.Name);
                     var solutionRoot = solutionFile.Directory;
                     var sharedPackagesRepository = new SharedPackageRepository(Path.Combine(solutionRoot.FullName, "packages"));
                     var solution = new Solution(solutionFile.FullName);
                     var simpleProjectObjects = solution.Projects;
+                    var projectAdapters = simpleProjectObjects.Select(p => GetProjectAdapterOrDefault(solutionRoot, p)).Where(p => p != null).ToList();
 
                     Console.WriteLine("Processing {0} projects in solution {1}...", simpleProjectObjects.Count, solutionFile.Name);
-                    foreach (var simpleProject in simpleProjectObjects)
+                    foreach (var projectAdapter in projectAdapters)
                     {
-                        NugetifyProject(solutionFile, simpleProject, solutionRoot, sharedPackagesRepository);
+                        LogAndNugetifyProject(projectAdapter, solutionRoot, sharedPackagesRepository);
                     }
                     Console.WriteLine("Complete!");
                 }
@@ -94,19 +97,28 @@ namespace NuGet.Extensions.Commands
             }
         }
 
-        private void NugetifyProject(FileInfo solutionFile, SolutionProject simpleProject, DirectoryInfo solutionRoot, ISharedPackageRepository existingSolutionPackagesRepo)
+        private ProjectAdapter GetProjectAdapterOrDefault(DirectoryInfo solutionRoot, SolutionProject simpleProject)
         {
-            var projectPath = Path.Combine(solutionFile.Directory.FullName, simpleProject.RelativePath);
+            var projectPath = Path.Combine(solutionRoot.FullName, simpleProject.RelativePath);
             if (File.Exists(projectPath))
             {
-                var projectAdapter = new ProjectAdapter(projectPath, PackagesConfigFilename);
-                Console.WriteLine();
-                Console.WriteLine("Processing Project: {0}", simpleProject.ProjectName);
-                NugetifyProject(projectAdapter, solutionRoot, existingSolutionPackagesRepo);
-
-                Console.WriteLine("Project completed!");
+                return new ProjectAdapter(projectPath, PackagesConfigFilename);
             }
-            else Console.WriteWarning("Project: {0} was not found on disk", simpleProject.ProjectName);
+            else
+            {
+                Console.WriteWarning("Project: {0} was not found on disk", simpleProject.ProjectName);
+                return null;
+            }
+        }
+
+        private void LogAndNugetifyProject(ProjectAdapter projectAdapter, DirectoryInfo solutionRoot, ISharedPackageRepository existingSolutionPackagesRepo)
+        {
+            Console.WriteLine();
+            Console.WriteLine("Processing Project: {0}", projectAdapter.ProjectName);
+
+            NugetifyProject(projectAdapter, solutionRoot, existingSolutionPackagesRepo);
+
+            Console.WriteLine("Project completed!");
         }
 
         private void NugetifyProject(ProjectAdapter projectAdapter, DirectoryInfo solutionRoot, ISharedPackageRepository existingSolutionPackagesRepo)
