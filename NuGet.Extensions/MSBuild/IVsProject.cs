@@ -10,5 +10,6 @@ namespace NuGet.Extensions.MSBuild
         DirectoryInfo ProjectDirectory { get; }
         void Save();
         void AddFile(string filename);
+        IEnumerable<IReference> GetProjectReferences();
     }
 }
