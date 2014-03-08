@@ -70,6 +70,7 @@
     <Compile Include="Caches\NuGetCacheManager.cs" />
     <Compile Include="Commands\Audit.cs" />
     <Compile Include="Commands\INuspecDataSource.cs" />
+    <Compile Include="Commands\NuspecBuilder.cs" />
     <Compile Include="MSBuild\BinaryReferenceAdapter.cs" />
     <Compile Include="Commands\FixReferences.cs" />
     <Compile Include="MSBuild\IProjectLoader.cs" />
