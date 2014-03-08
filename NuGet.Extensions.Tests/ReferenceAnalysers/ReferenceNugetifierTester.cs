@@ -8,13 +8,12 @@ using NuGet.Extensions.Tests.Mocks;
 
 namespace NuGet.Extensions.Tests.ReferenceAnalysers
 {
-    public class ReferenceNugetifierTester {
-        public static List<ManifestDependency> GetManifestDependencies(ReferenceNugetifier nugetifier, ISharedPackageRepository sharedPackageRepository = null, List<string> projectReferences = null, PackageReferenceFile packageReferenceFile = null)
+    public class ReferenceNugetifierTester 
+    {
+        public static List<ManifestDependency> GetManifestDependencies(ReferenceNugetifier nugetifier, ISharedPackageRepository sharedPackageRepository = null)
         {
             sharedPackageRepository = sharedPackageRepository ?? new Mock<ISharedPackageRepository>().Object;
-            projectReferences = projectReferences ?? new List<string>();
-            packageReferenceFile = packageReferenceFile ?? GetPackageReferenceFile(GetMockFileSystem(GetMockDirectory()));
-            return nugetifier.AddNugetMetadataForReferences(sharedPackageRepository, projectReferences, packageReferenceFile, true);
+            return nugetifier.AddNugetMetadataForReferences(sharedPackageRepository, true);
         }
 
         public static ReferenceNugetifier BuildNugetifier(IFileSystem projectFileSystem = null, Mock<IVsProject> vsProject = null, IPackageRepository packageRepository = null)
@@ -26,11 +25,6 @@ namespace NuGet.Extensions.Tests.ReferenceAnalysers
             vsProject.SetupGet(p => p.ProjectDirectory).Returns(GetMockDirectory());
             packageRepository = packageRepository ?? new MockPackageRepository();
             return new ReferenceNugetifier(vsProject.Object, packageRepository, projectFileSystem, console.Object);
-        }
-
-        private static PackageReferenceFile GetPackageReferenceFile(IFileSystem projectFileSystem)
-        {
-            return new PackageReferenceFile(projectFileSystem, projectFileSystem.Root);
         }
 
         private static MockFileSystem GetMockFileSystem(DirectoryInfo solutionRoot)

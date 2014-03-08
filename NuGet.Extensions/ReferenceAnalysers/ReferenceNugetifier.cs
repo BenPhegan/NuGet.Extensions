@@ -68,11 +68,13 @@ namespace NuGet.Extensions.ReferenceAnalysers
             else _console.WriteWarning(message);
         }
 
-        public List<ManifestDependency> AddNugetMetadataForReferences(ISharedPackageRepository sharedPackagesRepository, List<string> projectDependencies, PackageReferenceFile packageReferenceFile, bool nuspec)
+        public List<ManifestDependency> AddNugetMetadataForReferences(ISharedPackageRepository sharedPackagesRepository, bool nuspec)
         {
             var resolvedMappings = _resolveReferenceMappings.Value;
             var manifestDependencies = new List<ManifestDependency>();
             if (!resolvedMappings.Any()) return manifestDependencies;
+            var projectReferences = _vsProject.GetProjectReferences().Select(pRef => pRef.IncludeName).ToList();
+            var packageReferenceFile = new PackageReferenceFile(_projectFileSystem, PackageReferenceFilename);
             //Now, create the packages.config for the resolved packages, and update the repositories.config
             _console.WriteLine("Creating {0}", PackageReferenceFilename);
             var packagesConfig = packageReferenceFile;
@@ -92,7 +94,7 @@ namespace NuGet.Extensions.ReferenceAnalysers
             //For any resolved project dependencies, add a manifest dependency if we are doing nuspecs
             if (nuspec)
             {
-                foreach (var projectDependency in projectDependencies)
+                foreach (var projectDependency in (List<string>)projectReferences)
                 {
                     if (manifestDependencies.All(m => m.Id != projectDependency))
                     {
