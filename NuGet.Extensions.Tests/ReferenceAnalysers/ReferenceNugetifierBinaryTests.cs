@@ -43,6 +43,20 @@ namespace NuGet.Extensions.Tests.ReferenceAnalysers
         }
 
         [Test]
+        public void TwoDependenciesWithCorrespondingPackagesGetNugetted()
+        {
+            var defaultDependency = ProjectReferenceTestData.ConstructMockDependency(ProjectReferenceTestData.AssemblyInPackageRepository);
+            var secondDependency = ProjectReferenceTestData.ConstructMockDependency(ProjectReferenceTestData.AnotherAssemblyInPackageRepository);
+            var projectWithSingleDependency = ProjectReferenceTestData.ConstructMockProject(new[] { defaultDependency.Object, secondDependency.Object });
+            var packageRepositoryWithCorrespondingPackage = ProjectReferenceTestData.CreateMockRepository();
+
+            var nugetifier = ReferenceNugetifierTester.BuildNugetifier(vsProject: projectWithSingleDependency, packageRepository: packageRepositoryWithCorrespondingPackage);
+            ReferenceNugetifierTester.NugetifyReferencesInProject(nugetifier);
+            defaultDependency.Verify(d => d.ConvertToNugetReferenceWithHintPath(It.IsAny<string>()), Times.Once());
+            secondDependency.Verify(d => d.ConvertToNugetReferenceWithHintPath(It.IsAny<string>()), Times.Once());
+        }
+
+        [Test]
         public void SingleDependencyWithoutCorrespondingPackageNotNugetted()
         {
             var singleDependency = ProjectReferenceTestData.ConstructMockDependency();
