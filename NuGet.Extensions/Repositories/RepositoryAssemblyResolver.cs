@@ -75,12 +75,13 @@ namespace NuGet.Extensions.Repositories
         /// </summary>
         public void OutputPackageConfigFile()
         {
-            if (fileSystem.FileExists("packages.config"))
-                fileSystem.DeleteFile("packages.config");
+            var packagesConfig = Constants.PackageReferenceFile;
+            if (fileSystem.FileExists(packagesConfig))
+                fileSystem.DeleteFile(packagesConfig);
 
-            if (!fileSystem.FileExists("packages.config"))
+            if (!fileSystem.FileExists(packagesConfig))
             {
-                var prf = new PackageReferenceFile(fileSystem,".\\packages.config");
+                var prf = new PackageReferenceFile(fileSystem,string.Format(".\\{0}", packagesConfig));
                 foreach (var assemblyToPackageMapping in resolvedAssemblies)
                 {
                     if (assemblyToPackageMapping.Value.Count() > 0)
