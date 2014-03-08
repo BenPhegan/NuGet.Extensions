@@ -18,7 +18,6 @@ namespace NuGet.Extensions.Commands
     {
         private static readonly string PackageReferenceFilename = Constants.PackageReferenceFile;
         private readonly List<string> _sources = new List<string>();
-        private readonly SolutionAdapter _solutionAdapter;
 
         [ImportingConstructor]
         public Nugetify()
