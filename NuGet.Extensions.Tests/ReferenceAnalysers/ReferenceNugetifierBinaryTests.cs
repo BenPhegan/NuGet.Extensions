@@ -35,11 +35,23 @@ namespace NuGet.Extensions.Tests.ReferenceAnalysers
         {
             var singleDependency = ProjectReferenceTestData.ConstructMockDependency();
             var projectWithSingleDependency = ProjectReferenceTestData.ConstructMockProject(new[] { singleDependency.Object });
-            var packageRepositoryWithOnePackage = ProjectReferenceTestData.CreateMockRepository();
+            var packageRepositoryWithCorrespondingPackage = ProjectReferenceTestData.CreateMockRepository();
 
-            var nugetifier = ReferenceNugetifierTester.BuildNugetifier(vsProject: projectWithSingleDependency, packageRepository: packageRepositoryWithOnePackage);
+            var nugetifier = ReferenceNugetifierTester.BuildNugetifier(vsProject: projectWithSingleDependency, packageRepository: packageRepositoryWithCorrespondingPackage);
             ReferenceNugetifierTester.NugetifyReferencesInProject(nugetifier);
             singleDependency.Verify(binaryDependency => binaryDependency.ConvertToNugetReferenceWithHintPath(It.IsAny<string>()), Times.Once());
+        }
+
+        [Test]
+        public void SingleDependencyWithoutCorrespondingPackageNotNugetted()
+        {
+            var singleDependency = ProjectReferenceTestData.ConstructMockDependency();
+            var projectWithSingleDependency = ProjectReferenceTestData.ConstructMockProject(new[] { singleDependency.Object });
+
+            var nugetifier = ReferenceNugetifierTester.BuildNugetifier(vsProject: projectWithSingleDependency);
+            ReferenceNugetifierTester.NugetifyReferencesInProject(nugetifier);
+
+            singleDependency.Verify(binaryDependency => binaryDependency.ConvertToNugetReferenceWithHintPath(It.IsAny<string>()), Times.Never());
         }
     }
 }
