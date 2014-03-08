@@ -17,7 +17,7 @@ namespace NuGet.Extensions.ReferenceAnalysers
         private readonly IPackageRepository _packageRepository;
         private readonly Lazy<IList<IReference>> _references;
         private readonly Lazy<IList<KeyValuePair<string, List<IPackage>>>> _resolveReferenceMappings;
-        private static string PackageReferenceFilename = Constants.PackageReferenceFile;
+        private static readonly string PackageReferenceFilename = Constants.PackageReferenceFile;
 
         public ReferenceNugetifier(IVsProject vsProject, IPackageRepository packageRepository, IFileSystem projectFileSystem, IConsole console)
         {
