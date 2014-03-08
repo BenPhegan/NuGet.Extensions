@@ -85,7 +85,7 @@ namespace NuGet.Extensions.Commands
                     foreach (var projectAdapter in projectAdapters)
                     {
                         Console.WriteLine();
-                        Console.WriteLine("Processing Project: {0}", projectAdapter.ProjectName);
+                        Console.WriteLine("Processing project: {0}", projectAdapter.ProjectName);
 
                         NugetifyProject(projectAdapter, solutionRoot, existingSolutionPackagesRepo);
 
@@ -208,7 +208,7 @@ namespace NuGet.Extensions.Commands
 
         public static List<string> ParseProjectReferences(ProjectAdapter project, IConsole console)
         {
-            console.WriteLine("Checking for any project References for {0}...", PackageReferenceFilename);
+            console.WriteLine("Checking for any project references for {0}...", PackageReferenceFilename);
             var refs = new List<string>();
             var references = project.GetProjectReferences();
             foreach (var reference in references)
