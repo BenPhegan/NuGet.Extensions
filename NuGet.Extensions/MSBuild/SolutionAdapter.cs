@@ -7,7 +7,8 @@ using NuGet.Common;
 
 namespace NuGet.Extensions.MSBuild
 {
-    public class SolutionAdapter : IDisposable {
+    public class SolutionAdapter : IDisposable, IProjectLoader
+    {
         private readonly FileInfo _solutionFile;
         private readonly IConsole _console;
         private readonly ProjectCollection _projectCollection;
@@ -40,6 +41,18 @@ namespace NuGet.Extensions.MSBuild
         public void Dispose()
         {
             _projectCollection.Dispose();
+        }
+
+        public IVsProject GetProject(Guid projectGuid, string projectPath)
+        {
+            ProjectAdapter projectAdapter;
+            if (!ProjectsByGuid.TryGetValue(projectGuid, out projectAdapter))
+            {
+                _console.WriteWarning("Warning: Project {0} should have been referenced in the solution with guid {1}", Path.GetFileName(projectPath), projectGuid);
+                projectAdapter = CreateProjectAdapter(projectPath);
+                ProjectsByGuid.Add(projectGuid, projectAdapter);
+            }
+            return projectAdapter;
         }
 
         public static List<string> GetAssemblyNamesForProjectReferences(ProjectAdapter project)
