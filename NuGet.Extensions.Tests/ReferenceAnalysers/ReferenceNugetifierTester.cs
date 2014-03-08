@@ -9,8 +9,6 @@ using NuGet.Extensions.Tests.Mocks;
 namespace NuGet.Extensions.Tests.ReferenceAnalysers
 {
     public class ReferenceNugetifierTester {
-        private const string DefaultProjectPath = "c:\\isany.csproj";
-
         public static List<ManifestDependency> GetManifestDependencies(ReferenceNugetifier nugetifier, ISharedPackageRepository sharedPackageRepository = null, List<string> projectReferences = null, PackageReferenceFile packageReferenceFile = null)
         {
             sharedPackageRepository = sharedPackageRepository ?? new Mock<ISharedPackageRepository>().Object;
