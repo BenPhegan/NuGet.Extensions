@@ -78,12 +78,11 @@ namespace NuGet.Extensions.Commands
                 if (solutionFile.Exists && solutionFile.Extension == ".sln")
                 {
                     Console.WriteLine("Loading projects from solution {0}", solutionFile.Name);
-                    var solutionRoot = solutionFile.Directory;
 
+                    var existingSolutionPackagesRepo = new SharedPackageRepository(Path.Combine(solutionFile.Directory.FullName, "packages"));
                     using (var solutionAdapter = new SolutionAdapter(Console))
                     {
-                        var projectAdapters = solutionAdapter.GetProjectsFromSolution(solutionFile, solutionRoot);
-                        var existingSolutionPackagesRepo = new SharedPackageRepository(Path.Combine(solutionRoot.FullName, "packages"));
+                        var projectAdapters = solutionAdapter.GetProjectsFromSolution(solutionFile);
 
                         Console.WriteLine("Processing {0} projects...", projectAdapters.Count);
                         foreach (var projectAdapter in projectAdapters)
@@ -91,7 +90,7 @@ namespace NuGet.Extensions.Commands
                             Console.WriteLine();
                             Console.WriteLine("Processing project: {0}", projectAdapter.ProjectName);
 
-                            NugetifyProject(projectAdapter, solutionRoot, existingSolutionPackagesRepo);
+                            NugetifyProject(projectAdapter, solutionFile.Directory, existingSolutionPackagesRepo);
 
                             Console.WriteLine("Project completed!");
                         }

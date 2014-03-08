@@ -18,11 +18,11 @@ namespace NuGet.Extensions.Commands
             _projectCollection = new ProjectCollection();
         }
 
-        public List<ProjectAdapter> GetProjectsFromSolution(FileInfo solutionFile, DirectoryInfo solutionRoot)
+        public List<ProjectAdapter> GetProjectsFromSolution(FileInfo solutionFile)
         {
             var solution = new Solution(solutionFile.FullName);
             var simpleProjectObjects = solution.Projects;
-            var projectAdapters = simpleProjectObjects.Select(p => GetProjectAdapterOrDefault(solutionRoot, p)).Where(p => p != null).ToList();
+            var projectAdapters = simpleProjectObjects.Select(p => GetProjectAdapterOrDefault(solutionFile.Directory, p)).Where(p => p != null).ToList();
             return projectAdapters;
         }
 
