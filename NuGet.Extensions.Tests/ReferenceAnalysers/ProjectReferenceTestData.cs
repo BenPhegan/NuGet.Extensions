@@ -7,7 +7,8 @@ using NuGet.Extensions.Tests.Mocks;
 namespace NuGet.Extensions.Tests.ReferenceAnalysers
 {
     public class ProjectReferenceTestData {
-        private const string AssemblyInPackageRepository = "Assembly11.dll";
+        public const string AssemblyInPackageRepository = "Assembly11.dll";
+        public const string AnotherAssemblyInPackageRepository = "Assembly21.dll";
         public const string PackageInRepository = "Test1";
 
         public static Mock<IVsProject> ConstructMockProject(IReference[] references = null, string outputAssembly = null)
@@ -26,7 +27,7 @@ namespace NuGet.Extensions.Tests.ReferenceAnalysers
             var dependency = new Mock<IReference>();
             dependency.SetupGet(d => d.IncludeName).Returns(includeName);
             dependency.SetupGet(d => d.IncludeVersion).Returns(includeVersion ?? "0.0.0.0");
-            dependency.Setup(d => d.IsForAssembly(It.IsAny<string>())).Returns(true);
+            dependency.Setup(d => d.IsForAssembly(includeName)).Returns(true);
 
             string anydependencyHintpath = includeName;
             dependency.Setup(d => d.TryGetHintPath(out anydependencyHintpath)).Returns(true);
@@ -38,7 +39,7 @@ namespace NuGet.Extensions.Tests.ReferenceAnalysers
         {
             var mockRepo = new MockPackageRepository();
             mockRepo.AddPackage(PackageUtility.CreatePackage(PackageInRepository, isLatest: true, assemblyReferences: new List<string> { AssemblyInPackageRepository, "Assembly12.dll" }, dependencies: new List<PackageDependency>()));
-            mockRepo.AddPackage(PackageUtility.CreatePackage("Test2", isLatest: true, assemblyReferences: new List<string> { "Assembly21.dll", "Assembly22.dll" }, dependencies: new List<PackageDependency> { new PackageDependency(PackageInRepository) }));
+            mockRepo.AddPackage(PackageUtility.CreatePackage("Test2", isLatest: true, assemblyReferences: new List<string> { AnotherAssemblyInPackageRepository, "Assembly22.dll" }, dependencies: new List<PackageDependency> { new PackageDependency(PackageInRepository) }));
             return mockRepo;
         }
     }
