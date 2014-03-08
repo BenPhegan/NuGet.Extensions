@@ -130,7 +130,13 @@ namespace NuGet.Extensions.Commands
             var manifestDependencies = NugetifyReferences(projectAdapter, solutionRoot, existingSolutionPackagesRepo);
             projectAdapter.Save();
             //Create nuspec regardless of whether we have added dependencies
-            if (NuSpec) CreateAndOutputNuSpecFile(projectAdapter.AssemblyName, manifestDependencies);
+            if (NuSpec)
+            {
+                var assemblyOutput = projectAdapter.AssemblyName;
+                var manifest = CreateNuspecManifest(assemblyOutput, manifestDependencies);
+                string destination = assemblyOutput + Constants.ManifestExtension;
+                Save(manifest, destination);
+            }
         }
 
         private List<ManifestDependency> NugetifyReferences(ProjectAdapter projectAdapter, DirectoryInfo solutionRoot, ISharedPackageRepository existingSolutionPackagesRepo)
@@ -145,7 +151,7 @@ namespace NuGet.Extensions.Commands
             return manifestDependencies;
         }
 
-        private void CreateAndOutputNuSpecFile(string assemblyOutput, List<ManifestDependency> manifestDependencies, string targetFramework = ".NET Framework, Version=4.0")
+        private Manifest CreateNuspecManifest(string assemblyOutput, List<ManifestDependency> manifestDependencies, string targetFramework = ".NET Framework, Version=4.0")
         {
             var manifest = new Manifest
                                {
@@ -179,12 +185,14 @@ namespace NuGet.Extensions.Commands
                                                }
                                };
 
-            string nuspecFile = assemblyOutput + Constants.ManifestExtension;
-            
             //Dont add a releasenotes node if we dont have any to add...
-            if (!String.IsNullOrEmpty(ReleaseNotes))
-                manifest.Metadata.ReleaseNotes = ReleaseNotes;
+            if (!String.IsNullOrEmpty(ReleaseNotes)) manifest.Metadata.ReleaseNotes = ReleaseNotes;
 
+            return manifest;
+        }
+
+        private void Save(Manifest manifest, string nuspecFile)
+        {
             try
             {
                 Console.WriteLine("Saving new NuSpec: {0}", nuspecFile);
