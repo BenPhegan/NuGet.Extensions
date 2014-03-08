@@ -80,10 +80,9 @@ namespace NuGet.Extensions.Commands
                     Console.WriteLine("Loading projects from solution {0}", solutionFile.Name);
                     var solutionRoot = solutionFile.Directory;
 
-                    var solutionAdapter = new SolutionAdapter(Console);
-                    using (var projectCollection = new ProjectCollection())
+                    using (var solutionAdapter = new SolutionAdapter(Console))
                     {
-                        var projectAdapters = solutionAdapter.GetProjectsFromSolution(solutionFile, solutionRoot, projectCollection);
+                        var projectAdapters = solutionAdapter.GetProjectsFromSolution(solutionFile, solutionRoot);
                         var existingSolutionPackagesRepo = new SharedPackageRepository(Path.Combine(solutionRoot.FullName, "packages"));
 
                         Console.WriteLine("Processing {0} projects...", projectAdapters.Count);
