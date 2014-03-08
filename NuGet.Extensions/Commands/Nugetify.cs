@@ -12,7 +12,7 @@ namespace NuGet.Extensions.Commands
 {
     [Command("nugetify", "Given a solution, attempts to replace all file references with package references, adding all required" +
                          " packages.config files as it goes.", MinArgs = 1, MaxArgs = 1)]
-    public class Nugetify : Command
+    public class Nugetify : Command, INuspecDataSource
     {
         private static readonly string PackageReferenceFilename = Constants.PackageReferenceFile;
         private readonly List<string> _sources = new List<string>();
