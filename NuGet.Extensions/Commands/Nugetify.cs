@@ -116,9 +116,9 @@ namespace NuGet.Extensions.Commands
             if (NuSpec)
             {
                 var assemblyOutput = projectAdapter.AssemblyName;
-                var manifest = CreateNuspecManifest(assemblyOutput, manifestDependencies);
+                var manifest = CreateNuspecManifest(this, assemblyOutput, manifestDependencies);
                 string destination = assemblyOutput + Constants.ManifestExtension;
-                Save(manifest, destination);
+                Save(Console, manifest, destination);
             }
         }
 
@@ -130,7 +130,7 @@ namespace NuGet.Extensions.Commands
             return new ProjectNugetifier(projectAdapter, repository, projectFileSystem, Console);
         }
 
-        private Manifest CreateNuspecManifest(string assemblyOutput, List<ManifestDependency> manifestDependencies, string targetFramework = ".NET Framework, Version=4.0")
+        private static Manifest CreateNuspecManifest(Nugetify nuspecData, string assemblyOutput, List<ManifestDependency> manifestDependencies, string targetFramework = ".NET Framework, Version=4.0")
         {
             var manifest = new Manifest
                                {
@@ -141,18 +141,18 @@ namespace NuGet.Extensions.Commands
                                                             {
                                                    new ManifestDependencySet{Dependencies = manifestDependencies,TargetFramework = targetFramework}
                                                },
-                                           Id = Id ?? assemblyOutput,
-                                           Title = Title ?? assemblyOutput,
+                                           Id = nuspecData.Id ?? assemblyOutput,
+                                           Title = nuspecData.Title ?? assemblyOutput,
                                            Version = "$version$",
-                                           Description = Description ?? assemblyOutput,
-                                           Authors = Author ?? "$author$",
-                                           Tags = Tags ?? "$tags$",
-                                           LicenseUrl = LicenseUrl ?? "$licenseurl$",
-                                           RequireLicenseAcceptance = RequireLicenseAcceptance,
-                                           Copyright = Copyright ?? "$copyright$",
-                                           IconUrl = IconUrl ?? "$iconurl$",
-                                           ProjectUrl = ProjectUrl ?? "$projrcturl$",
-                                           Owners = Owners ?? Author ?? "$author$"                                          
+                                           Description = nuspecData.Description ?? assemblyOutput,
+                                           Authors = nuspecData.Author ?? "$author$",
+                                           Tags = nuspecData.Tags ?? "$tags$",
+                                           LicenseUrl = nuspecData.LicenseUrl ?? "$licenseurl$",
+                                           RequireLicenseAcceptance = nuspecData.RequireLicenseAcceptance,
+                                           Copyright = nuspecData.Copyright ?? "$copyright$",
+                                           IconUrl = nuspecData.IconUrl ?? "$iconurl$",
+                                           ProjectUrl = nuspecData.ProjectUrl ?? "$projrcturl$",
+                                           Owners = nuspecData.Owners ?? nuspecData.Author ?? "$author$"                                          
                                        },
                                    Files = new List<ManifestFile>
                                            {
@@ -165,16 +165,16 @@ namespace NuGet.Extensions.Commands
                                };
 
             //Dont add a releasenotes node if we dont have any to add...
-            if (!String.IsNullOrEmpty(ReleaseNotes)) manifest.Metadata.ReleaseNotes = ReleaseNotes;
+            if (!String.IsNullOrEmpty(nuspecData.ReleaseNotes)) manifest.Metadata.ReleaseNotes = nuspecData.ReleaseNotes;
 
             return manifest;
         }
 
-        private void Save(Manifest manifest, string nuspecFile)
+        private static void Save(IConsole console, Manifest manifest, string nuspecFile)
         {
             try
             {
-                Console.WriteLine("Saving new NuSpec: {0}", nuspecFile);
+                console.WriteLine("Saving new NuSpec: {0}", nuspecFile);
                 using (var stream = new MemoryStream())
                 {
                     manifest.Save(stream, validate: false);
@@ -185,7 +185,7 @@ namespace NuGet.Extensions.Commands
             }
             catch (Exception)
             {
-                Console.WriteError("Could not save file: {0}", nuspecFile);
+                console.WriteError("Could not save file: {0}", nuspecFile);
                 throw;
             }
         }
