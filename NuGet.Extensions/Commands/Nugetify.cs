@@ -30,13 +30,13 @@ namespace NuGet.Extensions.Commands
             get { return _sources; }
         }
 
-        [Option("NuSpec Project URL")]
+        [Option("NuSpec project URL")]
         public string ProjectUrl { get; set; }
 
-        [Option("NuSpec LicenseUrl")]
+        [Option("NuSpec license URL")]
         public string LicenseUrl { get; set; }
 
-        [Option("NuSpec Icon URL")]
+        [Option("NuSpec icon URL")]
         public string IconUrl { get; set; }
 
         [Option("NuSpec tags")]
@@ -57,16 +57,16 @@ namespace NuGet.Extensions.Commands
         [Option("NuSpec title")]
         public string Title { get; set; }
 
-        [Option("NuSpec Author")]
+        [Option("NuSpec author")]
         public string Author { get; set; }
 
-        [Option("NuSpec RequireLicenseAcceptance (defaults to false)")]
+        [Option("NuSpec require license acceptance (defaults to false)")]
         public bool RequireLicenseAcceptance { get; set; }
 
-        [Option(("NuSpec Copyright"))]
+        [Option(("NuSpec copyright"))]
         public string Copyright { get; set; }
 
-        [Option("NuSpec Owners")]
+        [Option("NuSpec owners")]
         public string Owners { get; set; }
 
         public override void ExecuteCommand()
