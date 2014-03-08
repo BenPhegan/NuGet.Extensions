@@ -60,7 +60,12 @@ namespace NuGet.Extensions.MSBuild
 
         private ProjectAdapter ProjectAdapter(SolutionProject p)
         {
-            return new ProjectAdapter(GetAbsoluteProjectPath(p), _projectCollection);
+            return CreateProjectAdapter(p.RelativePath);
+        }
+
+        private ProjectAdapter CreateProjectAdapter(string relativePath)
+        {
+            return new ProjectAdapter(GetAbsoluteProjectPath(relativePath), _projectCollection);
         }
 
         private static Guid ProjectGuid(SolutionProject p)
@@ -70,16 +75,16 @@ namespace NuGet.Extensions.MSBuild
 
         private bool ProjectExists(SolutionProject simpleProject)
         {
-            var projectPath = GetAbsoluteProjectPath(simpleProject);
+            var projectPath = GetAbsoluteProjectPath(simpleProject.RelativePath);
             if (File.Exists(projectPath)) return true;
 
             _console.WriteWarning("Project: {0} was not found on disk", simpleProject.ProjectName);
             return false;
         }
 
-        private string GetAbsoluteProjectPath(SolutionProject simpleProject)
+        private string GetAbsoluteProjectPath(string relativePath)
         {
-            return Path.Combine(_solutionFile.Directory.FullName, simpleProject.RelativePath);
+            return Path.Combine(_solutionFile.Directory.FullName, relativePath);
         }
 
     }
