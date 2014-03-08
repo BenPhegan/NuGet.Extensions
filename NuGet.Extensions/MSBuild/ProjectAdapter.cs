@@ -36,6 +36,11 @@ namespace NuGet.Extensions.MSBuild
             get { return _project.GetPropertyValue("AssemblyName"); }
         }
 
+        public string ProjectName
+        {
+            get { return _project.GetPropertyValue("ProjectName"); }
+        }
+
         public DirectoryInfo ProjectDirectory
         {
             get { return new DirectoryInfo(_project.DirectoryPath); }

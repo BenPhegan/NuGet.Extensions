@@ -33,6 +33,12 @@ namespace NuGet.Extensions.Tests.MSBuild
         }
 
         [Test]
+        public void ProjectWithDependenciesProjectyNameIsProjectWithDependencies()
+        {
+            Assert.That(_projectWithDependenciesAdapter.ProjectName, Is.EqualTo("ProjectWithDependencies"));
+        }
+
+        [Test]
         public void ProjectWithDependenciesDependsOnNewtonsoftJson()
         {
             var binaryReferenceIncludeNames = _projectBinaryReferenceAdapters.Select(r => r.IncludeName).ToList();
