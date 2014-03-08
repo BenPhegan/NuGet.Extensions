@@ -119,7 +119,7 @@ namespace NuGet.Extensions.Tests.MSBuild
 
         private static ProjectAdapter CreateProjectAdapter(string projectWithDependencies)
         {
-            return new ProjectAdapter(projectWithDependencies, "packages.config");
+            return new ProjectAdapter(projectWithDependencies);
         }
     }
 }

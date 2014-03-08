@@ -103,7 +103,7 @@ namespace NuGet.Extensions.ReferenceAnalysers
             //Register the packages.config
             var packagesConfigFilePath = Path.Combine(_vsProject.ProjectDirectory.FullName + "\\", PackageReferenceFilename);
             sharedPackagesRepository.RegisterRepository(packagesConfigFilePath);
-            _vsProject.AddPackagesConfig();
+            _vsProject.AddFile(PackageReferenceFilename);
 
             return manifestDependencies;
         }

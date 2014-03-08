@@ -8,17 +8,15 @@ namespace NuGet.Extensions.MSBuild
     public class ProjectAdapter : IVsProject
     {
         private readonly Project _project;
-        private readonly string _packagesConfigFilename;
 
-        public ProjectAdapter(string projectPath, string packagesConfigFilename, IDictionary<string, string> globalMsBuildProperties = null)
-            : this(CreateMsBuildProject(projectPath, globalMsBuildProperties), packagesConfigFilename)
+        public ProjectAdapter(string projectPath, IDictionary<string, string> globalMsBuildProperties = null)
+            : this(CreateMsBuildProject(projectPath, globalMsBuildProperties))
         {
         }
 
-        public ProjectAdapter(Project project, string packagesConfigFilename)
+        public ProjectAdapter(Project project)
         {
             _project = project;
-            _packagesConfigFilename = packagesConfigFilename;
         }
 
         private static Project CreateMsBuildProject(string projectPath, IDictionary<string, string> globalMsBuildProperties)
@@ -51,17 +49,17 @@ namespace NuGet.Extensions.MSBuild
             _project.Save();
         }
 
-        public void AddPackagesConfig()
+        public void AddFile(string filename)
         { //Add the packages.config to the project content, otherwise later versions of the VSIX fail...
-            if (!HasPackagesConfig())
+            if (!FileAlreadyReferenced(filename))
             {
-                _project.Xml.AddItemGroup().AddItem("None", _packagesConfigFilename);
+                _project.Xml.AddItemGroup().AddItem("None", filename);
             }
         }
 
-        private bool HasPackagesConfig()
+        private bool FileAlreadyReferenced(string filename)
         {
-            return _project.GetItems("None").Any(i => i.UnevaluatedInclude.Equals(_packagesConfigFilename));
+            return _project.GetItems("None").Any(i => i.UnevaluatedInclude.Equals(filename));
         }
 
         public static List<string> GetReferencedAssemblies(IEnumerable<IReference> references)

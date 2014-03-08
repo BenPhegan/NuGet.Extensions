@@ -113,7 +113,7 @@ namespace NuGet.Extensions.Commands
             var projectPath = Path.Combine(solutionRoot.FullName, simpleProject.RelativePath);
             if (File.Exists(projectPath))
             {
-                return new ProjectAdapter(projectPath, PackageReferenceFilename);
+                return new ProjectAdapter(projectPath);
             }
             else
             {
@@ -214,7 +214,7 @@ namespace NuGet.Extensions.Commands
             foreach (var reference in references)
             {
                 var newProjectPath = Path.Combine(project.ProjectDirectory.FullName, reference.IncludeName);
-                var refProjectAdapter = new ProjectAdapter(newProjectPath, PackageReferenceFilename);
+                var refProjectAdapter = new ProjectAdapter(newProjectPath);
                 refs.Add(refProjectAdapter.AssemblyName);
             }
             return refs;

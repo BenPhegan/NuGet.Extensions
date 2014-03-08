@@ -9,6 +9,6 @@ namespace NuGet.Extensions.MSBuild
         string ProjectName { get; }
         DirectoryInfo ProjectDirectory { get; }
         void Save();
-        void AddPackagesConfig();
+        void AddFile(string filename);
     }
 }
