@@ -14,7 +14,6 @@ namespace NuGet.Extensions.Commands
                          " packages.config files as it goes.", MinArgs = 1, MaxArgs = 1)]
     public class Nugetify : Command, INuspecDataSource
     {
-        private static readonly string PackageReferenceFilename = Constants.PackageReferenceFile;
         private readonly List<string> _sources = new List<string>();
 
         [ImportingConstructor]
