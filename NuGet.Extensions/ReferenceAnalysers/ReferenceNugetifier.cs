@@ -70,6 +70,7 @@ namespace NuGet.Extensions.ReferenceAnalysers
 
         public List<ManifestDependency> AddNugetMetadataForReferences(ISharedPackageRepository sharedPackagesRepository, bool nuspec)
         {
+            _console.WriteLine("Checking for any project references for {0}...", PackageReferenceFilename);
             var resolvedMappings = _resolveReferenceMappings.Value;
             var manifestDependencies = new List<ManifestDependency>();
             if (!resolvedMappings.Any()) return manifestDependencies;
