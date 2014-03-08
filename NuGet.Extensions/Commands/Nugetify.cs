@@ -78,10 +78,8 @@ namespace NuGet.Extensions.Commands
                 {
                     Console.WriteLine("Loading projects from solution {0}", solutionFile.Name);
                     var solutionRoot = solutionFile.Directory;
+                    var projectAdapters = GetProjectsFromSolution(solutionFile, solutionRoot);
                     var sharedPackagesRepository = new SharedPackageRepository(Path.Combine(solutionRoot.FullName, "packages"));
-                    var solution = new Solution(solutionFile.FullName);
-                    var simpleProjectObjects = solution.Projects;
-                    var projectAdapters = simpleProjectObjects.Select(p => GetProjectAdapterOrDefault(solutionRoot, p)).Where(p => p != null).ToList();
 
                     Console.WriteLine("Processing {0} projects...", projectAdapters.Count);
                     foreach (var projectAdapter in projectAdapters)
@@ -95,6 +93,14 @@ namespace NuGet.Extensions.Commands
                     Console.WriteError("Could not find solution file : {0}", solutionFile);
                 }
             }
+        }
+
+        private List<ProjectAdapter> GetProjectsFromSolution(FileInfo solutionFile, DirectoryInfo solutionRoot)
+        {
+            var solution = new Solution(solutionFile.FullName);
+            var simpleProjectObjects = solution.Projects;
+            var projectAdapters = simpleProjectObjects.Select(p => GetProjectAdapterOrDefault(solutionRoot, p)).Where(p => p != null).ToList();
+            return projectAdapters;
         }
 
         private ProjectAdapter GetProjectAdapterOrDefault(DirectoryInfo solutionRoot, SolutionProject simpleProject)
