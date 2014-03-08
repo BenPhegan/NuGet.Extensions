@@ -4,9 +4,8 @@ using System.IO;
 using System.Linq;
 using Microsoft.Build.Evaluation;
 using NuGet.Common;
-using NuGet.Extensions.MSBuild;
 
-namespace NuGet.Extensions.Commands
+namespace NuGet.Extensions.MSBuild
 {
     public class SolutionAdapter : IDisposable {
         private readonly IConsole _console;

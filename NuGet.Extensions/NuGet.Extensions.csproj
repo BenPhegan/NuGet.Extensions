@@ -69,13 +69,13 @@
     <Compile Include="Caches\MemoryBasedPackageCache.cs" />
     <Compile Include="Caches\NuGetCacheManager.cs" />
     <Compile Include="Commands\Audit.cs" />
-    <Compile Include="Commands\SolutionAdapter.cs" />
     <Compile Include="MSBuild\BinaryReferenceAdapter.cs" />
     <Compile Include="Commands\FixReferences.cs" />
     <Compile Include="MSBuild\IReference.cs" />
     <Compile Include="MSBuild\IVsProject.cs" />
     <Compile Include="MSBuild\ProjectAdapter.cs" />
     <Compile Include="MSBuild\ProjectReferenceAdapter.cs" />
+    <Compile Include="MSBuild\SolutionAdapter.cs" />
     <Compile Include="ReferenceAnalysers\ReferenceNugetifier.cs" />
     <Compile Include="Comparers\LambdaComparer.cs" />
     <Compile Include="Comparers\PackageReferenceEqualityComparer.cs" />
