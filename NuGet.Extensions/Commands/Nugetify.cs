@@ -2,9 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
-using System.Linq;
 using System.Text.RegularExpressions;
-using Microsoft.Build.Evaluation;
 using NuGet.Commands;
 using NuGet.Common;
 using NuGet.Extensions.MSBuild;
