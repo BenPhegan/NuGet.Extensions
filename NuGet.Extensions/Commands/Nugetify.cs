@@ -78,18 +78,21 @@ namespace NuGet.Extensions.Commands
                 {
                     Console.WriteLine("Loading projects from solution {0}", solutionFile.Name);
                     var solutionRoot = solutionFile.Directory;
-                    var projectAdapters = GetProjectsFromSolution(solutionFile, solutionRoot);
-                    var existingSolutionPackagesRepo = new SharedPackageRepository(Path.Combine(solutionRoot.FullName, "packages"));
-
-                    Console.WriteLine("Processing {0} projects...", projectAdapters.Count);
-                    foreach (var projectAdapter in projectAdapters)
+                    using (var projectCollection = new ProjectCollection())
                     {
-                        Console.WriteLine();
-                        Console.WriteLine("Processing project: {0}", projectAdapter.ProjectName);
+                        var projectAdapters = GetProjectsFromSolution(solutionFile, solutionRoot, projectCollection);
+                        var existingSolutionPackagesRepo = new SharedPackageRepository(Path.Combine(solutionRoot.FullName, "packages"));
 
-                        NugetifyProject(projectAdapter, solutionRoot, existingSolutionPackagesRepo);
+                        Console.WriteLine("Processing {0} projects...", projectAdapters.Count);
+                        foreach (var projectAdapter in projectAdapters)
+                        {
+                            Console.WriteLine();
+                            Console.WriteLine("Processing project: {0}", projectAdapter.ProjectName);
 
-                        Console.WriteLine("Project completed!");
+                            NugetifyProject(projectAdapter, solutionRoot, existingSolutionPackagesRepo);
+
+                            Console.WriteLine("Project completed!");
+                        }
                     }
                     Console.WriteLine("Complete!");
                 }
@@ -100,20 +103,20 @@ namespace NuGet.Extensions.Commands
             }
         }
 
-        private List<ProjectAdapter> GetProjectsFromSolution(FileInfo solutionFile, DirectoryInfo solutionRoot)
+        private List<ProjectAdapter> GetProjectsFromSolution(FileInfo solutionFile, DirectoryInfo solutionRoot, ProjectCollection projectCollection)
         {
             var solution = new Solution(solutionFile.FullName);
             var simpleProjectObjects = solution.Projects;
-            var projectAdapters = simpleProjectObjects.Select(p => GetProjectAdapterOrDefault(solutionRoot, p)).Where(p => p != null).ToList();
+            var projectAdapters = simpleProjectObjects.Select(p => GetProjectAdapterOrDefault(solutionRoot, p, projectCollection)).Where(p => p != null).ToList();
             return projectAdapters;
         }
 
-        private ProjectAdapter GetProjectAdapterOrDefault(DirectoryInfo solutionRoot, SolutionProject simpleProject)
+        private ProjectAdapter GetProjectAdapterOrDefault(DirectoryInfo solutionRoot, SolutionProject simpleProject, ProjectCollection projectCollection)
         {
             var projectPath = Path.Combine(solutionRoot.FullName, simpleProject.RelativePath);
             if (File.Exists(projectPath))
             {
-                return new ProjectAdapter(projectPath);
+                return new ProjectAdapter(projectPath, projectCollection: projectCollection);
             }
             else
             {
@@ -211,11 +214,14 @@ namespace NuGet.Extensions.Commands
             console.WriteLine("Checking for any project references for {0}...", PackageReferenceFilename);
             var refs = new List<string>();
             var references = project.GetProjectReferences();
-            foreach (var reference in references)
+            using (var projectCollection = new ProjectCollection())
             {
-                var newProjectPath = Path.Combine(project.ProjectDirectory.FullName, reference.IncludeName);
-                var refProjectAdapter = new ProjectAdapter(newProjectPath);
-                refs.Add(refProjectAdapter.AssemblyName);
+                foreach (var reference in references)
+                {
+                    var newProjectPath = Path.Combine(project.ProjectDirectory.FullName, reference.IncludeName);
+                    var refProjectAdapter = new ProjectAdapter(newProjectPath, projectCollection: projectCollection);
+                    refs.Add(refProjectAdapter.AssemblyName);
+                }
             }
             return refs;
         }

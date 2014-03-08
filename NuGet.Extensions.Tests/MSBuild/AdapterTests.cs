@@ -119,7 +119,7 @@ namespace NuGet.Extensions.Tests.MSBuild
 
         private static ProjectAdapter CreateProjectAdapter(string projectWithDependencies)
         {
-            return new ProjectAdapter(projectWithDependencies);
+            return new ProjectAdapter(projectWithDependencies, new ProjectCollection());
         }
     }
 }

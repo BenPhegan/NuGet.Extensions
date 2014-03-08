@@ -9,19 +9,19 @@ namespace NuGet.Extensions.MSBuild
     {
         private readonly Project _project;
 
-        public ProjectAdapter(string projectPath, IDictionary<string, string> globalMsBuildProperties = null)
-            : this(CreateMsBuildProject(projectPath, globalMsBuildProperties))
+        public ProjectAdapter(string projectPath, ProjectCollection projectCollection, IDictionary<string, string> globalMsBuildProperties = null)
+            : this(CreateMsBuildProject(projectPath, projectCollection, globalMsBuildProperties))
         {
         }
 
-        public ProjectAdapter(Project project)
+        private ProjectAdapter(Project project)
         {
             _project = project;
         }
 
-        private static Project CreateMsBuildProject(string projectPath, IDictionary<string, string> globalMsBuildProperties)
+        private static Project CreateMsBuildProject(string projectPath, ProjectCollection projectCollection, IDictionary<string, string> globalMsBuildProperties)
         {
-            return new Project(projectPath, globalMsBuildProperties, null, new ProjectCollection());
+            return new Project(projectPath, globalMsBuildProperties, null, projectCollection);
         }
 
         public IEnumerable<IReference> GetBinaryReferences()
