@@ -8,20 +8,22 @@ using NuGet.Common;
 namespace NuGet.Extensions.MSBuild
 {
     public class SolutionAdapter : IDisposable {
+        private readonly FileInfo _solutionFile;
         private readonly IConsole _console;
         private readonly ProjectCollection _projectCollection;
 
-        public SolutionAdapter(IConsole console)
+        public SolutionAdapter(FileInfo solutionFile, IConsole console)
         {
+            _solutionFile = solutionFile;
             _console = console;
             _projectCollection = new ProjectCollection();
         }
 
-        public List<ProjectAdapter> GetProjectsFromSolution(FileInfo solutionFile)
+        public List<ProjectAdapter> GetProjects()
         {
-            var solution = new Solution(solutionFile.FullName);
+            var solution = new Solution(_solutionFile.FullName);
             var simpleProjectObjects = solution.Projects;
-            var projectAdapters = simpleProjectObjects.Select(p => GetProjectAdapterOrDefault(solutionFile.Directory, p)).Where(p => p != null).ToList();
+            var projectAdapters = simpleProjectObjects.Select(p => GetProjectAdapterOrDefault(_solutionFile.Directory, p)).Where(p => p != null).ToList();
             return projectAdapters;
         }
 
