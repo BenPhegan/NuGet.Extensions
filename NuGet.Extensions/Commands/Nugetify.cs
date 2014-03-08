@@ -78,7 +78,7 @@ namespace NuGet.Extensions.Commands
                     Console.WriteLine("Loading projects from solution {0}", solutionFile.Name);
 
                     var existingSolutionPackagesRepo = new SharedPackageRepository(Path.Combine(solutionFile.Directory.FullName, "packages"));
-                    using (var solutionAdapter = new SolutionAdapter(solutionFile, Console))
+                    using (var solutionAdapter = new SolutionProjectLoader(solutionFile, Console))
                     {
                         var projectAdapters = solutionAdapter.GetProjects();
 

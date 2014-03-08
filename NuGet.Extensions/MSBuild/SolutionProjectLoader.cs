@@ -7,14 +7,14 @@ using NuGet.Common;
 
 namespace NuGet.Extensions.MSBuild
 {
-    public class SolutionAdapter : IDisposable, IProjectLoader
+    public class SolutionProjectLoader : IDisposable, IProjectLoader
     {
         private readonly FileInfo _solutionFile;
         private readonly IConsole _console;
         private readonly ProjectCollection _projectCollection;
         private readonly Lazy<IDictionary<Guid, ProjectAdapter>> _projectsInSolutionByGuid;
 
-        public SolutionAdapter(FileInfo solutionFile, IConsole console)
+        public SolutionProjectLoader(FileInfo solutionFile, IConsole console)
         {
             _solutionFile = solutionFile;
             _console = console;

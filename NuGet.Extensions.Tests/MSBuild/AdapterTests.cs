@@ -17,7 +17,7 @@ namespace NuGet.Extensions.Tests.MSBuild
     {
         private ProjectAdapter _projectWithDependenciesAdapter;
         private IEnumerable<IReference> _projectBinaryReferenceAdapters;
-        private SolutionAdapter _solutionAdapter;
+        private SolutionProjectLoader _solutionProjectLoader;
         private const string _projectWithDependenciesName = "ProjectWithDependencies";
         private const string _expectedBinaryDependencyAssemblyName = "Newtonsoft.Json";
         private const string _expectedBinaryDependencyVersion = "6.0.0.0";
@@ -26,8 +26,8 @@ namespace NuGet.Extensions.Tests.MSBuild
         [SetUp]
         public void SetUpProjectAdapterAndBinaryDependencies()
         {
-            _solutionAdapter = new SolutionAdapter(new FileInfo(Paths.AdapterTestsSolutionFile), new Mock<IConsole>().Object);
-            var projectAdapters = _solutionAdapter.GetProjects();
+            _solutionProjectLoader = new SolutionProjectLoader(new FileInfo(Paths.AdapterTestsSolutionFile), new Mock<IConsole>().Object);
+            var projectAdapters = _solutionProjectLoader.GetProjects();
             _projectWithDependenciesAdapter = projectAdapters.Single(p => p.ProjectName == _projectWithDependenciesName);
             _projectBinaryReferenceAdapters = _projectWithDependenciesAdapter.GetBinaryReferences();
         }
