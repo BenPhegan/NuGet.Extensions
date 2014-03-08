@@ -48,7 +48,7 @@ namespace NuGet.Extensions.MSBuild
             ProjectAdapter projectAdapter;
             if (!ProjectsByGuid.TryGetValue(projectGuid, out projectAdapter))
             {
-                _console.WriteWarning("Warning: Project {0} should have been referenced in the solution with guid {1}", Path.GetFileName(projectPath), projectGuid);
+                _console.WriteWarning("Project {0} should have been referenced in the solution with guid {1}", Path.GetFileName(projectPath), projectGuid);
                 projectAdapter = CreateProjectAdapter(projectPath);
                 ProjectsByGuid.Add(projectGuid, projectAdapter);
             }
