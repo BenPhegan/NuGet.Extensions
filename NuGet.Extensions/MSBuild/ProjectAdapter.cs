@@ -10,10 +10,20 @@ namespace NuGet.Extensions.MSBuild
         private readonly Project _project;
         private readonly string _packagesConfigFilename;
 
+        public ProjectAdapter(string projectPath, string packagesConfigFilename, IDictionary<string, string> globalMsBuildProperties = null)
+            : this(CreateMsBuildProject(projectPath, globalMsBuildProperties), packagesConfigFilename)
+        {
+        }
+
         public ProjectAdapter(Project project, string packagesConfigFilename)
         {
             _project = project;
             _packagesConfigFilename = packagesConfigFilename;
+        }
+
+        private static Project CreateMsBuildProject(string projectPath, IDictionary<string, string> globalMsBuildProperties)
+        {
+            return new Project(projectPath, globalMsBuildProperties, null, new ProjectCollection());
         }
 
         public IEnumerable<IReference> GetBinaryReferences()

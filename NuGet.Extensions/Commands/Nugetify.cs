@@ -101,8 +101,7 @@ namespace NuGet.Extensions.Commands
             {
                 Console.WriteLine();
                 Console.WriteLine("Processing Project: {0}", simpleProject.ProjectName);
-                var project = new Project(projectPath, new Dictionary<string, string>(), null, new ProjectCollection());
-                var projectAdapter = new ProjectAdapter(project, PackagesConfigFilename);
+                var projectAdapter = new ProjectAdapter(projectPath, PackagesConfigFilename);
                 var projectFileSystem = new PhysicalFileSystem(projectAdapter.ProjectDirectory.ToString());
                 var packageReferenceFile = new PackageReferenceFile(projectFileSystem, PackagesConfigFilename);
                 var packageRepository = GetRepository();
@@ -190,8 +189,8 @@ namespace NuGet.Extensions.Commands
             var references = project.GetProjectReferences();
             foreach (var reference in references)
             {
-                var refProject = new Project(Path.Combine(project.ProjectDirectory.FullName, reference.IncludeName),new Dictionary<string, string>(),null,new ProjectCollection());
-                var refProjectAdapter = new ProjectAdapter(refProject, PackagesConfigFilename);
+                var newProjectPath = Path.Combine(project.ProjectDirectory.FullName, reference.IncludeName);
+                var refProjectAdapter = new ProjectAdapter(newProjectPath, PackagesConfigFilename);
                 refs.Add(refProjectAdapter.AssemblyName);
             }
             return refs;
