@@ -118,8 +118,8 @@ namespace NuGet.Extensions.Commands
         private List<ManifestDependency> NugetifyReferences(ProjectAdapter projectAdapter, DirectoryInfo solutionRoot, ISharedPackageRepository existingSolutionPackagesRepo)
         {
             var referenceNugetifier = CreateReferenceNugetifier(projectAdapter);
-            Console.WriteLine("Checking for any project references for {0}...", PackageReferenceFilename);
             referenceNugetifier.NugetifyReferencesInProject(solutionRoot);
+            Console.WriteLine("Checking for any project references for {0}...", PackageReferenceFilename);
             var manifestDependencies = referenceNugetifier.AddNugetMetadataForReferences(existingSolutionPackagesRepo, NuSpec);
             return manifestDependencies;
         }
