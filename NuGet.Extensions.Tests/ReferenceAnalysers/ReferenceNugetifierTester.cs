@@ -10,13 +10,13 @@ namespace NuGet.Extensions.Tests.ReferenceAnalysers
 {
     public class ReferenceNugetifierTester 
     {
-        public static List<ManifestDependency> GetManifestDependencies(ReferenceNugetifier nugetifier, ISharedPackageRepository sharedPackageRepository = null)
+        public static List<ManifestDependency> GetManifestDependencies(ProjectNugetifier nugetifier, ISharedPackageRepository sharedPackageRepository = null)
         {
             sharedPackageRepository = sharedPackageRepository ?? new Mock<ISharedPackageRepository>().Object;
-            return nugetifier.AddNugetMetadataForReferences(sharedPackageRepository, true);
+            return nugetifier.AddNugetReferenceMetadata(sharedPackageRepository, true);
         }
 
-        public static ReferenceNugetifier BuildNugetifier(IFileSystem projectFileSystem = null, Mock<IVsProject> vsProject = null, IPackageRepository packageRepository = null)
+        public static ProjectNugetifier BuildNugetifier(IFileSystem projectFileSystem = null, Mock<IVsProject> vsProject = null, IPackageRepository packageRepository = null)
         {
             var console = new Mock<IConsole>();
             var solutionRoot = GetMockDirectory();
@@ -24,7 +24,7 @@ namespace NuGet.Extensions.Tests.ReferenceAnalysers
             vsProject = vsProject ?? new Mock<IVsProject>();
             vsProject.SetupGet(p => p.ProjectDirectory).Returns(GetMockDirectory());
             packageRepository = packageRepository ?? new MockPackageRepository();
-            return new ReferenceNugetifier(vsProject.Object, packageRepository, projectFileSystem, console.Object);
+            return new ProjectNugetifier(vsProject.Object, packageRepository, projectFileSystem, console.Object);
         }
 
         private static MockFileSystem GetMockFileSystem(DirectoryInfo solutionRoot)
@@ -37,9 +37,9 @@ namespace NuGet.Extensions.Tests.ReferenceAnalysers
             return new DirectoryInfo("c:\\isAnyFolder");
         }
 
-        public static void NugetifyReferencesInProject(ReferenceNugetifier nugetifier)
+        public static void NugetifyReferencesInProject(ProjectNugetifier nugetifier)
         {
-            nugetifier.NugetifyReferencesInProject(GetMockDirectory());
+            nugetifier.NugetifyReferences(GetMockDirectory());
         }
     }
 }

@@ -9,7 +9,7 @@ using NuGet.Extensions.Repositories;
 
 namespace NuGet.Extensions.ReferenceAnalysers
 {
-    public class ReferenceNugetifier
+    public class ProjectNugetifier
     {
         private readonly IConsole _console;
         private readonly IFileSystem _projectFileSystem;
@@ -19,7 +19,7 @@ namespace NuGet.Extensions.ReferenceAnalysers
         private readonly Lazy<IList<KeyValuePair<string, List<IPackage>>>> _resolveReferenceMappings;
         private static readonly string PackageReferenceFilename = Constants.PackageReferenceFile;
 
-        public ReferenceNugetifier(IVsProject vsProject, IPackageRepository packageRepository, IFileSystem projectFileSystem, IConsole console)
+        public ProjectNugetifier(IVsProject vsProject, IPackageRepository packageRepository, IFileSystem projectFileSystem, IConsole console)
         {
             _console = console;
             _projectFileSystem = projectFileSystem;
@@ -29,7 +29,7 @@ namespace NuGet.Extensions.ReferenceAnalysers
             _resolveReferenceMappings = new Lazy<IList<KeyValuePair<string, List<IPackage>>>>(() => ResolveReferenceMappings(_references.Value).ToList());
         }
 
-        public void NugetifyReferencesInProject(DirectoryInfo solutionDir)
+        public void NugetifyReferences(DirectoryInfo solutionDir)
         {
             var resolvedMappings = _resolveReferenceMappings.Value;
             if (!resolvedMappings.Any()) return;
@@ -68,7 +68,7 @@ namespace NuGet.Extensions.ReferenceAnalysers
             else _console.WriteWarning(message);
         }
 
-        public List<ManifestDependency> AddNugetMetadataForReferences(ISharedPackageRepository sharedPackagesRepository, bool nuspec)
+        public List<ManifestDependency> AddNugetReferenceMetadata(ISharedPackageRepository sharedPackagesRepository, bool nuspec)
         {
             _console.WriteLine("Checking for any project references for {0}...", PackageReferenceFilename);
             var resolvedMappings = _resolveReferenceMappings.Value;

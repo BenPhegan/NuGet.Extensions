@@ -77,7 +77,7 @@
     <Compile Include="MSBuild\ProjectAdapter.cs" />
     <Compile Include="MSBuild\ProjectReferenceAdapter.cs" />
     <Compile Include="MSBuild\SolutionProjectLoader.cs" />
-    <Compile Include="ReferenceAnalysers\ReferenceNugetifier.cs" />
+    <Compile Include="ReferenceAnalysers\ProjectNugetifier.cs" />
     <Compile Include="Comparers\LambdaComparer.cs" />
     <Compile Include="Comparers\PackageReferenceEqualityComparer.cs" />
     <Compile Include="Comparers\VersionSpecEqualityComparer.cs" />
