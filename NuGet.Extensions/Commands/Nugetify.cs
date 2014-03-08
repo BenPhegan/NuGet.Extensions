@@ -79,12 +79,17 @@ namespace NuGet.Extensions.Commands
                     Console.WriteLine("Loading projects from solution {0}", solutionFile.Name);
                     var solutionRoot = solutionFile.Directory;
                     var projectAdapters = GetProjectsFromSolution(solutionFile, solutionRoot);
-                    var sharedPackagesRepository = new SharedPackageRepository(Path.Combine(solutionRoot.FullName, "packages"));
+                    var existingSolutionPackagesRepo = new SharedPackageRepository(Path.Combine(solutionRoot.FullName, "packages"));
 
                     Console.WriteLine("Processing {0} projects...", projectAdapters.Count);
                     foreach (var projectAdapter in projectAdapters)
                     {
-                        LogAndNugetifyProject(projectAdapter, solutionRoot, sharedPackagesRepository);
+                        Console.WriteLine();
+                        Console.WriteLine("Processing Project: {0}", projectAdapter.ProjectName);
+
+                        NugetifyProject(projectAdapter, solutionRoot, existingSolutionPackagesRepo);
+
+                        Console.WriteLine("Project completed!");
                     }
                     Console.WriteLine("Complete!");
                 }
@@ -115,16 +120,6 @@ namespace NuGet.Extensions.Commands
                 Console.WriteWarning("Project: {0} was not found on disk", simpleProject.ProjectName);
                 return null;
             }
-        }
-
-        private void LogAndNugetifyProject(ProjectAdapter projectAdapter, DirectoryInfo solutionRoot, ISharedPackageRepository existingSolutionPackagesRepo)
-        {
-            Console.WriteLine();
-            Console.WriteLine("Processing Project: {0}", projectAdapter.ProjectName);
-
-            NugetifyProject(projectAdapter, solutionRoot, existingSolutionPackagesRepo);
-
-            Console.WriteLine("Project completed!");
         }
 
         private void NugetifyProject(ProjectAdapter projectAdapter, DirectoryInfo solutionRoot, ISharedPackageRepository existingSolutionPackagesRepo)
