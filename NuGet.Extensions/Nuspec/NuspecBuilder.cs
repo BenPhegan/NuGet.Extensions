@@ -4,7 +4,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 using NuGet.Common;
 
-namespace NuGet.Extensions.Commands
+namespace NuGet.Extensions.Nuspec
 {
     public class NuspecBuilder {
         private readonly Manifest _manifest;

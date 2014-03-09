@@ -1,4 +1,4 @@
-﻿namespace NuGet.Extensions.Commands
+﻿namespace NuGet.Extensions.Nuspec
 {
     public interface INuspecDataSource
     {

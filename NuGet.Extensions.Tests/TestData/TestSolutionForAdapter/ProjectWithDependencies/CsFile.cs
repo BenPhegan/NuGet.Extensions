@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace ProjectWithDependency
+namespace NuGet.Extensions.Tests.TestData.TestSolutionForAdapter.ProjectWithDependencies
 {
     class CsFile
     {
