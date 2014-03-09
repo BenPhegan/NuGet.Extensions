@@ -47,12 +47,11 @@ namespace NuGet.Extensions.MSBuild
         public IVsProject GetProject(Guid projectGuid, string absoluteProjectPath)
         {
             IVsProject projectAdapter;
-            if (!ProjectsByGuid.TryGetValue(projectGuid, out projectAdapter))
-            {
-                _console.WriteLine("Potential authoring issue: Project {0} should have been referenced in the solution with guid {1}", Path.GetFileName(absoluteProjectPath), projectGuid);
-                projectAdapter = CreateProjectAdapter(absoluteProjectPath);
-                ProjectsByGuid.Add(projectGuid, projectAdapter);
-            }
+            if (ProjectsByGuid.TryGetValue(projectGuid, out projectAdapter)) return projectAdapter;
+
+            projectAdapter = CreateProjectAdapter(absoluteProjectPath);
+            _console.WriteLine("Potential authoring issue: Project {0} should have been referenced in the solution with guid {1}", Path.GetFileName(absoluteProjectPath), projectGuid);
+            ProjectsByGuid.Add(projectGuid, projectAdapter);
             return projectAdapter;
         }
 
