@@ -116,7 +116,19 @@ namespace NuGet.Extensions.ReferenceAnalysers
             var referenceList = GetReferencedAssemblies(references);
             if (referenceList.Any())
             {
-                var referenceMappings = ResolveAssembliesToPackagesConfigFile(referenceList);
+                var results = new Dictionary<string, List<IPackage>>();
+                if (referenceList.Any())
+                {
+                    _console.WriteLine("Checking feed for {0} references...", referenceList.Count);
+
+                    IQueryable<IPackage> packageSource = _packageRepository.GetPackages().OrderBy(p => p.Id);
+
+                    var assemblyResolver = new RepositoryAssemblyResolver(referenceList, packageSource, _projectFileSystem, _console);
+                    results = assemblyResolver.GetAssemblyToPackageMapping(false);
+                    assemblyResolver.OutputPackageConfigFile();
+                }
+                else _console.WriteWarning("No references found to resolve (all GAC?)");
+                var referenceMappings = results;
                 var resolvedMappings = referenceMappings.Where(m => m.Value.Any());
                 var failedMappings = referenceMappings.Where(m => m.Value.Count == 0);
                 //next, lets rewrite the project file with the mappings to the new location...
@@ -169,23 +181,6 @@ namespace NuGet.Extensions.ReferenceAnalysers
 
             // Clean path and return.
             return Uri.UnescapeDataString(relativeUri.ToString()).Replace('/', Path.DirectorySeparatorChar);
-        }
-
-        private Dictionary<string, List<IPackage>> ResolveAssembliesToPackagesConfigFile(List<string> referenceFiles)
-        {
-            var results = new Dictionary<string, List<IPackage>>();
-            if (referenceFiles.Any())
-            {
-                _console.WriteLine("Checking feed for {0} references...", referenceFiles.Count);
-
-                IQueryable<IPackage> packageSource = _packageRepository.GetPackages().OrderBy(p => p.Id);
-
-                var assemblyResolver = new RepositoryAssemblyResolver(referenceFiles, packageSource, _projectFileSystem, _console);
-                results = assemblyResolver.GetAssemblyToPackageMapping(false);
-                assemblyResolver.OutputPackageConfigFile();
-            }
-            else _console.WriteWarning("No references found to resolve (all GAC?)");
-            return results;
         }
     }
 }
