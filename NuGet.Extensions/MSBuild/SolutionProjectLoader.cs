@@ -39,6 +39,33 @@ namespace NuGet.Extensions.MSBuild
             return solution.Projects.Where(ProjectExists).ToDictionary(ProjectGuid, CreateProjectAdapter);
         }
 
+
+        private static Guid ProjectGuid(SolutionProject p)
+        {
+            return Guid.Parse(p.ProjectGuid);
+        }
+
+        private IVsProject CreateProjectAdapter(SolutionProject p)
+        {
+            var noCacheExistsYet = new Dictionary<Guid, IVsProject>();
+            return CreateProjectAdapter(GetAbsoluteProjectPath(p.RelativePath), noCacheExistsYet);
+        }
+
+        private bool ProjectExists(SolutionProject simpleProject)
+        {
+            var projectPath = GetAbsoluteProjectPath(simpleProject.RelativePath);
+            if (File.Exists(projectPath)) return true;
+
+            _console.WriteWarning("Project: {0} was not found on disk", simpleProject.ProjectName);
+            return false;
+        }
+
+        private string GetAbsoluteProjectPath(string relativePath)
+        {
+            return Path.Combine(_solutionFile.Directory.FullName, relativePath);
+        }
+
+
         public void Dispose()
         {
             _projectCollection.Dispose();
@@ -53,11 +80,6 @@ namespace NuGet.Extensions.MSBuild
             _console.WriteLine("Potential authoring issue: Project {0} should have been referenced in the solution with guid {1}", Path.GetFileName(absoluteProjectPath), projectGuid);
             ProjectsByGuid.Add(projectGuid, projectAdapter);
             return projectAdapter;
-        }
-
-        private IVsProject CreateProjectAdapter(SolutionProject p)
-        {
-            return CreateProjectAdapter(GetAbsoluteProjectPath(p.RelativePath), new Dictionary<Guid, IVsProject>());
         }
 
         private IVsProject CreateProjectAdapter(string absoluteProjectPath, IDictionary<Guid, IVsProject> projectsByGuidCache)
@@ -93,25 +115,6 @@ namespace NuGet.Extensions.MSBuild
             var canonicalProjectPath = Path.GetFullPath(projectPath).ToLowerInvariant();
             var existing = projectCollection.GetLoadedProjects(canonicalProjectPath).SingleOrDefault();
             return existing ?? new Project(canonicalProjectPath, globalMsBuildProperties, null, projectCollection);
-        }
-
-        private static Guid ProjectGuid(SolutionProject p)
-        {
-            return Guid.Parse(p.ProjectGuid);
-        }
-
-        private bool ProjectExists(SolutionProject simpleProject)
-        {
-            var projectPath = GetAbsoluteProjectPath(simpleProject.RelativePath);
-            if (File.Exists(projectPath)) return true;
-
-            _console.WriteWarning("Project: {0} was not found on disk", simpleProject.ProjectName);
-            return false;
-        }
-
-        private string GetAbsoluteProjectPath(string relativePath)
-        {
-            return Path.Combine(_solutionFile.Directory.FullName, relativePath);
         }
 
     }
