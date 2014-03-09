@@ -63,7 +63,18 @@ namespace NuGet.Extensions.MSBuild
         private IVsProject CreateProjectAdapter(string relativePath)
         {
             var projectLoader = (IProjectLoader) this;
-            return new ProjectAdapter(GetAbsoluteProjectPath(relativePath), _projectCollection, projectLoader);
+            var absoluteProjectPath = GetAbsoluteProjectPath(relativePath);
+            try
+            {
+                return new ProjectAdapter(absoluteProjectPath, _projectCollection, projectLoader);
+            }
+            catch (Exception e)
+            {
+                var nullProjectAdapter = new NullProjectAdapter(absoluteProjectPath);
+                _console.WriteWarning("Problem loading {0}, any future messages about modifications to it are speculative only:");
+                _console.WriteWarning("  {0}", e.Message);
+                return nullProjectAdapter;
+            }
         }
 
         private static Guid ProjectGuid(SolutionProject p)
