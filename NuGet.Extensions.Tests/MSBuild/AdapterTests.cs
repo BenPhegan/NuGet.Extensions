@@ -30,7 +30,7 @@ namespace NuGet.Extensions.Tests.MSBuild
             _console = new Mock<IConsole>();
             _solutionProjectLoader = new SolutionProjectLoader(new FileInfo(Paths.AdapterTestsSolutionFile), _console.Object);
             var projectAdapters = _solutionProjectLoader.GetProjects();
-            _projectWithDependenciesAdapter = projectAdapters.Single(p => p.ProjectName == _projectWithDependenciesName);
+            _projectWithDependenciesAdapter = projectAdapters.Single(p => p.ProjectName.Equals(_projectWithDependenciesName, StringComparison.OrdinalIgnoreCase));
             _projectBinaryReferenceAdapters = _projectWithDependenciesAdapter.GetBinaryReferences();
         }
 
