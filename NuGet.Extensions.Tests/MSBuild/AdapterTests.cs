@@ -124,6 +124,15 @@ namespace NuGet.Extensions.Tests.MSBuild
             Assert.That(projReferences.Single().AssemblyName, Contains.Substring(_expectedProjectDependencyName));
         }
 
+        [Test]
+        public void PassingWrongGuidGetsProjectByRelativePath()
+        {
+            var anyProject =_solutionProjectLoader.GetProjects().First();
+            var sameProject = _solutionProjectLoader.GetProject(Guid.Empty, Path.Combine(anyProject.ProjectDirectory.FullName, anyProject.ProjectName + ".csproj"));
+            Assert.That(anyProject.ProjectName, Is.EqualTo(sameProject.ProjectName));
+        }
+
+
         private static bool IsExpectedBinaryDependency(IReference r)
         {
             return r.AssemblyName == _expectedBinaryDependencyAssemblyName;
