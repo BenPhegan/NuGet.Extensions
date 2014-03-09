@@ -12,7 +12,7 @@ namespace NuGet.Extensions.MSBuild
         private readonly FileInfo _solutionFile;
         private readonly IConsole _console;
         private readonly ProjectCollection _projectCollection;
-        private readonly Lazy<IDictionary<Guid, IVsProject>> _projectsInSolutionByGuid;
+        private readonly ReallyLazy<Dictionary<Guid, IVsProject>> _projectsByGuid;
         private readonly IDictionary<string, string> _globalMsBuildProperties = new Dictionary<string, string>();
 
         public SolutionProjectLoader(FileInfo solutionFile, IConsole console)
@@ -20,20 +20,15 @@ namespace NuGet.Extensions.MSBuild
             _solutionFile = solutionFile;
             _console = console;
             _projectCollection = new ProjectCollection();
-            _projectsInSolutionByGuid = new Lazy<IDictionary<Guid, IVsProject>>(LoadProjectsInSolutionByGuid);
+            _projectsByGuid = new ReallyLazy<Dictionary<Guid, IVsProject>>(LoadProjectsInSolutionByGuid);
         }
 
         public List<IVsProject> GetProjects()
         {
-            return ProjectsByGuid.Values.ToList();
+            return _projectsByGuid.GetValue(true).Values.ToList();
         }
-
-        private IDictionary<Guid, IVsProject> ProjectsByGuid
-        {
-            get { return _projectsInSolutionByGuid.Value; }
-        }
-
-        private IDictionary<Guid, IVsProject> LoadProjectsInSolutionByGuid()
+        
+        private Dictionary<Guid, IVsProject> LoadProjectsInSolutionByGuid()
         {
             var solution = new Solution(_solutionFile.FullName);
             return solution.Projects.Where(ProjectExists).ToDictionary(ProjectGuid, CreateProjectAdapter);
@@ -47,8 +42,7 @@ namespace NuGet.Extensions.MSBuild
 
         private IVsProject CreateProjectAdapter(SolutionProject p)
         {
-            var noCacheExistsYet = new Dictionary<Guid, IVsProject>();
-            return CreateProjectAdapter(GetAbsoluteProjectPath(p.RelativePath), noCacheExistsYet);
+            return CreateProjectAdapter(GetAbsoluteProjectPath(p.RelativePath), _projectsByGuid.GetValue());
         }
 
         private bool ProjectExists(SolutionProject simpleProject)
@@ -74,11 +68,11 @@ namespace NuGet.Extensions.MSBuild
         public IVsProject GetProject(Guid projectGuid, string absoluteProjectPath)
         {
             IVsProject projectAdapter;
-            if (ProjectsByGuid.TryGetValue(projectGuid, out projectAdapter)) return projectAdapter;
+            if (_projectsByGuid.GetValue().TryGetValue(projectGuid, out projectAdapter)) return projectAdapter;
 
-            projectAdapter = CreateProjectAdapter(absoluteProjectPath, ProjectsByGuid);
+            projectAdapter = CreateProjectAdapter(absoluteProjectPath, _projectsByGuid.GetValue());
             _console.WriteLine("Potential authoring issue: Project {0} should have been referenced in the solution with guid {1}", Path.GetFileName(absoluteProjectPath), projectGuid);
-            ProjectsByGuid.Add(projectGuid, projectAdapter);
+            _projectsByGuid.GetValue().Add(projectGuid, projectAdapter);
             return projectAdapter;
         }
 
