@@ -38,8 +38,8 @@ namespace NuGet.Extensions.ReferenceAnalysers
                 var referenceMatch = _references.Value.FirstOrDefault(r => r.IsForAssembly(mapping.Key));
                 if (referenceMatch != null)
                 {
-                    var includeName = referenceMatch.IncludeName;
-                    var includeVersion = referenceMatch.IncludeVersion;
+                    var includeName = referenceMatch.AssemblyName;
+                    var includeVersion = referenceMatch.AssemblyVersion;
                     var package = mapping.Value.OrderBy(p => p.GetFiles().Count()).First();
 
                     LogHintPathRewriteMessage(package, includeName, includeVersion);
@@ -74,7 +74,7 @@ namespace NuGet.Extensions.ReferenceAnalysers
             var resolvedMappings = _resolveReferenceMappings.Value;
             var manifestDependencies = new List<ManifestDependency>();
             if (!resolvedMappings.Any()) return manifestDependencies;
-            var projectReferences = _vsProject.GetProjectReferences().Select(pRef => pRef.IncludeName).ToList();
+            var projectReferences = _vsProject.GetProjectReferences().Select(pRef => pRef.AssemblyName).ToList();
             var packageReferenceFile = new PackageReferenceFile(_projectFileSystem, PackageReferenceFilename);
             //Now, create the packages.config for the resolved packages, and update the repositories.config
             _console.WriteLine("Creating {0}", PackageReferenceFilename);

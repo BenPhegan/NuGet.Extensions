@@ -25,8 +25,8 @@ namespace NuGet.Extensions.Tests.ReferenceAnalysers
             includeName = includeName ?? AssemblyInPackageRepository;
 
             var dependency = new Mock<IReference>();
-            dependency.SetupGet(d => d.IncludeName).Returns(includeName);
-            dependency.SetupGet(d => d.IncludeVersion).Returns(includeVersion ?? "0.0.0.0");
+            dependency.SetupGet(d => d.AssemblyName).Returns(includeName);
+            dependency.SetupGet(d => d.AssemblyVersion).Returns(includeVersion ?? "0.0.0.0");
             dependency.Setup(d => d.IsForAssembly(includeName)).Returns(true);
 
             string anydependencyHintpath = includeName;

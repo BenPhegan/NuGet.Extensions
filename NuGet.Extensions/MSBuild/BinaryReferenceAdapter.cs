@@ -28,12 +28,12 @@ namespace NuGet.Extensions.MSBuild
             _reference.SetMetadataValue("HintPath", hintPath);
         }
 
-        public string IncludeVersion
+        public string AssemblyVersion
         {
             get { return _reference.EvaluatedInclude.Contains(',') ? _reference.EvaluatedInclude.Split(',')[1].Split('=')[1] : null; }
         }
 
-        public string IncludeName
+        public string AssemblyName
         {
             get { return _reference.EvaluatedInclude.Contains(',') ? _reference.EvaluatedInclude.Split(',')[0] : _reference.EvaluatedInclude; }
         }

@@ -28,19 +28,19 @@ namespace NuGet.Extensions.MSBuild
             _addBinaryReferenceWithMetadata(_project.AssemblyName, new KeyValuePair<string, string>("HintPath", hintPath));
         }
 
-        public string IncludeVersion
+        public string AssemblyVersion
         {
             get { return null; }
         }
 
-        public string IncludeName
+        public string AssemblyName
         {
             get { return _project.AssemblyName; }
         }
 
         public bool IsForAssembly(string assemblyFilename)
         {
-            return (IncludeName + ".dll").Equals(assemblyFilename, StringComparison.OrdinalIgnoreCase);
+            return (AssemblyName + ".dll").Equals(assemblyFilename, StringComparison.OrdinalIgnoreCase);
         }
     }
 }

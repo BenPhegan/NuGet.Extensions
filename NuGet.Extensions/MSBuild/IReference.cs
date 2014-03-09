@@ -1,8 +1,8 @@
 namespace NuGet.Extensions.MSBuild
 {
     public interface IReference {
-        string IncludeVersion { get; }
-        string IncludeName { get; }
+        string AssemblyVersion { get; }
+        string AssemblyName { get; }
         bool IsForAssembly(string assemblyFilename);
         bool TryGetHintPath(out string hintPath);
 

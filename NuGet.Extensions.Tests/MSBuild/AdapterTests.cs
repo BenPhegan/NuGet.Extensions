@@ -41,7 +41,7 @@ namespace NuGet.Extensions.Tests.MSBuild
         [Test]
         public void ProjectWithDependenciesDependsOnNewtonsoftJson()
         {
-            var binaryReferenceIncludeNames = _projectBinaryReferenceAdapters.Select(r => r.IncludeName).ToList();
+            var binaryReferenceIncludeNames = _projectBinaryReferenceAdapters.Select(r => r.AssemblyName).ToList();
             Assert.That(binaryReferenceIncludeNames, Contains.Item(_expectedBinaryDependencyAssemblyName));
         }
 
@@ -49,7 +49,7 @@ namespace NuGet.Extensions.Tests.MSBuild
         public void ProjectWithDependenciesDependsOnNewtonsoftJson6000()
         {
             var binaryDependency = _projectBinaryReferenceAdapters.Single(IsExpectedBinaryDependency);
-            Assert.That(binaryDependency.IncludeVersion, Is.EqualTo(_expectedBinaryDependencyVersion));
+            Assert.That(binaryDependency.AssemblyVersion, Is.EqualTo(_expectedBinaryDependencyVersion));
         }
 
         [Test]
@@ -108,13 +108,13 @@ namespace NuGet.Extensions.Tests.MSBuild
             var projReferences = _projectWithDependenciesAdapter.GetProjectReferences().ToList();
 
             Assert.That(projReferences.Count(), Is.EqualTo(1));
-            Assert.That(projReferences.Single().IncludeName, Contains.Substring(_expectedProjectDependencyName));
+            Assert.That(projReferences.Single().AssemblyName, Contains.Substring(_expectedProjectDependencyName));
         }
 
 
         private static bool IsExpectedBinaryDependency(IReference r)
         {
-            return r.IncludeName == _expectedBinaryDependencyAssemblyName;
+            return r.AssemblyName == _expectedBinaryDependencyAssemblyName;
         }
     }
 }
