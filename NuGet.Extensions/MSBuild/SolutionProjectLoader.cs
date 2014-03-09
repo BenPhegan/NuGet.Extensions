@@ -49,7 +49,7 @@ namespace NuGet.Extensions.MSBuild
             IVsProject projectAdapter;
             if (ProjectsByGuid.TryGetValue(projectGuid, out projectAdapter)) return projectAdapter;
 
-            projectAdapter = CreateProjectAdapter(absoluteProjectPath);
+            projectAdapter = CreateProjectAdapter(absoluteProjectPath, ProjectsByGuid);
             _console.WriteLine("Potential authoring issue: Project {0} should have been referenced in the solution with guid {1}", Path.GetFileName(absoluteProjectPath), projectGuid);
             ProjectsByGuid.Add(projectGuid, projectAdapter);
             return projectAdapter;
@@ -57,16 +57,15 @@ namespace NuGet.Extensions.MSBuild
 
         private IVsProject CreateProjectAdapter(SolutionProject p)
         {
-            return CreateProjectAdapter(GetAbsoluteProjectPath(p.RelativePath));
+            return CreateProjectAdapter(GetAbsoluteProjectPath(p.RelativePath), new Dictionary<Guid, IVsProject>());
         }
 
-        private IVsProject CreateProjectAdapter(string absoluteProjectPath)
+        private IVsProject CreateProjectAdapter(string absoluteProjectPath, IDictionary<Guid, IVsProject> projectsByGuidCache)
         {
-            var projectLoader = (IProjectLoader) this;
             try
             {
-                var msBuildProject = CreateMsBuildProject(absoluteProjectPath, _projectCollection, _globalMsBuildProperties);
-                return new ProjectAdapter(msBuildProject, projectLoader);
+                var msBuildProject = GetMsBuildProject(absoluteProjectPath, _projectCollection, _globalMsBuildProperties);
+                return GetRealProjectAdapter(this, msBuildProject, projectsByGuidCache);
             }
             catch (Exception e)
             {
@@ -76,9 +75,20 @@ namespace NuGet.Extensions.MSBuild
                 return nullProjectAdapter;
             }
         }
-        
 
-        private static Project CreateMsBuildProject(string projectPath, ProjectCollection projectCollection, IDictionary<string, string> globalMsBuildProperties)
+        private static IVsProject GetRealProjectAdapter(IProjectLoader projectLoader, Project msBuildProject, IDictionary<Guid, IVsProject> projectsByGuidCache)
+        {
+            var projectGuid = Guid.Parse(GetProjectGuid(msBuildProject));
+            IVsProject projectAdapter;
+            return projectsByGuidCache.TryGetValue(projectGuid, out projectAdapter) ? projectAdapter : new ProjectAdapter(msBuildProject, projectLoader);
+        }
+
+        private static string GetProjectGuid(Project msBuildProject)
+        {
+            return msBuildProject.GetPropertyValue("ProjectGuid");
+        }
+
+        private static Project GetMsBuildProject(string projectPath, ProjectCollection projectCollection, IDictionary<string, string> globalMsBuildProperties)
         {
             var canonicalProjectPath = Path.GetFullPath(projectPath).ToLowerInvariant();
             var existing = projectCollection.GetLoadedProjects(canonicalProjectPath).SingleOrDefault();
