@@ -125,13 +125,12 @@ namespace NuGet.Extensions.Tests.MSBuild
         }
 
         [Test]
-        public void PassingWrongGuidGetsProjectByRelativePath()
+        public void PassingWrongGuidGetsProjectByPath()
         {
             var anyProject =_solutionProjectLoader.GetProjects().First();
             var sameProject = _solutionProjectLoader.GetProject(Guid.Empty, Path.Combine(anyProject.ProjectDirectory.FullName, anyProject.ProjectName + ".csproj"));
             Assert.That(anyProject.ProjectName, Is.EqualTo(sameProject.ProjectName));
         }
-
 
         private static bool IsExpectedBinaryDependency(IReference r)
         {
