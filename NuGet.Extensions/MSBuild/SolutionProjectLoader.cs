@@ -43,13 +43,13 @@ namespace NuGet.Extensions.MSBuild
             _projectCollection.Dispose();
         }
 
-        public IVsProject GetProject(Guid projectGuid, string projectPath)
+        public IVsProject GetProject(Guid projectGuid, string absoluteProjectPath)
         {
             IVsProject projectAdapter;
             if (!ProjectsByGuid.TryGetValue(projectGuid, out projectAdapter))
             {
-                _console.WriteWarning("Project {0} should have been referenced in the solution with guid {1}", Path.GetFileName(projectPath), projectGuid);
-                projectAdapter = CreateProjectAdapter(projectPath);
+                _console.WriteLine("Potential authoring issue: Project {0} should have been referenced in the solution with guid {1}", Path.GetFileName(absoluteProjectPath), projectGuid);
+                projectAdapter = CreateProjectAdapter(absoluteProjectPath);
                 ProjectsByGuid.Add(projectGuid, projectAdapter);
             }
             return projectAdapter;
@@ -57,13 +57,12 @@ namespace NuGet.Extensions.MSBuild
 
         private IVsProject ProjectAdapter(SolutionProject p)
         {
-            return CreateProjectAdapter(p.RelativePath);
+            return CreateProjectAdapter(GetAbsoluteProjectPath(p.RelativePath));
         }
 
-        private IVsProject CreateProjectAdapter(string relativePath)
+        private IVsProject CreateProjectAdapter(string absoluteProjectPath)
         {
             var projectLoader = (IProjectLoader) this;
-            var absoluteProjectPath = GetAbsoluteProjectPath(relativePath);
             try
             {
                 return new ProjectAdapter(absoluteProjectPath, _projectCollection, projectLoader);

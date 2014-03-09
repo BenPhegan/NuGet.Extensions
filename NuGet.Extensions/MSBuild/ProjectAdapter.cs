@@ -12,7 +12,7 @@ namespace NuGet.Extensions.MSBuild
         private readonly IProjectLoader _projectLoader;
 
         public ProjectAdapter(string projectPath, ProjectCollection projectCollection, IProjectLoader projectLoader, IDictionary<string, string> globalMsBuildProperties = null)
-            : this(CreateMsBuildProject(projectPath, projectCollection, globalMsBuildProperties), projectLoader)
+            : this(CreateMsBuildProject(projectPath, projectCollection, globalMsBuildProperties ?? new Dictionary<string, string>()), projectLoader)
         {
         }
 
@@ -24,7 +24,8 @@ namespace NuGet.Extensions.MSBuild
 
         private static Project CreateMsBuildProject(string projectPath, ProjectCollection projectCollection, IDictionary<string, string> globalMsBuildProperties)
         {
-            return new Project(projectPath, globalMsBuildProperties, null, projectCollection);
+            var existing = projectCollection.GetLoadedProjects(projectPath).SingleOrDefault();
+            return existing ?? new Project(projectPath, globalMsBuildProperties, null, projectCollection);
         }
 
         public IEnumerable<IReference> GetBinaryReferences()
@@ -74,7 +75,8 @@ namespace NuGet.Extensions.MSBuild
         {
             var projectGuid = r.GetMetadataValue("Project");
             var csprojRelativePath = r.EvaluatedInclude;
-            var referencedProjectAdapter = _projectLoader.GetProject(Guid.Parse(projectGuid), csprojRelativePath);
+            var absoluteProjectPath = Path.Combine(ProjectDirectory.FullName, csprojRelativePath);
+            var referencedProjectAdapter = _projectLoader.GetProject(Guid.Parse(projectGuid), absoluteProjectPath);
             return new ProjectReferenceAdapter(referencedProjectAdapter, () => _project.RemoveItem(r), AddBinaryReference);
         }
 
