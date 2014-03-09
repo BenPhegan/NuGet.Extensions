@@ -143,7 +143,7 @@ namespace NuGet.Extensions.Tests.MSBuild
 
         private static bool IsExpectedBinaryDependency(IReference r)
         {
-            return r.AssemblyName == _expectedBinaryDependencyAssemblyName;
+            return r.AssemblyName.Equals(_expectedBinaryDependencyAssemblyName, StringComparison.OrdinalIgnoreCase);
         }
     }
 }
