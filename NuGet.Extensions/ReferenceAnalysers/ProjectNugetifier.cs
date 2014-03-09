@@ -95,7 +95,7 @@ namespace NuGet.Extensions.ReferenceAnalysers
             //For any resolved project dependencies, add a manifest dependency if we are doing nuspecs
             if (nuspec)
             {
-                foreach (var projectDependency in (List<string>)projectReferences)
+                foreach (var projectDependency in projectReferences)
                 {
                     if (manifestDependencies.All(m => m.Id != projectDependency))
                     {
