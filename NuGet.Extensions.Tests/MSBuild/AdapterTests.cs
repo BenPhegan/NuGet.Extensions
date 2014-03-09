@@ -18,6 +18,7 @@ namespace NuGet.Extensions.Tests.MSBuild
         private IVsProject _projectWithDependenciesAdapter;
         private IEnumerable<IReference> _projectBinaryReferenceAdapters;
         private SolutionProjectLoader _solutionProjectLoader;
+        private Mock<IConsole> _console;
         private const string _projectWithDependenciesName = "ProjectWithDependencies";
         private const string _expectedBinaryDependencyAssemblyName = "Newtonsoft.Json";
         private const string _expectedBinaryDependencyVersion = "6.0.0.0";
@@ -26,10 +27,22 @@ namespace NuGet.Extensions.Tests.MSBuild
         [SetUp]
         public void SetUpProjectAdapterAndBinaryDependencies()
         {
-            _solutionProjectLoader = new SolutionProjectLoader(new FileInfo(Paths.AdapterTestsSolutionFile), new Mock<IConsole>().Object);
+            _console = new Mock<IConsole>();
+            _solutionProjectLoader = new SolutionProjectLoader(new FileInfo(Paths.AdapterTestsSolutionFile), _console.Object);
             var projectAdapters = _solutionProjectLoader.GetProjects();
             _projectWithDependenciesAdapter = projectAdapters.Single(p => p.ProjectName == _projectWithDependenciesName);
             _projectBinaryReferenceAdapters = _projectWithDependenciesAdapter.GetBinaryReferences();
+        }
+
+        [TearDown]
+        public void CheckForConsoleErrors()
+        {
+            _console.Verify(c => c.WriteError(It.IsAny<object>()), Times.Never());
+            _console.Verify(c => c.WriteError(It.IsAny<string>()), Times.Never());
+            _console.Verify(c => c.WriteError(It.IsAny<string>(), It.IsAny<object[]>()), Times.Never());
+            _console.Verify(c => c.WriteWarning(It.IsAny<string>()), Times.Never());
+            _console.Verify(c => c.WriteWarning(It.IsAny<string>(), It.IsAny<object[]>()), Times.Never());
+            _console.Verify(c => c.WriteWarning(It.IsAny<string>(), It.IsAny<object[]>()), Times.Never());
         }
 
         [Test]
@@ -110,7 +123,6 @@ namespace NuGet.Extensions.Tests.MSBuild
             Assert.That(projReferences.Count(), Is.EqualTo(1));
             Assert.That(projReferences.Single().AssemblyName, Contains.Substring(_expectedProjectDependencyName));
         }
-
 
         private static bool IsExpectedBinaryDependency(IReference r)
         {
