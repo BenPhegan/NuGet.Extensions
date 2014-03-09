@@ -115,15 +115,10 @@ namespace NuGet.Extensions.Commands
             //Create nuspec regardless of whether we have added dependencies
             if (NuSpec)
             {
-                var nuspecBuilder = CreateNuspecBuilder(projectAdapter.AssemblyName);
+                var nuspecBuilder = new NuspecBuilder(projectAdapter.AssemblyName);
                 nuspecBuilder.AddData(this, manifestDependencies);
                 nuspecBuilder.Save(Console);
             }
-        }
-
-        private NuspecBuilder CreateNuspecBuilder(string assemblyName)
-        {
-            return new NuspecBuilder(assemblyName);
         }
 
         private ProjectNugetifier CreateReferenceNugetifier(ProjectAdapter projectAdapter)
