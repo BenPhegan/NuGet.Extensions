@@ -42,7 +42,7 @@ namespace NuGet.Extensions.MSBuild
 
         private IVsProject CreateProjectAdapter(SolutionProject p)
         {
-            return CreateProjectAdapter(GetAbsoluteProjectPath(p.RelativePath), _projectsByGuid.GetValue());
+            return CreateProjectAdapter(GetAbsoluteProjectPath(p.RelativePath));
         }
 
         private bool ProjectExists(SolutionProject simpleProject)
@@ -70,18 +70,18 @@ namespace NuGet.Extensions.MSBuild
             IVsProject projectAdapter;
             if (_projectsByGuid.GetValue().TryGetValue(projectGuid, out projectAdapter)) return projectAdapter;
 
-            projectAdapter = CreateProjectAdapter(absoluteProjectPath, _projectsByGuid.GetValue());
+            projectAdapter = CreateProjectAdapter(absoluteProjectPath);
             _console.WriteLine("Potential authoring issue: Project {0} should have been referenced in the solution with guid {1}", Path.GetFileName(absoluteProjectPath), projectGuid);
             _projectsByGuid.GetValue().Add(projectGuid, projectAdapter);
             return projectAdapter;
         }
 
-        private IVsProject CreateProjectAdapter(string absoluteProjectPath, IDictionary<Guid, IVsProject> projectsByGuidCache)
+        private IVsProject CreateProjectAdapter(string absoluteProjectPath)
         {
             try
             {
                 var msBuildProject = GetMsBuildProject(absoluteProjectPath, _projectCollection, _globalMsBuildProperties);
-                return GetRealProjectAdapter(this, msBuildProject, projectsByGuidCache);
+                return GetRealProjectAdapter(this, msBuildProject, _projectsByGuid.GetValue());
             }
             catch (Exception e)
             {
