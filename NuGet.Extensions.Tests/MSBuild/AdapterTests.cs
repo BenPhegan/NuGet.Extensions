@@ -132,6 +132,15 @@ namespace NuGet.Extensions.Tests.MSBuild
             Assert.That(anyProject.ProjectName, Is.EqualTo(sameProject.ProjectName));
         }
 
+        [Test(Description = "The same IVsProject must be returned so we don't end up with two out-of-sync views of the project")]
+        public void PassingWrongGuidAndNonCanonicalPathGetsSameReference()
+        {
+            var anyProject = _solutionProjectLoader.GetProjects().First();
+            var nonCanonicalPath = Path.Combine(anyProject.ProjectDirectory.FullName.ToLower(), "randomFolder", "..", anyProject.ProjectName.ToUpper() + ".csproj");
+            var sameProject = _solutionProjectLoader.GetProject(Guid.Empty, nonCanonicalPath);
+            Assert.That(anyProject, Is.EqualTo(sameProject));
+        }
+
         private static bool IsExpectedBinaryDependency(IReference r)
         {
             return r.AssemblyName == _expectedBinaryDependencyAssemblyName;
