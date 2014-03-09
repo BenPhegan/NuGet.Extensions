@@ -106,7 +106,7 @@ namespace NuGet.Extensions.Commands
             Console.WriteLine("Complete!");
         }
 
-        private void NugetifyProject(ProjectAdapter projectAdapter, DirectoryInfo solutionRoot, ISharedPackageRepository existingSolutionPackagesRepo)
+        private void NugetifyProject(IVsProject projectAdapter, DirectoryInfo solutionRoot, ISharedPackageRepository existingSolutionPackagesRepo)
         {
             var projectNugetifier = CreateProjectNugetifier(projectAdapter);
             projectNugetifier.NugetifyReferences(solutionRoot);
@@ -123,7 +123,7 @@ namespace NuGet.Extensions.Commands
             }
         }
 
-        private ProjectNugetifier CreateProjectNugetifier(ProjectAdapter projectAdapter)
+        private ProjectNugetifier CreateProjectNugetifier(IVsProject projectAdapter)
         {
             var projectFileSystem = new PhysicalFileSystem(projectAdapter.ProjectDirectory.ToString());
             var repository = AggregateRepositoryHelper.CreateAggregateRepositoryFromSources(RepositoryFactory, SourceProvider, Source);

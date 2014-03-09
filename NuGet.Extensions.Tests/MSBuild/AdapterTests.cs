@@ -15,7 +15,7 @@ namespace NuGet.Extensions.Tests.MSBuild
     [TestFixture]
     public class AdapterTests
     {
-        private ProjectAdapter _projectWithDependenciesAdapter;
+        private IVsProject _projectWithDependenciesAdapter;
         private IEnumerable<IReference> _projectBinaryReferenceAdapters;
         private SolutionProjectLoader _solutionProjectLoader;
         private const string _projectWithDependenciesName = "ProjectWithDependencies";

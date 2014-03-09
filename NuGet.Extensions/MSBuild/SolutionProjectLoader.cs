@@ -12,27 +12,27 @@ namespace NuGet.Extensions.MSBuild
         private readonly FileInfo _solutionFile;
         private readonly IConsole _console;
         private readonly ProjectCollection _projectCollection;
-        private readonly Lazy<IDictionary<Guid, ProjectAdapter>> _projectsInSolutionByGuid;
+        private readonly Lazy<IDictionary<Guid, IVsProject>> _projectsInSolutionByGuid;
 
         public SolutionProjectLoader(FileInfo solutionFile, IConsole console)
         {
             _solutionFile = solutionFile;
             _console = console;
             _projectCollection = new ProjectCollection();
-            _projectsInSolutionByGuid = new Lazy<IDictionary<Guid, ProjectAdapter>>(LoadProjectsInSolutionByGuid);
+            _projectsInSolutionByGuid = new Lazy<IDictionary<Guid, IVsProject>>(LoadProjectsInSolutionByGuid);
         }
 
-        public List<ProjectAdapter> GetProjects()
+        public List<IVsProject> GetProjects()
         {
             return ProjectsByGuid.Values.ToList();
         }
 
-        private IDictionary<Guid, ProjectAdapter> ProjectsByGuid
+        private IDictionary<Guid, IVsProject> ProjectsByGuid
         {
             get { return _projectsInSolutionByGuid.Value; }
         }
 
-        private IDictionary<Guid, ProjectAdapter> LoadProjectsInSolutionByGuid()
+        private IDictionary<Guid, IVsProject> LoadProjectsInSolutionByGuid()
         {
             var solution = new Solution(_solutionFile.FullName);
             return solution.Projects.Where(ProjectExists).ToDictionary(ProjectGuid, ProjectAdapter);
@@ -45,7 +45,7 @@ namespace NuGet.Extensions.MSBuild
 
         public IVsProject GetProject(Guid projectGuid, string projectPath)
         {
-            ProjectAdapter projectAdapter;
+            IVsProject projectAdapter;
             if (!ProjectsByGuid.TryGetValue(projectGuid, out projectAdapter))
             {
                 _console.WriteWarning("Project {0} should have been referenced in the solution with guid {1}", Path.GetFileName(projectPath), projectGuid);
@@ -55,12 +55,12 @@ namespace NuGet.Extensions.MSBuild
             return projectAdapter;
         }
 
-        private ProjectAdapter ProjectAdapter(SolutionProject p)
+        private IVsProject ProjectAdapter(SolutionProject p)
         {
             return CreateProjectAdapter(p.RelativePath);
         }
 
-        private ProjectAdapter CreateProjectAdapter(string relativePath)
+        private IVsProject CreateProjectAdapter(string relativePath)
         {
             var projectLoader = (IProjectLoader) this;
             return new ProjectAdapter(GetAbsoluteProjectPath(relativePath), _projectCollection, projectLoader);
