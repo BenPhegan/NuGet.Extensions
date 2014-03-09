@@ -36,7 +36,7 @@ namespace NuGet.Extensions.MSBuild
         private IDictionary<Guid, IVsProject> LoadProjectsInSolutionByGuid()
         {
             var solution = new Solution(_solutionFile.FullName);
-            return solution.Projects.Where(ProjectExists).ToDictionary(ProjectGuid, ProjectAdapter);
+            return solution.Projects.Where(ProjectExists).ToDictionary(ProjectGuid, CreateProjectAdapter);
         }
 
         public void Dispose()
@@ -56,7 +56,7 @@ namespace NuGet.Extensions.MSBuild
             return projectAdapter;
         }
 
-        private IVsProject ProjectAdapter(SolutionProject p)
+        private IVsProject CreateProjectAdapter(SolutionProject p)
         {
             return CreateProjectAdapter(GetAbsoluteProjectPath(p.RelativePath));
         }
