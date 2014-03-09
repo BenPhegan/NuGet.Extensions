@@ -117,9 +117,9 @@ namespace NuGet.Extensions.Commands
             {
                 var assemblyOutput = projectAdapter.AssemblyName;
                 var nuspecBuilder = CreateNuspecBuilder();
-                var manifest = nuspecBuilder.CreateNuspecManifest(this, assemblyOutput, manifestDependencies);
+                nuspecBuilder.AddData(this, assemblyOutput, manifestDependencies);
                 string destination = assemblyOutput + Constants.ManifestExtension;
-                nuspecBuilder.Save(Console, manifest, destination);
+                nuspecBuilder.Save(Console, destination);
             }
         }
 
