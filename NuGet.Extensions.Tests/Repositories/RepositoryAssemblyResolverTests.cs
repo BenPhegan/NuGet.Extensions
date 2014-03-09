@@ -14,17 +14,19 @@ namespace NuGet.Extensions.Tests.Repositories
     [TestFixture]
     public class RepositoryAssemblyResolverTests
     {
-        [Test]
-        public void CanFindSingleAssemblyInSinglePackage()
+        [TestCase(1, Description = "Normal single assembly reference")]
+        [TestCase(2, Description = "Can resolve the multiple versions of the same named assembly a project could reference")]
+        public void CanFindAssemblyInSinglePackage(int numberOfRepeatedAssemblies)
         {
-            var fileList = new List<string>() { "Assembly.Common.dll" };
+            const string assemblyCommonDll = "Assembly.Common.dll";
+            var fileList = new List<string>() { assemblyCommonDll };
             var packages = new List<IPackage> { PackageUtility.CreatePackage("Assembly.Common", "1.0",assemblyReferences: fileList) };
 
-            var assemblies = new List<string>() { "Assembly.Common.dll" };
+            var assemblies = Enumerable.Repeat(assemblyCommonDll, numberOfRepeatedAssemblies).ToList();
 
             var assemblyResolver = new RepositoryAssemblyResolver(assemblies, packages.AsQueryable(), new Mock<MockFileSystem>().Object, new Mock<IConsole>().Object);
             var resolved = assemblyResolver.GetAssemblyToPackageMapping(false).ResolvedMappings;
-            Assert.AreEqual(1, resolved["Assembly.Common.dll"].Count);
+            Assert.AreEqual(1, resolved[assemblyCommonDll].Count);
         }
 
         [Test]
