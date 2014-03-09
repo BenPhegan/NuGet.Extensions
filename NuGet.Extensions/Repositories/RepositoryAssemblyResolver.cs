@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.IO;
 using NuGet.Common;
 
@@ -12,11 +11,11 @@ namespace NuGet.Extensions.Repositories
     /// </summary>
     public class RepositoryAssemblyResolver
     {
-        List<string> assemblies = new List<string>();
-        IQueryable<IPackage> packageSource;
-        Dictionary<string, List<IPackage>> resolvedAssemblies = new Dictionary<string, List<IPackage>>();
-        IConsole Console;
-        IFileSystem fileSystem;
+        readonly List<string> _assemblies = new List<string>();
+        readonly IQueryable<IPackage> _packageSource;
+        private readonly IFileSystem _fileSystem;
+        private readonly IConsole _console;
+        readonly Dictionary<string, List<IPackage>> _resolvedAssemblies = new Dictionary<string, List<IPackage>>();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RepositoryAssemblyResolver"/> class.
@@ -27,87 +26,47 @@ namespace NuGet.Extensions.Repositories
         /// <param name="console">The console to output to.</param>
         public RepositoryAssemblyResolver(List<string> assemblies, IQueryable<IPackage> packageSource, IFileSystem fileSystem, IConsole console)
         {
-            this.assemblies = assemblies;
-            this.packageSource = packageSource;
-            this.Console = console;
-            this.fileSystem = fileSystem;
+            _assemblies = assemblies;
+            _packageSource = packageSource;
+            _fileSystem = fileSystem;
+            _console = console;
 
             foreach (var a in assemblies)
             {
-                resolvedAssemblies.Add(a, new List<IPackage>());
+                _resolvedAssemblies.Add(a, new List<IPackage>());
             }
         }
-
+        
         /// <summary>
         /// Resolves a list of packages that contain the assemblies requested.
         /// </summary>
         /// <param name="exhaustive">if set to <c>true</c> [exhaustive].</param>
         /// <returns></returns>
-        public Dictionary<string, List<IPackage>> GetAssemblyToPackageMapping(Boolean exhaustive)
+        public AssemblyToPackageMapping GetAssemblyToPackageMapping(Boolean exhaustive)
         {
             int current = 0;
-            int max = packageSource.Count();
+            int max = _packageSource.Count();
 
-            foreach (var package in packageSource)
+            foreach (var package in _packageSource)
             {
-                Console.WriteLine("Checking package {1} of {2}", package.Id, current++, max);
+                _console.WriteLine("Checking package {1} of {2}", package.Id, current++, max);
                 var packageFiles = package.GetFiles();
                 foreach (var f in packageFiles)
                 {
-                    FileInfo file = new FileInfo(f.Path);
-                    foreach (var assembly in assemblies.Where(a => a.Equals(file.Name, StringComparison.InvariantCultureIgnoreCase)))
+                    var file = new FileInfo(f.Path);
+                    foreach (var assembly in _assemblies.Where(a => a.Equals(file.Name, StringComparison.InvariantCultureIgnoreCase)))
                     {
-                        resolvedAssemblies[assembly].Add(package);
+                        _resolvedAssemblies[assembly].Add(package);
                         //HACK Exhaustive not easy with multiple assemblies, so default to only one currently....
-                        if (!exhaustive && assemblies.Count == 1)
+                        if (!exhaustive && _assemblies.Count == 1)
                         {
-                            return resolvedAssemblies;
+                            return new AssemblyToPackageMapping(_console, _fileSystem, _resolvedAssemblies);
                         }
                     }
                 }
             }
-            return resolvedAssemblies;
+            return new AssemblyToPackageMapping(_console, _fileSystem, _resolvedAssemblies);
         }
-
-
-        /// <summary>
-        /// Outputs a package.config file reflecting the set of packages that provides the requested set of assemblies.
-        /// </summary>
-        public void OutputPackageConfigFile()
-        {
-            var packagesConfig = Constants.PackageReferenceFile;
-            if (fileSystem.FileExists(packagesConfig))
-                fileSystem.DeleteFile(packagesConfig);
-
-            if (!fileSystem.FileExists(packagesConfig))
-            {
-                var prf = new PackageReferenceFile(fileSystem,string.Format(".\\{0}", packagesConfig));
-                foreach (var assemblyToPackageMapping in resolvedAssemblies)
-                {
-                    if (assemblyToPackageMapping.Value.Count() > 0)
-                    {
-                        IPackage smallestPackage;
-                        if (assemblyToPackageMapping.Value.Count > 1)
-                        {
-                            smallestPackage = assemblyToPackageMapping.Value.OrderBy(l => l.GetFiles().Count()).FirstOrDefault();
-                            Console.WriteLine(String.Format("{0} : Choosing {1} from {2} choices.", assemblyToPackageMapping.Key, smallestPackage.Id, assemblyToPackageMapping.Value.Count()));
-                        }
-                        else
-                        {
-                            smallestPackage = assemblyToPackageMapping.Value.First();
-                        }
-                        //Only add if we do not have another instance of the ID, not the id/version combo....
-                        if (!prf.GetPackageReferences().Any(p => p.Id == smallestPackage.Id))
-                            prf.AddEntry(smallestPackage.Id, smallestPackage.Version);
-                    }
-                }
-            }
-            else
-            {
-                Console.WriteError("Please move the existing packages.config file....");
-            }
-        }
-
     }
 
 

@@ -119,18 +119,15 @@ namespace NuGet.Extensions.ReferenceAnalysers
                 _console.WriteLine("Checking feed for {0} references...", referenceList.Count);
 
                 IQueryable<IPackage> packageSource = _packageRepository.GetPackages().OrderBy(p => p.Id);
-
                 var assemblyResolver = new RepositoryAssemblyResolver(referenceList, packageSource, _projectFileSystem, _console);
-                Dictionary<string, List<IPackage>> referenceMappings = assemblyResolver.GetAssemblyToPackageMapping(false);
-                assemblyResolver.OutputPackageConfigFile();
-                var resolvedMappings = referenceMappings.Where(m => m.Value.Any());
-                var failedMappings = referenceMappings.Where(m => m.Value.Count == 0);
+                var referenceMappings = assemblyResolver.GetAssemblyToPackageMapping(false);
+                referenceMappings.OutputPackageConfigFile();
                 //next, lets rewrite the project file with the mappings to the new location...
                 //Going to have to use the mapping to assembly name that we get back from the resolve above
                 _console.WriteLine();
-                _console.WriteLine("Found {0} package to assembly mappings on feed...", resolvedMappings.Count());
-                failedMappings.ToList().ForEach(f => _console.WriteWarning("Could not match: {0}", f.Key));
-                return resolvedMappings;
+                _console.WriteLine("Found {0} package to assembly mappings on feed...", referenceMappings.ResolvedMappings.Count());
+                referenceMappings.FailedMappings.ToList().ForEach(f => _console.WriteWarning("Could not match: {0}", f));
+                return referenceMappings.ResolvedMappings;
             }
 
             _console.WriteLine("No references found to resolve (all GAC?)");

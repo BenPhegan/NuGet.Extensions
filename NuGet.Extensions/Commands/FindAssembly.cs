@@ -58,53 +58,43 @@ namespace NuGet.Extensions.Commands
             var packageSource = GetPackageList(repository);
             _resolver = new RepositoryAssemblyResolver(assemblies, packageSource, _fileSystem, Console);
 
-            var assemblyLocations = new Dictionary<string, List<IPackage>>();
-            if (assemblies.Count > 0)
-            {
-                assemblyLocations = _resolver.GetAssemblyToPackageMapping(Exhaustive);
-            }
+            var assemblyToPackageMapping = _resolver.GetAssemblyToPackageMapping(Exhaustive);
 
             Console.WriteLine();
             sw.Stop();
 
             if (!OutputPackageConfig)
             {
-                OutputResultsToConsole(sw, assemblyLocations);
+                OutputResultsToConsole(sw, assemblyToPackageMapping.ResolvedMappings);
+                OutputErrors(assemblyToPackageMapping.FailedMappings);
             }
             else
             {
-                _resolver.OutputPackageConfigFile();
-                OutputErrors(assemblyLocations);
+                assemblyToPackageMapping.OutputPackageConfigFile();
+                OutputErrors(assemblyToPackageMapping.FailedMappings);
             }
 
             Environment.Exit(0);
         }
 
-        private void OutputErrors(Dictionary<string, List<IPackage>> assemblyLocations)
+        private void OutputErrors(IEnumerable<string> assemblyLocations)
         {
-            var notFound = assemblyLocations.Where(l => l.Value.Count == 0).ToList();
+            var notFound = assemblyLocations.ToList();
             if (!notFound.Any()) return;
             Console.WriteLine("Could not find the following assemblies in any packages on the provided source:");
             foreach (var a in notFound)
             {
-                Console.WriteLine("{0}".PadLeft(15), a.Key);
+                Console.WriteLine("{0}".PadLeft(15), a);
             }
         }
 
 
-        private void OutputResultsToConsole(Stopwatch sw, Dictionary<string, List<IPackage>> assemblyLocations)
+        private void OutputResultsToConsole(Stopwatch sw, IDictionary<string, List<IPackage>> assemblyLocations)
         {
             foreach (var a in assemblyLocations)
             {
                 Console.WriteLine("Search results for : {0}", a.Key);
-                if (a.Value.Count > 0)
-                {
-                    LogFoundPackages(a.Value);
-                }
-                else
-                {
-                    Console.WriteLine("Could not find assembly : {0}", a.Key);
-                }
+                LogFoundPackages(a.Value);
             }
             OutputElapsedTime(sw);
         }

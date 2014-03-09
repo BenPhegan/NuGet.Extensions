@@ -130,6 +130,7 @@
     <Compile Include="Packages\PackageEnumerator.cs" />
     <Compile Include="Packages\PackageResolutionManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Repositories\AssemblyToPackageMapping.cs" />
     <Compile Include="Repositories\IRepositoryEnumerator.cs" />
     <Compile Include="Repositories\IRepositoryManager.cs" />
     <Compile Include="Repositories\RepositoryAssemblyResolver.cs" />
