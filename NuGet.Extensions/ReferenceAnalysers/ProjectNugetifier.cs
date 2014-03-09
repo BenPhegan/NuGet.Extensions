@@ -180,9 +180,7 @@ namespace NuGet.Extensions.ReferenceAnalysers
 
                 IQueryable<IPackage> packageSource = _packageRepository.GetPackages().OrderBy(p => p.Id);
 
-                var assemblyResolver = new RepositoryAssemblyResolver(referenceFiles,
-                    packageSource,
-                    _projectFileSystem, _console);
+                var assemblyResolver = new RepositoryAssemblyResolver(referenceFiles, packageSource, _projectFileSystem, _console);
                 results = assemblyResolver.GetAssemblyToPackageMapping(false);
                 assemblyResolver.OutputPackageConfigFile();
             }
