@@ -43,7 +43,7 @@ namespace NuGet.Extensions.Repositories
         /// </summary>
         /// <param name="exhaustive">if set to <c>true</c> [exhaustive].</param>
         /// <returns></returns>
-        public Dictionary<string, List<IPackage>> ResolveAssemblies(Boolean exhaustive)
+        public Dictionary<string, List<IPackage>> GetAssemblyToPackageMapping(Boolean exhaustive)
         {
             int current = 0;
             int max = packageSource.Count();

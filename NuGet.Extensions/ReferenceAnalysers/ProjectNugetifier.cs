@@ -183,7 +183,7 @@ namespace NuGet.Extensions.ReferenceAnalysers
                 var assemblyResolver = new RepositoryAssemblyResolver(referenceFiles,
                     packageSource,
                     _projectFileSystem, _console);
-                results = assemblyResolver.ResolveAssemblies(false);
+                results = assemblyResolver.GetAssemblyToPackageMapping(false);
                 assemblyResolver.OutputPackageConfigFile();
             }
             else _console.WriteWarning("No references found to resolve (all GAC?)");

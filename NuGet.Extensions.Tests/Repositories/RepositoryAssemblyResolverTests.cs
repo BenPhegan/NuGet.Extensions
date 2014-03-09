@@ -23,7 +23,7 @@ namespace NuGet.Extensions.Tests.Repositories
             var assemblies = new List<string>() { "Assembly.Common.dll" };
 
             var assemblyResolver = new RepositoryAssemblyResolver(assemblies, packages.AsQueryable(), new Mock<MockFileSystem>().Object, new Mock<IConsole>().Object);
-            var resolved = assemblyResolver.ResolveAssemblies(false);
+            var resolved = assemblyResolver.GetAssemblyToPackageMapping(false);
             Assert.AreEqual(1, resolved["Assembly.Common.dll"].Count);
         }
 
@@ -41,7 +41,7 @@ namespace NuGet.Extensions.Tests.Repositories
             var assemblies = new List<string>() { "Assembly.Common.dll" };
 
             var assemblyResolver = new RepositoryAssemblyResolver(assemblies, packages.AsQueryable(), new Mock<MockFileSystem>().Object, new Mock<IConsole>().Object);
-            var resolved = assemblyResolver.ResolveAssemblies(true);
+            var resolved = assemblyResolver.GetAssemblyToPackageMapping(true);
             Assert.AreEqual(3, resolved["Assembly.Common.dll"].Count);
         }
 
@@ -57,7 +57,7 @@ namespace NuGet.Extensions.Tests.Repositories
             var assemblies = new List<string>() { "Assembly.Common.dll", "Assembly.Data.dll" };
 
             var assemblyResolver = new RepositoryAssemblyResolver(assemblies, packages.AsQueryable(), new Mock<MockFileSystem>().Object, new Mock<IConsole>().Object);
-            var resolved = assemblyResolver.ResolveAssemblies(true);
+            var resolved = assemblyResolver.GetAssemblyToPackageMapping(true);
             Assert.AreEqual(1, resolved["Assembly.Common.dll"].Count);
             Assert.AreEqual(1, resolved["Assembly.Data.dll"].Count);
         }
@@ -77,7 +77,7 @@ namespace NuGet.Extensions.Tests.Repositories
             var assemblies = new List<string>() { "Assembly.Common.dll", "Assembly.Data.dll" };
 
             var assemblyResolver = new RepositoryAssemblyResolver(assemblies, packages.AsQueryable(), new Mock<MockFileSystem>().Object, new Mock<IConsole>().Object);
-            var resolved = assemblyResolver.ResolveAssemblies(true);
+            var resolved = assemblyResolver.GetAssemblyToPackageMapping(true);
             Assert.AreEqual(3, resolved["Assembly.Common.dll"].Count);
             Assert.AreEqual(4, resolved["Assembly.Data.dll"].Count);
         }
@@ -93,7 +93,7 @@ namespace NuGet.Extensions.Tests.Repositories
             //filesystem.Root = @"c:\test";
 
             var assemblyResolver = new RepositoryAssemblyResolver(assemblies, packages.AsQueryable(), filesystem, new Mock<IConsole>().Object);
-            var resolved = assemblyResolver.ResolveAssemblies(false);
+            var resolved = assemblyResolver.GetAssemblyToPackageMapping(false);
             assemblyResolver.OutputPackageConfigFile();
             Assert.AreEqual(1,filesystem.Paths.Count);
             var file = new PackageReferenceFile(filesystem, string.Concat(filesystem.Root, ".\\packages.config"));
@@ -113,7 +113,7 @@ namespace NuGet.Extensions.Tests.Repositories
             var filesystem = new MockFileSystem();
 
             var assemblyResolver = new RepositoryAssemblyResolver(assemblies, packages.AsQueryable(), filesystem, new Mock<IConsole>().Object);
-            var resolved = assemblyResolver.ResolveAssemblies(false);
+            var resolved = assemblyResolver.GetAssemblyToPackageMapping(false);
             assemblyResolver.OutputPackageConfigFile();
             Assert.AreEqual(1, filesystem.Paths.Count);
             var file = new PackageReferenceFile(filesystem, string.Concat(filesystem.Root, ".\\packages.config"));

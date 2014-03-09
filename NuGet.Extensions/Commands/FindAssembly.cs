@@ -61,7 +61,7 @@ namespace NuGet.Extensions.Commands
             var assemblyLocations = new Dictionary<string, List<IPackage>>();
             if (assemblies.Count > 0)
             {
-                assemblyLocations = _resolver.ResolveAssemblies(Exhaustive);
+                assemblyLocations = _resolver.GetAssemblyToPackageMapping(Exhaustive);
             }
 
             Console.WriteLine();
