@@ -11,21 +11,10 @@ namespace NuGet.Extensions.MSBuild
         private readonly Project _project;
         private readonly IProjectLoader _projectLoader;
 
-        public ProjectAdapter(string projectPath, ProjectCollection projectCollection, IProjectLoader projectLoader, IDictionary<string, string> globalMsBuildProperties = null)
-            : this(CreateMsBuildProject(projectPath, projectCollection, globalMsBuildProperties ?? new Dictionary<string, string>()), projectLoader)
-        {
-        }
-
-        private ProjectAdapter(Project project, IProjectLoader projectLoader)
+        public ProjectAdapter(Project project, IProjectLoader projectLoader)
         {
             _project = project;
             _projectLoader = projectLoader;
-        }
-
-        private static Project CreateMsBuildProject(string projectPath, ProjectCollection projectCollection, IDictionary<string, string> globalMsBuildProperties)
-        {
-            var existing = projectCollection.GetLoadedProjects(projectPath).SingleOrDefault();
-            return existing ?? new Project(projectPath, globalMsBuildProperties, null, projectCollection);
         }
 
         public IEnumerable<IReference> GetBinaryReferences()

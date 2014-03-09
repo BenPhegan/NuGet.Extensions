@@ -13,6 +13,7 @@ namespace NuGet.Extensions.MSBuild
         private readonly IConsole _console;
         private readonly ProjectCollection _projectCollection;
         private readonly Lazy<IDictionary<Guid, IVsProject>> _projectsInSolutionByGuid;
+        private readonly IDictionary<string, string> _globalMsBuildProperties = new Dictionary<string, string>();
 
         public SolutionProjectLoader(FileInfo solutionFile, IConsole console)
         {
@@ -65,7 +66,8 @@ namespace NuGet.Extensions.MSBuild
             var projectLoader = (IProjectLoader) this;
             try
             {
-                return new ProjectAdapter(absoluteProjectPath, _projectCollection, projectLoader);
+                var msBuildProject = CreateMsBuildProject(absoluteProjectPath, _projectCollection, _globalMsBuildProperties);
+                return new ProjectAdapter(msBuildProject, projectLoader);
             }
             catch (Exception e)
             {
@@ -74,6 +76,14 @@ namespace NuGet.Extensions.MSBuild
                 _console.WriteWarning("  {0}", e.Message);
                 return nullProjectAdapter;
             }
+        }
+        
+
+        private static Project CreateMsBuildProject(string projectPath, ProjectCollection projectCollection, IDictionary<string, string> globalMsBuildProperties)
+        {
+            var canonicalProjectPath = Path.GetFullPath(projectPath).ToLowerInvariant();
+            var existing = projectCollection.GetLoadedProjects(canonicalProjectPath).SingleOrDefault();
+            return existing ?? new Project(canonicalProjectPath, globalMsBuildProperties, null, projectCollection);
         }
 
         private static Guid ProjectGuid(SolutionProject p)
