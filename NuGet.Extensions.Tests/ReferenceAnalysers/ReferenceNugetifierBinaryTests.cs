@@ -1,6 +1,8 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 using Moq;
+using NuGet.Extensions.Tests.Mocks;
 using NUnit.Framework;
 
 namespace NuGet.Extensions.Tests.ReferenceAnalysers
@@ -14,6 +16,23 @@ namespace NuGet.Extensions.Tests.ReferenceAnalysers
             var nugetifier = ReferenceNugetifierTester.BuildNugetifier();
             var nugettedDependencies = ReferenceNugetifierTester.GetManifestDependencies(nugetifier);
             Assert.That(nugettedDependencies, Is.Empty);
+        }
+
+        [Test]
+        public void NugettedProjectHasPackagesConfigAddedToRepositoriesConfig()
+        {
+            const string projectRoot = "c:\\projectRoot";
+            var fileSystem = new MockFileSystem(projectRoot);
+            var singleDependency = ProjectReferenceTestData.ConstructMockDependency();
+            var projectWithSingleDependency = ProjectReferenceTestData.ConstructMockProject(new[] { singleDependency.Object });
+            var packageRepositoryWithOnePackage = ProjectReferenceTestData.CreateMockRepository();
+            var repositoriesConfig = new Mock<ISharedPackageRepository>();
+
+            var nugetifier = ReferenceNugetifierTester.BuildNugetifier(vsProject: projectWithSingleDependency, packageRepository: packageRepositoryWithOnePackage, projectFileSystem: fileSystem);
+            var nugettedDependencies = ReferenceNugetifierTester.GetManifestDependencies(nugetifier, repositoriesConfig.Object);
+
+            Assert.That(nugettedDependencies, Is.Not.Empty);
+            repositoriesConfig.Verify(r => r.RegisterRepository(It.Is<string>(path => path.StartsWith(projectRoot))));
         }
 
         [Test]

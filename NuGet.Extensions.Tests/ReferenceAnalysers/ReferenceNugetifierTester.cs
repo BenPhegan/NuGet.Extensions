@@ -22,7 +22,7 @@ namespace NuGet.Extensions.Tests.ReferenceAnalysers
             var solutionRoot = GetMockDirectory();
             projectFileSystem = projectFileSystem ?? GetMockFileSystem(solutionRoot);
             vsProject = vsProject ?? new Mock<IVsProject>();
-            vsProject.SetupGet(p => p.ProjectDirectory).Returns(GetMockDirectory());
+            vsProject.SetupGet(p => p.ProjectDirectory).Returns(new DirectoryInfo(projectFileSystem.Root));
             packageRepository = packageRepository ?? new MockPackageRepository();
             return new ProjectNugetifier(vsProject.Object, packageRepository, projectFileSystem, console.Object);
         }
