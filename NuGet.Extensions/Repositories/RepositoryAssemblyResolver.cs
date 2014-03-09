@@ -15,7 +15,7 @@ namespace NuGet.Extensions.Repositories
         readonly IQueryable<IPackage> _packageSource;
         private readonly IFileSystem _fileSystem;
         private readonly IConsole _console;
-        readonly Dictionary<string, List<IPackage>> _resolvedAssemblies = new Dictionary<string, List<IPackage>>();
+        private readonly Dictionary<string, List<IPackage>> _resolvedAssemblies;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RepositoryAssemblyResolver"/> class.
@@ -26,15 +26,14 @@ namespace NuGet.Extensions.Repositories
         /// <param name="console">The console to output to.</param>
         public RepositoryAssemblyResolver(List<string> assemblies, IQueryable<IPackage> packageSource, IFileSystem fileSystem, IConsole console)
         {
-            _assemblies = assemblies;
             _packageSource = packageSource;
             _fileSystem = fileSystem;
             _console = console;
 
-            foreach (var a in assemblies)
-            {
-                _resolvedAssemblies.Add(a, new List<IPackage>());
-            }
+            var lookup = assemblies.ToLookup(a => a, a => "");
+            foreach (var assembly in lookup.Where(a => a.Count() > 1)) console.WriteWarning("Same assembly resolution will be used for both assembly references for {0}", assembly);
+            _assemblies = assemblies.Distinct().ToList();
+            _resolvedAssemblies = _assemblies.ToDictionary(a => a, _ => new List<IPackage>());
         }
         
         /// <summary>
