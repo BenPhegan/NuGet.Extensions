@@ -43,30 +43,34 @@ namespace NuGet.Extensions.Repositories
         /// <returns></returns>
         public AssemblyToPackageMapping GetAssemblyToPackageMapping(Boolean exhaustive)
         {
+            IPackage currentPackage = null;
             int current = 0;
             int max = _packageSource.Count();
 
-            foreach (var package in _packageSource)
+            foreach (var filePackagePair in GetFilePackagePairs())
             {
                 _console.WriteLine("Checking package {0} of {1}", current++, max);
                 var packageFiles = package.GetFiles();
                 foreach (var f in packageFiles)
                 {
-                    var file = new FileInfo(f.Path);
-                    foreach (var assembly in _assemblies.Where(a => a.Equals(file.Name, StringComparison.InvariantCultureIgnoreCase)))
+                    _resolvedAssemblies[assembly].Add(currentPackage);
+                    //HACK Exhaustive not easy with multiple assemblies, so default to only one currently....
+                    if (!exhaustive && _assemblies.Count == 1)
                     {
-                        _resolvedAssemblies[assembly].Add(package);
-                        //HACK Exhaustive not easy with multiple assemblies, so default to only one currently....
-                        if (!exhaustive && _assemblies.Count == 1)
-                        {
-                            return new AssemblyToPackageMapping(_console, _fileSystem, _resolvedAssemblies);
-                        }
+                        return new AssemblyToPackageMapping(_console, _fileSystem, _resolvedAssemblies);
                     }
                 }
             }
             return new AssemblyToPackageMapping(_console, _fileSystem, _resolvedAssemblies);
         }
+
+        private IEnumerable<KeyValuePair<string, IPackage>> GetFilePackagePairs()
+        {
+            foreach (var package in _packageSource)
+            {
+                var files = package.GetFiles();
+                foreach (var file in files) yield return new KeyValuePair<string, IPackage>(new FileInfo(file.Path).Name, package);
+            }
+        }
     }
-
-
 }
