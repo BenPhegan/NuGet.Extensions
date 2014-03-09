@@ -32,13 +32,9 @@ namespace NuGet.Extensions.Commands
             _nuspecFileDestination = assemblyName + Constants.ManifestExtension;
         }
 
-        public void AddData(INuspecDataSource nuspecData, List<ManifestDependency> manifestDependencies, string targetFramework = ".NET Framework, Version=4.0")
+        public void SetMetadata(INuspecDataSource nuspecData, List<ManifestDependency> manifestDependencies)
         {
             var metadata = _manifest.Metadata;
-            metadata.DependencySets = new List<ManifestDependencySet>
-                                               {
-                                                   new ManifestDependencySet{Dependencies = manifestDependencies,TargetFramework = targetFramework}
-                                               };
             metadata.Id = nuspecData.Id ?? metadata.Id;
             metadata.Title = nuspecData.Title ?? metadata.Title;
             metadata.Version = "$version$";
@@ -54,6 +50,15 @@ namespace NuGet.Extensions.Commands
 
             //Dont add a releasenotes node if we dont have any to add...
             if (!String.IsNullOrEmpty(nuspecData.ReleaseNotes)) metadata.ReleaseNotes = nuspecData.ReleaseNotes;
+        }
+
+        public void SetDependencies(List<ManifestDependency> manifestDependencies, string targetFramework = ".NET Framework, Version=4.0")
+        {
+            _manifest.Metadata.DependencySets =
+                new List<ManifestDependencySet>
+                {
+                    new ManifestDependencySet {Dependencies = manifestDependencies, TargetFramework = targetFramework}
+                };
         }
 
         public void Save(IConsole console)

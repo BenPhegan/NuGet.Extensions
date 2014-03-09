@@ -116,7 +116,8 @@ namespace NuGet.Extensions.Commands
             if (NuSpec)
             {
                 var nuspecBuilder = new NuspecBuilder(projectAdapter.AssemblyName);
-                nuspecBuilder.AddData(this, manifestDependencies);
+                nuspecBuilder.SetMetadata(this, manifestDependencies);
+                nuspecBuilder.SetDependencies(manifestDependencies);
                 nuspecBuilder.Save(Console);
             }
         }
