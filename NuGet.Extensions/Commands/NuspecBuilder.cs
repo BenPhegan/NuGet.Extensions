@@ -7,19 +7,42 @@ using NuGet.Common;
 namespace NuGet.Extensions.Commands
 {
     public class NuspecBuilder {
-        private readonly Manifest _manifest = new Manifest();
+        private readonly Manifest _manifest;
+        private readonly string _nuspecFileDestination;
 
-        public void AddData(INuspecDataSource nuspecData, string assemblyOutput, List<ManifestDependency> manifestDependencies, string targetFramework = ".NET Framework, Version=4.0")
+        public NuspecBuilder(string assemblyName)
+        {
+            var file = new ManifestFile
+                       {
+                           Source = assemblyName + ".dll",
+                           Target = "lib"
+                       };
+
+            _manifest = new Manifest
+                        {
+                            Metadata = new ManifestMetadata
+                                       {
+                                           Id = assemblyName,
+                                           Title = assemblyName,
+                                           Description = assemblyName
+                                       },
+                            Files = new List<ManifestFile> {file}
+                        };
+
+            _nuspecFileDestination = assemblyName + Constants.ManifestExtension;
+        }
+
+        public void AddData(INuspecDataSource nuspecData, List<ManifestDependency> manifestDependencies, string targetFramework = ".NET Framework, Version=4.0")
         {
             var metadata = _manifest.Metadata;
             metadata.DependencySets = new List<ManifestDependencySet>
                                                {
                                                    new ManifestDependencySet{Dependencies = manifestDependencies,TargetFramework = targetFramework}
                                                };
-            metadata.Id = nuspecData.Id ?? assemblyOutput;
-            metadata.Title = nuspecData.Title ?? assemblyOutput;
+            metadata.Id = nuspecData.Id ?? metadata.Id;
+            metadata.Title = nuspecData.Title ?? metadata.Title;
             metadata.Version = "$version$";
-            metadata.Description = nuspecData.Description ?? assemblyOutput;
+            metadata.Description = nuspecData.Description ?? metadata.Description;
             metadata.Authors = nuspecData.Author ?? "$author$";
             metadata.Tags = nuspecData.Tags ?? "$tags$";
             metadata.LicenseUrl = nuspecData.LicenseUrl ?? "$licenseurl$";
@@ -28,21 +51,14 @@ namespace NuGet.Extensions.Commands
             metadata.IconUrl = nuspecData.IconUrl ?? "$iconurl$";
             metadata.ProjectUrl = nuspecData.ProjectUrl ?? "$projrcturl$";
             metadata.Owners = nuspecData.Owners ?? nuspecData.Author ?? "$author$";
-            _manifest.Files = new List<ManifestFile>
-                             {
-                                 new ManifestFile
-                                 {
-                                     Source = assemblyOutput + ".dll",
-                                     Target = "lib"
-                                 }
-                             };
 
             //Dont add a releasenotes node if we dont have any to add...
             if (!String.IsNullOrEmpty(nuspecData.ReleaseNotes)) metadata.ReleaseNotes = nuspecData.ReleaseNotes;
         }
 
-        public void Save(IConsole console, string nuspecFile)
+        public void Save(IConsole console)
         {
+            var nuspecFile = _nuspecFileDestination;
             try
             {
                 console.WriteLine("Saving new NuSpec: {0}", nuspecFile);
