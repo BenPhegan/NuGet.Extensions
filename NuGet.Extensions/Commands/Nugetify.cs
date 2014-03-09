@@ -107,9 +107,9 @@ namespace NuGet.Extensions.Commands
 
         private void NugetifyProject(ProjectAdapter projectAdapter, DirectoryInfo solutionRoot, ISharedPackageRepository existingSolutionPackagesRepo)
         {
-            var referenceNugetifier = CreateReferenceNugetifier(projectAdapter);
-            referenceNugetifier.NugetifyReferences(solutionRoot);
-            var manifestDependencies = referenceNugetifier.AddNugetReferenceMetadata(existingSolutionPackagesRepo, NuSpec);
+            var projectNugetifier = CreateProjectNugetifier(projectAdapter);
+            projectNugetifier.NugetifyReferences(solutionRoot);
+            var manifestDependencies = projectNugetifier.AddNugetReferenceMetadata(existingSolutionPackagesRepo, NuSpec);
             projectAdapter.Save();
 
             //Create nuspec regardless of whether we have added dependencies
@@ -122,7 +122,7 @@ namespace NuGet.Extensions.Commands
             }
         }
 
-        private ProjectNugetifier CreateReferenceNugetifier(ProjectAdapter projectAdapter)
+        private ProjectNugetifier CreateProjectNugetifier(ProjectAdapter projectAdapter)
         {
             var projectFileSystem = new PhysicalFileSystem(projectAdapter.ProjectDirectory.ToString());
             var repository = AggregateRepositoryHelper.CreateAggregateRepositoryFromSources(RepositoryFactory, SourceProvider, Source);
