@@ -118,7 +118,7 @@ namespace NuGet.Extensions.ReferenceAnalysers
             {
                 _console.WriteLine("Checking feed for {0} references...", referenceList.Count);
 
-                IQueryable<IPackage> packageSource = _packageRepository.GetPackages().OrderBy(p => p.Id);
+                IQueryable<IPackage> packageSource = _packageRepository.GetPackages();
                 var assemblyResolver = new RepositoryAssemblyResolver(referenceList, packageSource, _projectFileSystem, _console);
                 var referenceMappings = assemblyResolver.GetAssemblyToPackageMapping(false);
                 referenceMappings.OutputPackageConfigFile();
