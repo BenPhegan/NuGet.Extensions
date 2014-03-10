@@ -58,8 +58,7 @@ namespace NuGet.Extensions.Repositories
                 if (_assemblies.Contains(currentFilename))
                 {
                     _resolvedAssemblies[currentFilename].Add(currentPackage);
-                    //HACK Exhaustive not easy with multiple assemblies, so default to only one currently....
-                    if (!exhaustive && _assemblies.Count == 1) break;
+                    if (!exhaustive && _resolvedAssemblies.Values.All(resolvedList => resolvedList.Any())) break;
                 }
             }
             return new AssemblyToPackageMapping(_console, _fileSystem, _resolvedAssemblies);
