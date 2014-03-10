@@ -45,7 +45,7 @@ namespace NuGet.Extensions.Repositories
         public AssemblyToPackageMapping GetAssemblyToPackageMapping(Boolean exhaustive)
         {
             IPackage currentPackage = null;
-            int current = 0;
+            int current = 1;
             int max = _packageSource.Count();
 
             foreach (var filenamePackage in GetFilenamePackagePairs())
