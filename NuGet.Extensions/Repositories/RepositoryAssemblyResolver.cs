@@ -11,7 +11,7 @@ namespace NuGet.Extensions.Repositories
     /// </summary>
     public class RepositoryAssemblyResolver
     {
-        readonly List<string> _assemblies = new List<string>();
+        readonly HashSet<string> _assemblies = new HashSet<string>();
         readonly IQueryable<IPackage> _packageSource;
         private readonly IFileSystem _fileSystem;
         private readonly IConsole _console;
@@ -30,9 +30,10 @@ namespace NuGet.Extensions.Repositories
             _fileSystem = fileSystem;
             _console = console;
 
-            var lookup = assemblies.ToLookup(a => a, a => "");
-            foreach (var assembly in lookup.Where(a => a.Count() > 1)) console.WriteWarning("Same assembly resolution will be used for both assembly references for {0}", assembly);
-            _assemblies = assemblies.Distinct().ToList();
+            foreach (var assembly in assemblies.Where(assembly => !_assemblies.Add(assembly)))
+            {
+                console.WriteWarning("Same assembly resolution will be used for both assembly references to {0}", assembly);
+            }
             _resolvedAssemblies = _assemblies.ToDictionary(a => a, _ => new List<IPackage>());
         }
         
