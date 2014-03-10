@@ -48,7 +48,7 @@ namespace NuGet.Extensions.Repositories
 
             foreach (var package in _packageSource)
             {
-                _console.WriteLine("Checking package {1} of {2}", package.Id, current++, max);
+                _console.WriteLine("Checking package {0} of {1}", current++, max);
                 var packageFiles = package.GetFiles();
                 foreach (var f in packageFiles)
                 {
