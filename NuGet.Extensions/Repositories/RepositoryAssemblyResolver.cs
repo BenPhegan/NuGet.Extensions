@@ -11,7 +11,7 @@ namespace NuGet.Extensions.Repositories
     /// </summary>
     public class RepositoryAssemblyResolver
     {
-        readonly HashSet<string> _assemblies = new HashSet<string>();
+        readonly HashSet<string> _assemblies = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
         readonly IQueryable<IPackage> _packageSource;
         private readonly IFileSystem _fileSystem;
         private readonly IConsole _console;
@@ -50,16 +50,16 @@ namespace NuGet.Extensions.Repositories
 
             foreach (var filePackagePair in GetFilePackagePairs())
             {
-                _console.WriteLine("Checking package {0} of {1}", current++, max);
-                var packageFiles = package.GetFiles();
-                foreach (var f in packageFiles)
+                if (currentPackage != filePackagePair.Value) _console.WriteLine("Checking package {0} of {1}", current++, max);
+
+                var currentFilename = filePackagePair.Key;
+                currentPackage = filePackagePair.Value;
+
+                if (_assemblies.Contains(currentFilename))
                 {
-                    _resolvedAssemblies[assembly].Add(currentPackage);
+                    _resolvedAssemblies[currentFilename].Add(currentPackage);
                     //HACK Exhaustive not easy with multiple assemblies, so default to only one currently....
-                    if (!exhaustive && _assemblies.Count == 1)
-                    {
-                        return new AssemblyToPackageMapping(_console, _fileSystem, _resolvedAssemblies);
-                    }
+                    if (!exhaustive && _assemblies.Count == 1) break;
                 }
             }
             return new AssemblyToPackageMapping(_console, _fileSystem, _resolvedAssemblies);
