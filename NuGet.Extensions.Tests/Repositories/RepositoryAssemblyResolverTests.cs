@@ -52,6 +52,26 @@ namespace NuGet.Extensions.Tests.Repositories
         }
 
         [Test]
+        public void NonExhaustiveSearchStopsAfterResolvingOnePackagePerAssembly()
+        {
+            var willThrowErrorIfManipulatedAsPath = new List<string>() { "c:\\temp c:\\windows" };
+            var packages = new List<IPackage> 
+            { 
+                PackageUtility.CreatePackage("Assembly.Common", "1.2", assemblyReferences: new[]{AssemblyCommonDll}, isLatest: true), 
+                PackageUtility.CreatePackage("Assembly.Data", "1.1", assemblyReferences: new[]{AssemblyDataDll}, isLatest: false),
+                PackageUtility.CreatePackage("Assembly.Common", "1.0", assemblyReferences: willThrowErrorIfManipulatedAsPath, isLatest: false) 
+            };
+
+            var assemblies = new List<string>() { AssemblyCommonDll, AssemblyDataDll };
+
+            var assemblyResolver = new RepositoryAssemblyResolver(assemblies, packages.AsQueryable(), new Mock<MockFileSystem>().Object, new Mock<IConsole>().Object);
+            var resolved = assemblyResolver.GetAssemblyToPackageMapping(false).ResolvedMappings;
+            Assert.AreEqual(1, resolved[AssemblyCommonDll].Count);
+            Assert.AreEqual(1, resolved[AssemblyDataDll].Count);
+        }
+
+
+        [Test]
         public void CanFindMultipleAssembliesInSinglePackage()
         {
             var fileList = new List<string>() { AssemblyCommonDll, AssemblyDataDll };
