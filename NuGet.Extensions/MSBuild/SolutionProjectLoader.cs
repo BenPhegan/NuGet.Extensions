@@ -13,10 +13,12 @@ namespace NuGet.Extensions.MSBuild
         private readonly IConsole _console;
         private readonly ProjectCollection _projectCollection;
         private readonly ReallyLazy<Dictionary<Guid, IVsProject>> _projectsByGuid;
-        private readonly IDictionary<string, string> _globalMsBuildProperties = new Dictionary<string, string>();
+        private readonly IDictionary<string, string> _globalMsBuildProperties;
 
-        public SolutionProjectLoader(FileInfo solutionFile, IConsole console)
+        public SolutionProjectLoader(FileInfo solutionFile, IConsole console, IDictionary<string, string> globalMsBuildProperties = null)
         {
+            _globalMsBuildProperties = globalMsBuildProperties ?? new Dictionary<string, string>();
+            _globalMsBuildProperties["SolutionDir"] = solutionFile.Directory.FullName;
             _solutionFile = solutionFile;
             _console = console;
             _projectCollection = new ProjectCollection();
