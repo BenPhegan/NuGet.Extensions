@@ -51,8 +51,8 @@ namespace NuGet.Extensions.MSBuild
         {
             var projectPath = GetAbsoluteProjectPath(simpleProject.RelativePath);
             if (File.Exists(projectPath)) return true;
-
-            _console.WriteWarning("Project: {0} was not found on disk", simpleProject.ProjectName);
+            
+            if (!Directory.Exists(projectPath)) _console.WriteWarning("Project: {0} was not found on disk", simpleProject.ProjectName);
             return false;
         }
 
