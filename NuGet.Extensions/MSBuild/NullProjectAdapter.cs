@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 
 namespace NuGet.Extensions.MSBuild
 {
+    [DebuggerDisplay("{ProjectName} {AssemblyName}")]
     public class NullProjectAdapter : IVsProject {
         private readonly string _projectPath;
 

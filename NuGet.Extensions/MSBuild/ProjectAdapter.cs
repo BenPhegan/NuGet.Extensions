@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Microsoft.Build.Evaluation;
 
 namespace NuGet.Extensions.MSBuild
 {
+    [DebuggerDisplay("{ProjectName} {AssemblyName}")]
     public class ProjectAdapter : IVsProject
     {
         private readonly Project _project;

@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace NuGet.Extensions.MSBuild
 {
+    [DebuggerDisplay("{AssemblyName}")]
     public class ProjectReferenceAdapter : IReference
     {
         private readonly Func<bool> _removeFromParentProject;

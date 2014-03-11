@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -6,6 +7,7 @@ using Microsoft.Build.Evaluation;
 
 namespace NuGet.Extensions.MSBuild
 {
+    [DebuggerDisplay("{AssemblyName}")]
     public class BinaryReferenceAdapter : IReference
     {
         private readonly ProjectItem _reference;
