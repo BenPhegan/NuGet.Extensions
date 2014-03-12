@@ -28,7 +28,7 @@ namespace NuGet.Extensions.Tests.MSBuild
         public void SetUpProjectAdapterAndBinaryDependencies()
         {
             _console = new Mock<IConsole>();
-            _solutionProjectLoader = new SolutionProjectLoader(new FileInfo(Paths.AdapterTestsSolutionFile), _console.Object);
+            _solutionProjectLoader = new SolutionProjectLoader(Paths.AdapterTestsSolutionFile, _console.Object);
             var projectAdapters = _solutionProjectLoader.GetProjects();
             _projectWithDependenciesAdapter = projectAdapters.Single(p => p.ProjectName.Equals(ProjectWithDependenciesName, StringComparison.OrdinalIgnoreCase));
             _projectBinaryReferenceAdapters = _projectWithDependenciesAdapter.GetBinaryReferences();
@@ -81,7 +81,7 @@ namespace NuGet.Extensions.Tests.MSBuild
         
         public IEnumerable<IReference> GetReferencesForProjectWithDependencies(IDictionary<string, string> globalMsBuildProperties)
         {
-            var loader = new SolutionProjectLoader(new FileInfo(Paths.AdapterTestsSolutionFile), _console.Object, globalMsBuildProperties);
+            var loader = new SolutionProjectLoader(Paths.AdapterTestsSolutionFile, _console.Object, globalMsBuildProperties);
             var projectAdapters = loader.GetProjects();
             var projectWithDependenciesAdapter = projectAdapters.Single(p => p.ProjectName.Equals(ProjectWithDependenciesName, StringComparison.OrdinalIgnoreCase));
             return projectWithDependenciesAdapter.GetBinaryReferences();
