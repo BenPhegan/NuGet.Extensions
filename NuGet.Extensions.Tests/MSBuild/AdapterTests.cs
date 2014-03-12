@@ -19,10 +19,10 @@ namespace NuGet.Extensions.Tests.MSBuild
         private IEnumerable<IReference> _projectBinaryReferenceAdapters;
         private SolutionProjectLoader _solutionProjectLoader;
         private Mock<IConsole> _console;
-        private const string _projectWithDependenciesName = "ProjectWithDependencies";
-        private const string _expectedBinaryDependencyAssemblyName = "Newtonsoft.Json";
-        private const string _expectedBinaryDependencyVersion = "6.0.0.0";
-        private const string _expectedProjectDependencyName = "ProjectDependency";
+        private const string ProjectWithDependenciesName = "ProjectWithDependencies";
+        private const string ExpectedBinaryDependencyAssemblyName = "Newtonsoft.Json";
+        private const string ExpectedBinaryDependencyVersion = "6.0.0.0";
+        private const string ExpectedProjectDependencyName = "ProjectDependency";
 
         [SetUp]
         public void SetUpProjectAdapterAndBinaryDependencies()
@@ -30,7 +30,7 @@ namespace NuGet.Extensions.Tests.MSBuild
             _console = new Mock<IConsole>();
             _solutionProjectLoader = new SolutionProjectLoader(new FileInfo(Paths.AdapterTestsSolutionFile), _console.Object);
             var projectAdapters = _solutionProjectLoader.GetProjects();
-            _projectWithDependenciesAdapter = projectAdapters.Single(p => p.ProjectName.Equals(_projectWithDependenciesName, StringComparison.OrdinalIgnoreCase));
+            _projectWithDependenciesAdapter = projectAdapters.Single(p => p.ProjectName.Equals(ProjectWithDependenciesName, StringComparison.OrdinalIgnoreCase));
             _projectBinaryReferenceAdapters = _projectWithDependenciesAdapter.GetBinaryReferences();
         }
 
@@ -48,21 +48,48 @@ namespace NuGet.Extensions.Tests.MSBuild
         [Test]
         public void ProjectWithDependenciesAssemblyNameIsProjectWithDependencies()
         {
-            Assert.That(_projectWithDependenciesAdapter.AssemblyName, Is.EqualTo(_projectWithDependenciesName));
+            Assert.That(_projectWithDependenciesAdapter.AssemblyName, Is.EqualTo(ProjectWithDependenciesName));
         }
 
         [Test]
         public void ProjectWithDependenciesDependsOnNewtonsoftJson()
         {
             var binaryReferenceIncludeNames = _projectBinaryReferenceAdapters.Select(r => r.AssemblyName).ToList();
-            Assert.That(binaryReferenceIncludeNames, Contains.Item(_expectedBinaryDependencyAssemblyName));
+            Assert.That(binaryReferenceIncludeNames, Contains.Item(ExpectedBinaryDependencyAssemblyName));
         }
 
         [Test]
         public void ProjectWithDependenciesDependsOnNewtonsoftJson6000()
         {
             var binaryDependency = _projectBinaryReferenceAdapters.Single(IsExpectedBinaryDependency);
-            Assert.That(binaryDependency.AssemblyVersion, Is.EqualTo(_expectedBinaryDependencyVersion));
+            Assert.That(binaryDependency.AssemblyVersion, Is.EqualTo(ExpectedBinaryDependencyVersion));
+        }
+
+        [Test]
+        public void ProjectWithDependenciesDependsOnCorrectReferencesForEmptyCondition()
+        {
+            var emptyConfigurationDependencies = GetReferencesForProjectWithDependencies(new Dictionary<string, string>());
+            var referencedAssemblyNames = emptyConfigurationDependencies.Select(r => r.AssemblyName).ToArray();
+            Assert.That(referencedAssemblyNames, Contains.Item("AssemblyReferencedWhenConfigurationNotEqualsRelease"));
+            Assert.That(referencedAssemblyNames, Is.Not.Contains("AssemblyReferencedWhenConfigurationEqualsRelease"));
+        }
+
+        [Test]
+        public void ProjectWithDependenciesDependsOnCorrectReferencesForSetCondition()
+        {
+            var setConfigurationDependencies = GetReferencesForProjectWithDependencies(new Dictionary<string, string> {{"Configuration", "Release"}});
+
+            var referencedAssemblyNames = setConfigurationDependencies.Select(r => r.AssemblyName).ToArray();
+            Assert.That(referencedAssemblyNames, Contains.Item("AssemblyReferencedWhenConfigurationEqualsRelease"));
+            Assert.That(referencedAssemblyNames, Is.Not.Contains("AssemblyReferencedWhenConfigurationNotEqualsRelease"));
+        }
+        
+        public IEnumerable<IReference> GetReferencesForProjectWithDependencies(IDictionary<string, string> globalMsBuildProperties)
+        {
+            var loader = new SolutionProjectLoader(new FileInfo(Paths.AdapterTestsSolutionFile), _console.Object, globalMsBuildProperties);
+            var projectAdapters = loader.GetProjects();
+            var projectWithDependenciesAdapter = projectAdapters.Single(p => p.ProjectName.Equals(ProjectWithDependenciesName, StringComparison.OrdinalIgnoreCase));
+            return projectWithDependenciesAdapter.GetBinaryReferences();
         }
 
         [Test]
@@ -73,8 +100,8 @@ namespace NuGet.Extensions.Tests.MSBuild
             var hasHintPath = binaryDependency.TryGetHintPath(out hintpath);
 
             Assert.That(hasHintPath, Is.True);
-            const string expectedHintPathStart = "..\\packages\\" + _expectedBinaryDependencyAssemblyName;
-            const string expectedHintPathEnd = _expectedBinaryDependencyAssemblyName + ".dll";
+            const string expectedHintPathStart = "..\\packages\\" + ExpectedBinaryDependencyAssemblyName;
+            const string expectedHintPathEnd = ExpectedBinaryDependencyAssemblyName + ".dll";
             Assert.That(hintpath, new StartsWithConstraint(expectedHintPathStart));
             Assert.That(hintpath, new EndsWithConstraint(expectedHintPathEnd));
         }
@@ -100,7 +127,7 @@ namespace NuGet.Extensions.Tests.MSBuild
         {
             var binaryDependency = _projectBinaryReferenceAdapters.Single(IsExpectedBinaryDependency);
 
-            var isForCorrespondingAssembly = binaryDependency.IsForAssembly(_expectedBinaryDependencyAssemblyName + ".dll");
+            var isForCorrespondingAssembly = binaryDependency.IsForAssembly(ExpectedBinaryDependencyAssemblyName + ".dll");
 
             Assert.That(isForCorrespondingAssembly, Is.True);
         }
@@ -121,7 +148,7 @@ namespace NuGet.Extensions.Tests.MSBuild
             var projReferences = _projectWithDependenciesAdapter.GetProjectReferences().ToList();
 
             Assert.That(projReferences.Count(), Is.EqualTo(1));
-            Assert.That(projReferences.Single().AssemblyName, Contains.Substring(_expectedProjectDependencyName));
+            Assert.That(projReferences.Single().AssemblyName, Contains.Substring(ExpectedProjectDependencyName));
         }
 
         [Test]
@@ -143,7 +170,7 @@ namespace NuGet.Extensions.Tests.MSBuild
 
         private static bool IsExpectedBinaryDependency(IReference r)
         {
-            return r.AssemblyName.Equals(_expectedBinaryDependencyAssemblyName, StringComparison.OrdinalIgnoreCase);
+            return r.AssemblyName.Equals(ExpectedBinaryDependencyAssemblyName, StringComparison.OrdinalIgnoreCase);
         }
     }
 }
