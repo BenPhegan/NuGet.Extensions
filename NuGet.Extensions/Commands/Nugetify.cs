@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Diagnostics.Contracts;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using NuGet.Commands;
 using NuGet.Common;
@@ -27,6 +29,9 @@ namespace NuGet.Extensions.Commands
         {
             get { return _sources; }
         }
+
+        [Option("Comma separated list of key=value pairs of parameters to be used when loading projects")]
+        public string MsBuildProperties { get; set; }
 
         [Option("NuSpec project URL")]
         public string ProjectUrl { get; set; }
@@ -88,7 +93,7 @@ namespace NuGet.Extensions.Commands
             Console.WriteLine("Loading projects from solution {0}", solutionFile.Name);
 
             var existingSolutionPackagesRepo = new SharedPackageRepository(Path.Combine(solutionFile.Directory.FullName, "packages"));
-            using (var solutionAdapter = new SolutionProjectLoader(solutionFile, Console))
+            using (var solutionAdapter = new SolutionProjectLoader(solutionFile, Console, ParsedBuildProperties))
             {
                 var projectAdapters = solutionAdapter.GetProjects();
 
@@ -104,6 +109,18 @@ namespace NuGet.Extensions.Commands
                 }
             }
             Console.WriteLine("Complete!");
+        }
+
+        public IDictionary<string, string> ParsedBuildProperties
+        {
+            get
+            {
+                if (MsBuildProperties == null) return new Dictionary<string, string>();
+                var keyValuePairs = MsBuildProperties.Split(',');
+                var twoElementArrays = keyValuePairs.Select(kvp => kvp.Split('=')).ToList();
+                foreach (var errorKvp  in twoElementArrays.Where(a => a.Length != 2)) throw new ArgumentException(string.Format("Key value pair near {0} is formatted incorrectly", string.Join(",", errorKvp[0])));
+                return twoElementArrays.ToDictionary(kvp => kvp[0].Trim(), kvp => kvp[1].Trim());
+            }
         }
 
         private void NugetifyProject(IVsProject projectAdapter, DirectoryInfo solutionRoot, ISharedPackageRepository existingSolutionPackagesRepo)
