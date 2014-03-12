@@ -50,7 +50,7 @@ namespace NuGet.Extensions.Repositories
 
             foreach (var filenamePackage in GetFilenamePackagePairs())
             {
-                if (currentPackage != filenamePackage.Value) _console.WriteLine("Checking package {0} of {1}", current++, max);
+                if (currentPackage != filenamePackage.Value) ConsoleWriteOnSameLine("Checking package {0} of {1}", current++, max);
 
                 var currentFilename = filenamePackage.Key;
                 currentPackage = filenamePackage.Value;
@@ -62,6 +62,11 @@ namespace NuGet.Extensions.Repositories
                 }
             }
             return new AssemblyToPackageMapping(_console, _fileSystem, _resolvedAssemblies);
+        }
+
+        private void ConsoleWriteOnSameLine(string formatMessage, params object[] paramObjects)
+        {
+            _console.WriteLine(formatMessage, paramObjects);
         }
 
         private IEnumerable<KeyValuePair<string, IPackage>> GetFilenamePackagePairs()
