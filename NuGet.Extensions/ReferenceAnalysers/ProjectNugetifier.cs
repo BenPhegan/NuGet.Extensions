@@ -126,7 +126,7 @@ namespace NuGet.Extensions.ReferenceAnalysers
                 //Going to have to use the mapping to assembly name that we get back from the resolve above
                 _console.WriteLine();
                 _console.WriteLine("Found {0} package to assembly mappings on feed...", referenceMappings.ResolvedMappings.Count());
-                referenceMappings.FailedMappings.ToList().ForEach(f => _console.WriteWarning("Could not match: {0}", f));
+                referenceMappings.FailedMappings.ToList().ForEach(f => _console.WriteLine("Could not match: {0}", f));
                 return referenceMappings.ResolvedMappings;
             }
 
