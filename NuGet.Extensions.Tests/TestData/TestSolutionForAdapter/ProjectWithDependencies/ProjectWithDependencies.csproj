@@ -31,7 +31,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="AsyncBridge.Net35">
-      <HintPath>..\..\..\..\..\..\..\c\Delivery\SQLSourceControl\Source\Build\Debug\AsyncBridge.Net35.dll</HintPath>
+      <HintPath>$(OutputPath)\AsyncBridge.Net35.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -39,10 +39,11 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="AssemblyReferencedWhenConfigurationEqualsRelease" Condition="'$(Configuration)' == 'Release'" />
+    <Reference Include="AssemblyReferencedWhenConfigurationNotEqualsRelease" Condition="'$(Configuration)' != 'Release'" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Threading" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
