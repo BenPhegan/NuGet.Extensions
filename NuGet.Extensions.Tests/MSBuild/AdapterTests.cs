@@ -37,12 +37,7 @@ namespace NuGet.Extensions.Tests.MSBuild
         [TearDown]
         public void CheckForConsoleErrors()
         {
-            _console.Verify(c => c.WriteError(It.IsAny<object>()), Times.Never());
-            _console.Verify(c => c.WriteError(It.IsAny<string>()), Times.Never());
-            _console.Verify(c => c.WriteError(It.IsAny<string>(), It.IsAny<object[]>()), Times.Never());
-            _console.Verify(c => c.WriteWarning(It.IsAny<string>()), Times.Never());
-            _console.Verify(c => c.WriteWarning(It.IsAny<string>(), It.IsAny<object[]>()), Times.Never());
-            _console.Verify(c => c.WriteWarning(It.IsAny<string>(), It.IsAny<object[]>()), Times.Never());
+            ConsoleMock.AssertConsoleHasNoErrorsOrWarnings(_console);
         }
 
         [Test]

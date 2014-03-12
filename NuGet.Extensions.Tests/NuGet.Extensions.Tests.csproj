@@ -71,6 +71,7 @@
     <Compile Include="FeedAudit\FeedAuditorTests.cs" />
     <Compile Include="FeedAudit\GacResolverTests.cs" />
     <Compile Include="MSBuild\AdapterTests.cs" />
+    <Compile Include="MSBuild\ConsoleMock.cs" />
     <Compile Include="PackageReferences\PackageReferenceSetResolverTests.cs" />
     <Compile Include="Packages\PackageAggregatorTests.cs" />
     <Compile Include="Packages\PackageEnumeratorTests.cs" />
