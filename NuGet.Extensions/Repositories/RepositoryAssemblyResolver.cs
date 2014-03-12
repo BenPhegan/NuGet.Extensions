@@ -66,7 +66,7 @@ namespace NuGet.Extensions.Repositories
 
         private void ConsoleWriteOnSameLine(string formatMessage, params object[] paramObjects)
         {
-            _console.WriteLine(formatMessage, paramObjects);
+            _console.Write("\r" + formatMessage, paramObjects);
         }
 
         private IEnumerable<KeyValuePair<string, IPackage>> GetFilenamePackagePairs()
