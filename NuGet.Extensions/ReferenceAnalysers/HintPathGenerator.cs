@@ -7,14 +7,18 @@ namespace NuGet.Extensions.ReferenceAnalysers
 {
     public class HintPathGenerator : IHintPathGenerator
     {
-        public HintPathGenerator()
-        {}
+        private readonly bool _useVersionedPackageHintPath;
+
+        public HintPathGenerator(bool useVersionedPackageHintPath = true)
+        {
+            _useVersionedPackageHintPath = useVersionedPackageHintPath;
+        }
 
         public string ForAssembly(DirectoryInfo solutionDir, DirectoryInfo projectDir, IPackage package, string assemblyFilename)
         {
             var fileLocation = GetFileLocationFromPackage(package, assemblyFilename);
-            //TODO make version available, currently only works for non versioned package directories...
-            var newHintPathFull = Path.Combine(solutionDir.FullName, "packages", package.Id, fileLocation);
+            var packageDirectory = _useVersionedPackageHintPath ? string.Format("{0}.{1}", package.Id, package.Version) : package.Id;
+            var newHintPathFull = Path.Combine(solutionDir.FullName, "packages", packageDirectory, fileLocation);
             var newHintPathRelative = GetRelativePath(projectDir.FullName + Path.DirectorySeparatorChar, newHintPathFull);
             return newHintPathRelative;
         }
