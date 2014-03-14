@@ -18,8 +18,9 @@ namespace NuGet.Extensions.ReferenceAnalysers
         private readonly Lazy<IList<IReference>> _references;
         private readonly Lazy<IList<KeyValuePair<string, List<IPackage>>>> _resolveReferenceMappings;
         private static readonly string PackageReferenceFilename = Constants.PackageReferenceFile;
+        private readonly IHintPathGenerator _hintPathGenerator;
 
-        public ProjectNugetifier(IVsProject vsProject, IPackageRepository packageRepository, IFileSystem projectFileSystem, IConsole console)
+        public ProjectNugetifier(IVsProject vsProject, IPackageRepository packageRepository, IFileSystem projectFileSystem, IConsole console, IHintPathGenerator hintPathGenerator)
         {
             _console = console;
             _projectFileSystem = projectFileSystem;
@@ -27,6 +28,7 @@ namespace NuGet.Extensions.ReferenceAnalysers
             _packageRepository = packageRepository;
             _references = new Lazy<IList<IReference>>(() => _vsProject.GetBinaryReferences().ToList());
             _resolveReferenceMappings = new Lazy<IList<KeyValuePair<string, List<IPackage>>>>(() => ResolveReferenceMappings(_references.Value).ToList());
+            _hintPathGenerator = hintPathGenerator;
         }
 
         public void NugetifyReferences(DirectoryInfo solutionDir)
@@ -44,11 +46,9 @@ namespace NuGet.Extensions.ReferenceAnalysers
 
                     LogHintPathRewriteMessage(package, includeName, includeVersion);
 
-                    var fileLocation = GetFileLocationFromPackage(package, mapping.Key);
-                    var newHintPathFull = Path.Combine(solutionDir.FullName, "packages", package.Id, fileLocation);
-                    var newHintPathRelative = String.Format(GetRelativePath(_vsProject.ProjectDirectory.FullName, newHintPathFull));
+                    var newHintPath = _hintPathGenerator.ForAssembly(solutionDir, _vsProject.ProjectDirectory, package, mapping.Key);
                     //TODO make version available, currently only works for non versioned package directories...
-                    referenceMatch.ConvertToNugetReferenceWithHintPath(newHintPathRelative);
+                    referenceMatch.ConvertToNugetReferenceWithHintPath(newHintPath);
                 }
             }
         }
@@ -148,30 +148,6 @@ namespace NuGet.Extensions.ReferenceAnalysers
                 }
             }
             return referenceFiles;
-        }
-
-        private string GetFileLocationFromPackage(IPackage package, string key)
-        {
-            return (from fileLocation in package.GetFiles()
-                where fileLocation.Path.ToLowerInvariant().EndsWith(key, StringComparison.OrdinalIgnoreCase)
-                select fileLocation.Path).FirstOrDefault();
-        }
-
-        private static String GetRelativePath(string root, string child)
-        {
-            // Validate paths.
-            Contract.Assert(!String.IsNullOrEmpty(root));
-            Contract.Assert(!String.IsNullOrEmpty(child));
-
-            // Create Uris
-            var rootUri = new Uri(root);
-            var childUri = new Uri(child);
-
-            // Get relative path.
-            var relativeUri = rootUri.MakeRelativeUri(childUri);
-
-            // Clean path and return.
-            return Uri.UnescapeDataString(relativeUri.ToString()).Replace('/', Path.DirectorySeparatorChar);
         }
     }
 }

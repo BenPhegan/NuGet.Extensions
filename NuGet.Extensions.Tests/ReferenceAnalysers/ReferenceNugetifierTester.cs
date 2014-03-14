@@ -24,7 +24,7 @@ namespace NuGet.Extensions.Tests.ReferenceAnalysers
             vsProject = vsProject ?? new Mock<IVsProject>();
             vsProject.SetupGet(p => p.ProjectDirectory).Returns(new DirectoryInfo(projectFileSystem.Root));
             packageRepository = packageRepository ?? new MockPackageRepository();
-            return new ProjectNugetifier(vsProject.Object, packageRepository, projectFileSystem, console.Object);
+            return new ProjectNugetifier(vsProject.Object, packageRepository, projectFileSystem, console.Object, new HintPathGenerator());
         }
 
         private static MockFileSystem GetMockFileSystem(DirectoryInfo solutionRoot)

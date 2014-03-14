@@ -81,6 +81,8 @@
     <Compile Include="MSBuild\ProjectAdapter.cs" />
     <Compile Include="MSBuild\ProjectReferenceAdapter.cs" />
     <Compile Include="MSBuild\SolutionProjectLoader.cs" />
+    <Compile Include="ReferenceAnalysers\HintPathGenerator.cs" />
+    <Compile Include="ReferenceAnalysers\IHintPathGenerator.cs" />
     <Compile Include="ReferenceAnalysers\ProjectNugetifier.cs" />
     <Compile Include="Comparers\LambdaComparer.cs" />
     <Compile Include="Comparers\PackageReferenceEqualityComparer.cs" />

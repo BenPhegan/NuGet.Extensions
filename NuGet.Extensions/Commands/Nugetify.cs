@@ -145,7 +145,8 @@ namespace NuGet.Extensions.Commands
             var projectFileSystem = new PhysicalFileSystem(projectAdapter.ProjectDirectory.ToString());
             var repository = AggregateRepositoryHelper.CreateAggregateRepositoryFromSources(RepositoryFactory, SourceProvider, Source);
             repository.Logger = Console;
-            return new ProjectNugetifier(projectAdapter, repository, projectFileSystem, Console);
+            var hintPathGenerator = new HintPathGenerator();
+            return new ProjectNugetifier(projectAdapter, repository, projectFileSystem, Console, hintPathGenerator);
         }
     }
 }
