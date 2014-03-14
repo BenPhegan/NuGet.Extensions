@@ -5,7 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
-namespace NuGet.Extensions.FeedAudit
+namespace NuGet.Extensions.ReferenceAnalysers
 {
     /// <summary>
     /// http://trikks.wordpress.com/2011/07/13/programmatically-check-if-an-assembly-is-loaded-in-gac-with-c/

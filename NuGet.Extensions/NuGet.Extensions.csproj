@@ -116,7 +116,7 @@
     <Compile Include="Commands\Details.cs" />
     <Compile Include="Commands\Nugetify.cs" />
     <Compile Include="Commands\TeamCity.cs" />
-    <Compile Include="FeedAudit\GacResolver.cs" />
+    <Compile Include="ReferenceAnalysers\GacResolver.cs" />
     <Compile Include="FeedAudit\PackageAuditEventArgs.cs" />
     <Compile Include="FeedAudit\PackageIgnoreEventArgs.cs" />
     <Compile Include="FindFilesPatternToRegex.cs" />
