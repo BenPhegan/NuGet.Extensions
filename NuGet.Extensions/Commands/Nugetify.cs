@@ -35,6 +35,9 @@ namespace NuGet.Extensions.Commands
         [Option("Format as in the packages.config file: {framework}{version}-{profile}")]
         public string TargetFramework { get; set; }
 
+        [Option("Use hint paths that don't contain the package version")]
+        public bool ExcludeVersion { get; set; }
+
         [Option("NuSpec project URL")]
         public string ProjectUrl { get; set; }
 
@@ -136,7 +139,7 @@ namespace NuGet.Extensions.Commands
             var projectFileSystem = new PhysicalFileSystem(projectAdapter.ProjectDirectory.ToString());
             var repository = AggregateRepositoryHelper.CreateAggregateRepositoryFromSources(RepositoryFactory, SourceProvider, Source);
             repository.Logger = Console;
-            var hintPathGenerator = new HintPathGenerator();
+            var hintPathGenerator = new HintPathGenerator(!ExcludeVersion);
             return new ProjectNugetifier(projectAdapter, repository, projectFileSystem, Console, hintPathGenerator);
         }
 
