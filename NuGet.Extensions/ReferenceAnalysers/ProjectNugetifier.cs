@@ -119,20 +119,36 @@ namespace NuGet.Extensions.ReferenceAnalysers
             return Enumerable.Empty<KeyValuePair<string, List<IPackage>>>();
         }
 
-        private static List<string> GetReferencedAssemblies(IEnumerable<IReference> references)
+        private List<string> GetReferencedAssemblies(IEnumerable<IReference> references)
         {
             var referenceFiles = new List<string>();
 
             foreach (var reference in references)
             {
-                //TODO deal with GAC assemblies that we want to replace as well....
                 string hintPath;
+                string gacPath;
                 if (reference.TryGetHintPath(out hintPath))
                 {
                     referenceFiles.Add(Path.GetFileName(hintPath));
                 }
+                else if (GacResolver.AssemblyExist(reference.AssemblyName, out gacPath))
+                {
+                    var publicKeyToken = GetPublicKeyTokenFromGacPath(gacPath);
+                    _console.WriteLine("Ignoring {0} because it was found in the GAC (with public key token {1})", reference.AssemblyName, publicKeyToken);
+                }
+                else
+                {
+                    referenceFiles.Add(reference.AssemblyName + ".dll");
+                }
             }
+
             return referenceFiles;
+        }
+
+        private static string GetPublicKeyTokenFromGacPath(string hintPath)
+        {
+            var versionUnderscoreToken = Path.GetDirectoryName(hintPath);
+            return versionUnderscoreToken.Split('_').Last();
         }
 
         public ICollection<ManifestDependency> GetManifestDependencies(ICollection<IPackage> packagesAdded)

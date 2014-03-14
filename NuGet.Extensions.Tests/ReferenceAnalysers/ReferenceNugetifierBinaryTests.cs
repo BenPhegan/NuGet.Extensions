@@ -43,7 +43,21 @@ namespace NuGet.Extensions.Tests.ReferenceAnalysers
             var packageRepositoryWithOnePackage = ProjectReferenceTestData.CreateMockRepository();
 
             var nugetifier = ReferenceNugetifierTester.BuildNugetifier(vsProject: projectWithSingleDependency, packageRepository: packageRepositoryWithOnePackage);
-            var nugettedDependencies = ReferenceNugetifierTester.AddReferenceMetadata(nugetifier);
+            var nugettedDependencies = ReferenceNugetifierTester.NugetifyReferencesInProject(nugetifier);
+
+            Assert.That(nugettedDependencies, Is.Not.Empty);
+            Assert.That(nugettedDependencies.Single().Id, Contains.Substring(ProjectReferenceTestData.PackageInRepository));
+        }
+
+        [Test]
+        public void PackageFoundForDependencyWithNoHintPath()
+        {
+            var singleDependency = ProjectReferenceTestData.ConstructMockDependency(hasHintpath: false);
+            var projectWithSingleDependency = ProjectReferenceTestData.ConstructMockProject(new[] { singleDependency.Object });
+            var packageRepositoryWithOnePackage = ProjectReferenceTestData.CreateMockRepository();
+
+            var nugetifier = ReferenceNugetifierTester.BuildNugetifier(vsProject: projectWithSingleDependency, packageRepository: packageRepositoryWithOnePackage);
+            var nugettedDependencies = ReferenceNugetifierTester.NugetifyReferencesInProject(nugetifier);
 
             Assert.That(nugettedDependencies, Is.Not.Empty);
             Assert.That(nugettedDependencies.Single().Id, Contains.Substring(ProjectReferenceTestData.PackageInRepository));
