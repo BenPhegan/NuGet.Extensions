@@ -63,20 +63,19 @@ namespace NuGet.Extensions.Tests.MSBuild
         [Test]
         public void ProjectWithDependenciesDependsOnCorrectReferencesForEmptyCondition()
         {
-            var emptyConfigurationDependencies = GetReferencesForProjectWithDependencies(new Dictionary<string, string>());
-            var referencedAssemblyNames = emptyConfigurationDependencies.Select(r => r.AssemblyName).ToArray();
-            Assert.That(referencedAssemblyNames, Contains.Item("AssemblyReferencedWhenConfigurationNotEqualsRelease"));
-            Assert.That(referencedAssemblyNames, Is.Not.Contains("AssemblyReferencedWhenConfigurationEqualsRelease"));
+            var emptyConfigurationDependencies = GetReferencesForProjectWithDependencies(new Dictionary<string, string>()).ToList();
+            var conditionTrueReferences = emptyConfigurationDependencies.Where(r => r.Condition).Select(r => r.AssemblyName).ToArray();
+            var conditionFalseReferences = emptyConfigurationDependencies.Where(r => !r.Condition).Select(r => r.AssemblyName).ToArray();
+            Assert.That(conditionTrueReferences, Contains.Item("AssemblyReferencedWhenConfigurationNotEqualsRelease"));
         }
 
         [Test]
         public void ProjectWithDependenciesDependsOnCorrectReferencesForSetCondition()
         {
-            var setConfigurationDependencies = GetReferencesForProjectWithDependencies(new Dictionary<string, string> {{"Configuration", "Release"}});
-
-            var referencedAssemblyNames = setConfigurationDependencies.Select(r => r.AssemblyName).ToArray();
-            Assert.That(referencedAssemblyNames, Contains.Item("AssemblyReferencedWhenConfigurationEqualsRelease"));
-            Assert.That(referencedAssemblyNames, Is.Not.Contains("AssemblyReferencedWhenConfigurationNotEqualsRelease"));
+            var emptyConfigurationDependencies = GetReferencesForProjectWithDependencies(new Dictionary<string, string> {{"Configuration", "Release"}}).ToList();
+            var conditionTrueReferences = emptyConfigurationDependencies.Where(r => r.Condition).Select(r => r.AssemblyName).ToArray();
+            var conditionFalseReferences = emptyConfigurationDependencies.Where(r => !r.Condition).Select(r => r.AssemblyName).ToArray();
+            Assert.That(conditionTrueReferences, Contains.Item("AssemblyReferencedWhenConfigurationEqualsRelease"));
         }
         
         public IEnumerable<IReference> GetReferencesForProjectWithDependencies(IDictionary<string, string> globalMsBuildProperties)

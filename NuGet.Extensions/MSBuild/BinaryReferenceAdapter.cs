@@ -12,9 +12,10 @@ namespace NuGet.Extensions.MSBuild
     {
         private readonly ProjectItem _reference;
 
-        public BinaryReferenceAdapter(ProjectItem reference)
+        public BinaryReferenceAdapter(ProjectItem reference, bool conditionTrue)
         {
             _reference = reference;
+            Condition = conditionTrue;
         }
 
         public bool TryGetHintPath(out string hintPath)
@@ -52,5 +53,7 @@ namespace NuGet.Extensions.MSBuild
 
             return false;
         }
+
+        public bool Condition { get; private set; }
     }
 }

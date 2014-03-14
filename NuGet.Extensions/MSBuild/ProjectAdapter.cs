@@ -21,7 +21,9 @@ namespace NuGet.Extensions.MSBuild
 
         public IEnumerable<IReference> GetBinaryReferences()
         {
-            return _project.GetItems("Reference").Select(r => new BinaryReferenceAdapter(r));
+            const string itemType = "Reference";
+            var conditionTrueReferences = new HashSet<ProjectItem>(_project.GetItems(itemType));
+            return conditionTrueReferences.Select(r => new BinaryReferenceAdapter(r, true));
         }
 
         public string AssemblyName
@@ -59,16 +61,18 @@ namespace NuGet.Extensions.MSBuild
 
         public IEnumerable<IReference> GetProjectReferences()
         {
-            return _project.GetItems("ProjectReference").Select(GetProjectReferenceAdapter);
+            const string itemType = "ProjectReference";
+            var conditionTrueProjectReferences = new HashSet<ProjectItem>(_project.GetItems(itemType));
+            return conditionTrueProjectReferences.Select(r => GetProjectReferenceAdapter(r, true));
         }
 
-        private ProjectReferenceAdapter GetProjectReferenceAdapter(ProjectItem r)
+        private ProjectReferenceAdapter GetProjectReferenceAdapter(ProjectItem r, bool conditionTrue)
         {
             var projectGuid = r.GetMetadataValue("Project");
             var csprojRelativePath = r.EvaluatedInclude;
             var absoluteProjectPath = Path.Combine(ProjectDirectory.FullName, csprojRelativePath);
             var referencedProjectAdapter = _projectLoader.GetProject(Guid.Parse(projectGuid), absoluteProjectPath);
-            return new ProjectReferenceAdapter(referencedProjectAdapter, () => _project.RemoveItem(r), AddBinaryReference);
+            return new ProjectReferenceAdapter(referencedProjectAdapter, () => _project.RemoveItem(r), AddBinaryReference, conditionTrue);
         }
 
         private void AddBinaryReference(string includePath, KeyValuePair<string, string> metadata)

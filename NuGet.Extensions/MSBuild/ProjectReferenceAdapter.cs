@@ -11,11 +11,12 @@ namespace NuGet.Extensions.MSBuild
         private readonly IVsProject _project;
         private readonly Action<string, KeyValuePair<string, string>> _addBinaryReferenceWithMetadata;
 
-        public ProjectReferenceAdapter(IVsProject project, Func<bool> removeFromParentProject, Action<string, KeyValuePair<string, string>> addBinaryReferenceWithMetadata)
+        public ProjectReferenceAdapter(IVsProject project, Func<bool> removeFromParentProject, Action<string, KeyValuePair<string, string>> addBinaryReferenceWithMetadata, bool conditionTrue)
         {
             _project = project;
             _removeFromParentProject = removeFromParentProject;
             _addBinaryReferenceWithMetadata = addBinaryReferenceWithMetadata;
+            Condition = conditionTrue;
         }
 
         public bool TryGetHintPath(out string hintPath)
@@ -39,6 +40,8 @@ namespace NuGet.Extensions.MSBuild
         {
             get { return _project.AssemblyName; }
         }
+
+        public bool Condition { get; private set; }
 
         public bool IsForAssembly(string assemblyFilename)
         {
