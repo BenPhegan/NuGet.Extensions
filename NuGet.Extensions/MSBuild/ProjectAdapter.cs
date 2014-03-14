@@ -22,8 +22,9 @@ namespace NuGet.Extensions.MSBuild
         public IEnumerable<IReference> GetBinaryReferences()
         {
             const string itemType = "Reference";
+            var allBinaryReferences = _project.GetItemsIgnoringCondition(itemType);
             var conditionTrueReferences = new HashSet<ProjectItem>(_project.GetItems(itemType));
-            return conditionTrueReferences.Select(r => new BinaryReferenceAdapter(r, true));
+            return allBinaryReferences.Select(r => new BinaryReferenceAdapter(r, conditionTrueReferences.Contains(r)));
         }
 
         public string AssemblyName
@@ -61,9 +62,9 @@ namespace NuGet.Extensions.MSBuild
 
         public IEnumerable<IReference> GetProjectReferences()
         {
-            const string itemType = "ProjectReference";
-            var conditionTrueProjectReferences = new HashSet<ProjectItem>(_project.GetItems(itemType));
-            return conditionTrueProjectReferences.Select(r => GetProjectReferenceAdapter(r, true));
+            var allrojectReferences = _project.GetItemsIgnoringCondition("ProjectReference");
+            var conditionTrueProjectReferences = new HashSet<ProjectItem>(_project.GetItems("ProjectReference"));
+            return allrojectReferences.Select(r => GetProjectReferenceAdapter(r, conditionTrueProjectReferences.Contains(r)));
         }
 
         private ProjectReferenceAdapter GetProjectReferenceAdapter(ProjectItem r, bool conditionTrue)
