@@ -71,6 +71,7 @@ namespace NuGet.Extensions.Tests.MSBuild
             var conditionTrueReferences = emptyConfigurationDependencies.Where(r => r.Condition).Select(r => r.AssemblyName).ToArray();
             var conditionFalseReferences = emptyConfigurationDependencies.Where(r => !r.Condition).Select(r => r.AssemblyName).ToArray();
             Assert.That(conditionTrueReferences, Contains.Item("AssemblyReferencedWhenConfigurationNotEqualsRelease"));
+            Assert.That(conditionFalseReferences.Single(), Is.EqualTo("AssemblyReferencedWhenConfigurationEqualsRelease"));
         }
 
         [Test]
@@ -80,6 +81,7 @@ namespace NuGet.Extensions.Tests.MSBuild
             var conditionTrueReferences = emptyConfigurationDependencies.Where(r => r.Condition).Select(r => r.AssemblyName).ToArray();
             var conditionFalseReferences = emptyConfigurationDependencies.Where(r => !r.Condition).Select(r => r.AssemblyName).ToArray();
             Assert.That(conditionTrueReferences, Contains.Item("AssemblyReferencedWhenConfigurationEqualsRelease"));
+            Assert.That(conditionFalseReferences.Single(), Is.EqualTo("AssemblyReferencedWhenConfigurationNotEqualsRelease"));
         }
         
         public IEnumerable<IReference> GetReferencesForProjectWithDependencies(IDictionary<string, string> globalMsBuildProperties)
