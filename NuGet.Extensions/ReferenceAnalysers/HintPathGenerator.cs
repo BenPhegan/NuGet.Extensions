@@ -14,7 +14,7 @@ namespace NuGet.Extensions.ReferenceAnalysers
         {
             var fileLocation = GetFileLocationFromPackage(package, assemblyFilename);
             var newHintPathFull = Path.Combine(solutionDir.FullName, "packages", package.Id, fileLocation);
-            var newHintPathRelative = String.Format(GetRelativePath(projectDir.FullName, newHintPathFull));
+            var newHintPathRelative = GetRelativePath(projectDir.FullName, newHintPathFull);
             return newHintPathRelative;
         }
 
