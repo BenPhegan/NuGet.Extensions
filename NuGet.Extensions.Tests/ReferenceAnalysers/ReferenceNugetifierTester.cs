@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.Versioning;
 using Moq;
 using NuGet.Common;
 using NuGet.Extensions.MSBuild;
@@ -17,7 +18,7 @@ namespace NuGet.Extensions.Tests.ReferenceAnalysers
             var sharedPackageRepository = repositoriesConfig ?? new Mock<ISharedPackageRepository>();
             solutionDir = solutionDir ?? GetMockDirectory();
             var packages = nugetifier.NugetifyReferences(solutionDir);
-            nugetifier.AddNugetReferenceMetadata(sharedPackageRepository.Object, packages);
+            nugetifier.AddNugetReferenceMetadata(sharedPackageRepository.Object, packages, new FrameworkName(".NET Framework, Version=4.0"));
             return packages.ToList();
         }
 
