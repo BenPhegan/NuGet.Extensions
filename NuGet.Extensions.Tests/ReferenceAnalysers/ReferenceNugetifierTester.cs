@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Moq;
 using NuGet.Common;
 using NuGet.Extensions.MSBuild;
@@ -13,7 +14,7 @@ namespace NuGet.Extensions.Tests.ReferenceAnalysers
         public static List<ManifestDependency> GetManifestDependencies(ProjectNugetifier nugetifier, ISharedPackageRepository sharedPackageRepository = null)
         {
             sharedPackageRepository = sharedPackageRepository ?? new Mock<ISharedPackageRepository>().Object;
-            return nugetifier.AddNugetReferenceMetadata(sharedPackageRepository, true);
+            return nugetifier.AddNugetReferenceMetadata(sharedPackageRepository, true).ToList();
         }
 
         public static ProjectNugetifier BuildNugetifier(IFileSystem projectFileSystem = null, Mock<IVsProject> vsProject = null, IPackageRepository packageRepository = null)

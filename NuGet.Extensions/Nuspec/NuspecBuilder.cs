@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using NuGet.Common;
 
@@ -33,7 +34,7 @@ namespace NuGet.Extensions.Nuspec
             FilePath = assemblyName + Constants.ManifestExtension;
         }
 
-        public void SetMetadata(INuspecDataSource nuspecData, List<ManifestDependency> manifestDependencies)
+        public void SetMetadata(INuspecDataSource nuspecData, ICollection<ManifestDependency> manifestDependencies)
         {
             var metadata = _manifest.Metadata;
             metadata.Id = nuspecData.Id ?? metadata.Id;
@@ -53,12 +54,12 @@ namespace NuGet.Extensions.Nuspec
             if (!String.IsNullOrEmpty(nuspecData.ReleaseNotes)) metadata.ReleaseNotes = nuspecData.ReleaseNotes;
         }
 
-        public void SetDependencies(List<ManifestDependency> manifestDependencies, string targetFramework = ".NET Framework, Version=4.0")
+        public void SetDependencies(ICollection<ManifestDependency> manifestDependencies, string targetFramework = ".NET Framework, Version=4.0")
         {
             _manifest.Metadata.DependencySets =
                 new List<ManifestDependencySet>
                 {
-                    new ManifestDependencySet {Dependencies = manifestDependencies, TargetFramework = targetFramework}
+                    new ManifestDependencySet {Dependencies = manifestDependencies.ToList(), TargetFramework = targetFramework}
                 };
         }
 
