@@ -75,22 +75,16 @@ namespace NuGet.Extensions.ReferenceAnalysers
             var manifestDependencies = new List<ManifestDependency>();
             if (!resolvedMappings.Any()) return manifestDependencies;
             var projectReferences = _vsProject.GetProjectReferences().Select(pRef => pRef.AssemblyName).ToList();
-            //Now, create the packages.config for the resolved packages, and update the repositories.config
-            _console.WriteLine("Creating {0}", PackageReferenceFilename);
-            var packagesConfig = new PackageReferenceFile(_projectFileSystem, PackageReferenceFilename);
-            foreach (var referenceMapping in resolvedMappings)
-            {
-                //TODO We shouldnt need to resolve this twice....
-                var package = referenceMapping.Value.OrderBy(p => p.GetFiles().Count()).First();
-                if (!packagesConfig.EntryExists(package.Id, package.Version))
-                    packagesConfig.AddEntry(package.Id, package.Version);
-                if (nuspec && manifestDependencies.All(m => m.Id != package.Id))
-                {
-                    manifestDependencies.Add(new ManifestDependency {Id = package.Id});
-                }
-            }
+            CreatePackagesConfig(nuspec, resolvedMappings, manifestDependencies);
+            AddProjectReferenceAssemblies(nuspec, projectReferences, manifestDependencies);
+            //Register the packages.config
+            RegisterPackagesConfig(sharedPackagesRepository);
 
-            //This is messy...refactor
+            return manifestDependencies;
+        }
+
+        private static void AddProjectReferenceAssemblies(bool nuspec, List<string> projectReferences, List<ManifestDependency> manifestDependencies)
+        { //This is messy...refactor
             //For any resolved project dependencies, add a manifest dependency if we are doing nuspecs
             if (nuspec)
             {
@@ -102,12 +96,32 @@ namespace NuGet.Extensions.ReferenceAnalysers
                     }
                 }
             }
-            //Register the packages.config
+        }
+
+        private void RegisterPackagesConfig(ISharedPackageRepository sharedPackagesRepository)
+        {
             var packagesConfigFilePath = Path.Combine(_vsProject.ProjectDirectory.FullName + "\\", PackageReferenceFilename);
             sharedPackagesRepository.RegisterRepository(packagesConfigFilePath);
             _vsProject.AddFile(PackageReferenceFilename);
+        }
 
-            return manifestDependencies;
+        /// <summary>
+        /// Create the packages.config for the resolved packages
+        /// </summary>
+        private void CreatePackagesConfig(bool nuspec, IList<KeyValuePair<string, List<IPackage>>> resolvedMappings, List<ManifestDependency> manifestDependencies)
+        { 
+            _console.WriteLine("Creating {0}", PackageReferenceFilename);
+            var packagesConfig = new PackageReferenceFile(_projectFileSystem, PackageReferenceFilename);
+            foreach (var referenceMapping in resolvedMappings)
+            {
+                //TODO We shouldnt need to resolve this twice....
+                var package = referenceMapping.Value.OrderBy(p => p.GetFiles().Count()).First();
+                if (!packagesConfig.EntryExists(package.Id, package.Version)) packagesConfig.AddEntry(package.Id, package.Version);
+                if (nuspec && manifestDependencies.All(m => m.Id != package.Id))
+                {
+                    manifestDependencies.Add(new ManifestDependency {Id = package.Id});
+                }
+            }
         }
 
         private IEnumerable<KeyValuePair<string, List<IPackage>>> ResolveReferenceMappings(IEnumerable<IReference> references)
