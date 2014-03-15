@@ -76,10 +76,8 @@ namespace NuGet.Extensions.ReferenceAnalysers
             if (!resolvedMappings.Any()) return manifestDependencies;
             var projectReferences = _vsProject.GetProjectReferences().Select(pRef => pRef.AssemblyName).ToList();
             CreatePackagesConfig(nuspec, resolvedMappings, manifestDependencies);
-            AddProjectReferenceAssemblies(nuspec, projectReferences, manifestDependencies);
-            //Register the packages.config
             RegisterPackagesConfig(sharedPackagesRepository);
-
+            AddProjectReferenceAssemblies(nuspec, projectReferences, manifestDependencies);
             return manifestDependencies;
         }
 
@@ -105,9 +103,6 @@ namespace NuGet.Extensions.ReferenceAnalysers
             _vsProject.AddFile(PackageReferenceFilename);
         }
 
-        /// <summary>
-        /// Create the packages.config for the resolved packages
-        /// </summary>
         private void CreatePackagesConfig(bool nuspec, IList<KeyValuePair<string, List<IPackage>>> resolvedMappings, List<ManifestDependency> manifestDependencies)
         { 
             _console.WriteLine("Creating {0}", PackageReferenceFilename);
