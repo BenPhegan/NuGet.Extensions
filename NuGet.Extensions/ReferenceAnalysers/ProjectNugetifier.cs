@@ -74,19 +74,19 @@ namespace NuGet.Extensions.ReferenceAnalysers
             var resolvedMappings = _resolveReferenceMappings.Value;
             var manifestDependencies = new List<ManifestDependency>();
             if (!resolvedMappings.Any()) return manifestDependencies;
-            var projectReferences = _vsProject.GetProjectReferences().Select(pRef => pRef.AssemblyName).ToList();
             CreatePackagesConfig(nuspec, resolvedMappings, manifestDependencies);
             RegisterPackagesConfig(sharedPackagesRepository);
-            AddProjectReferenceAssemblies(nuspec, projectReferences, manifestDependencies);
+            AddProjectReferenceAssemblies(manifestDependencies, nuspec);
             return manifestDependencies;
         }
 
-        private static void AddProjectReferenceAssemblies(bool nuspec, List<string> projectReferences, List<ManifestDependency> manifestDependencies)
-        { //This is messy...refactor
+        private void AddProjectReferenceAssemblies(ICollection<ManifestDependency> manifestDependencies, bool nuspec)
+        {
+            //This is messy...refactor
             //For any resolved project dependencies, add a manifest dependency if we are doing nuspecs
             if (nuspec)
             {
-                foreach (var projectDependency in projectReferences)
+                foreach (var projectDependency in _vsProject.GetProjectReferences().Select(pRef => pRef.AssemblyName).ToList())
                 {
                     if (manifestDependencies.All(m => m.Id != projectDependency))
                     {
