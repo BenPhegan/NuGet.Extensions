@@ -69,6 +69,7 @@
     <Compile Include="Caches\MemoryBasedPackageCache.cs" />
     <Compile Include="Caches\NuGetCacheManager.cs" />
     <Compile Include="Commands\Audit.cs" />
+    <Compile Include="ExtensionMethods\IPackageExtensions.cs" />
     <Compile Include="MSBuild\ReallyLazy.cs" />
     <Compile Include="MSBuild\NullProjectAdapter.cs" />
     <Compile Include="Nuspec\INuspecDataSource.cs" />
