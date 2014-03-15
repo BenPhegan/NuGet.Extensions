@@ -127,12 +127,13 @@ namespace NuGet.Extensions.Commands
         {
             var projectNugetifier = CreateProjectNugetifier(projectAdapter);
             var packagesAdded = projectNugetifier.NugetifyReferences(solutionRoot);
-            var manifestDependencies = projectNugetifier.AddNugetReferenceMetadata(existingSolutionPackagesRepo, NuSpec);
+            projectNugetifier.AddNugetReferenceMetadata(existingSolutionPackagesRepo, packagesAdded);
             projectAdapter.Save();
 
             //Create nuspec regardless of whether we have added dependencies
             if (NuSpec)
             {
+                var manifestDependencies = projectNugetifier.GetManifestDependencies(packagesAdded);
                 var nuspecBuilder = new NuspecBuilder(projectAdapter.AssemblyName);
                 nuspecBuilder.SetMetadata(this, manifestDependencies);
                 nuspecBuilder.SetDependencies(manifestDependencies);

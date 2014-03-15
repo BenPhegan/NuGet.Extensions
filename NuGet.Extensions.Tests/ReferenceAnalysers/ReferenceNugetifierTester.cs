@@ -11,10 +11,13 @@ namespace NuGet.Extensions.Tests.ReferenceAnalysers
 {
     public class ReferenceNugetifierTester 
     {
-        public static List<ManifestDependency> GetManifestDependencies(ProjectNugetifier nugetifier, ISharedPackageRepository sharedPackageRepository = null)
+        public static List<IPackage> AddReferenceMetadata(ProjectNugetifier nugetifier, Mock<ISharedPackageRepository> repositoriesConfig = null, DirectoryInfo solutionDir = null)
         {
-            sharedPackageRepository = sharedPackageRepository ?? new Mock<ISharedPackageRepository>().Object;
-            return nugetifier.AddNugetReferenceMetadata(sharedPackageRepository, true).ToList();
+            var sharedPackageRepository = repositoriesConfig ?? new Mock<ISharedPackageRepository>();
+            solutionDir = solutionDir ?? GetMockDirectory();
+            var packages = nugetifier.NugetifyReferences(solutionDir);
+            nugetifier.AddNugetReferenceMetadata(sharedPackageRepository.Object, packages);
+            return packages.ToList();
         }
 
         public static ProjectNugetifier BuildNugetifier(IFileSystem projectFileSystem = null, Mock<IVsProject> vsProject = null, IPackageRepository packageRepository = null)

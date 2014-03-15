@@ -71,32 +71,12 @@ namespace NuGet.Extensions.ReferenceAnalysers
             else _console.WriteWarning(message);
         }
 
-        public ICollection<ManifestDependency> AddNugetReferenceMetadata(ISharedPackageRepository sharedPackagesRepository, bool nuspec)
+        public void AddNugetReferenceMetadata(ISharedPackageRepository sharedPackagesRepository, ICollection<IPackage> packagesToAdd)
         {
             _console.WriteLine("Checking for any project references for {0}...", PackageReferenceFilename);
-            var resolvedMappings = _resolveReferenceMappings.Value;
-            var manifestDependencies = new List<ManifestDependency>();
-            if (!resolvedMappings.Any()) return manifestDependencies;
-            CreatePackagesConfig(nuspec, resolvedMappings, manifestDependencies);
+            if (!packagesToAdd.Any()) return;
+            CreatePackagesConfig(packagesToAdd);
             RegisterPackagesConfig(sharedPackagesRepository);
-            AddProjectReferenceAssemblies(manifestDependencies, nuspec);
-            return manifestDependencies;
-        }
-
-        private void AddProjectReferenceAssemblies(ICollection<ManifestDependency> manifestDependencies, bool nuspec)
-        {
-            //This is messy...refactor
-            //For any resolved project dependencies, add a manifest dependency if we are doing nuspecs
-            if (nuspec)
-            {
-                foreach (var projectDependency in _vsProject.GetProjectReferences().Select(pRef => pRef.AssemblyName).ToList())
-                {
-                    if (manifestDependencies.All(m => m.Id != projectDependency))
-                    {
-                        manifestDependencies.Add(new ManifestDependency {Id = projectDependency});
-                    }
-                }
-            }
         }
 
         private void RegisterPackagesConfig(ISharedPackageRepository sharedPackagesRepository)
@@ -106,19 +86,13 @@ namespace NuGet.Extensions.ReferenceAnalysers
             _vsProject.AddFile(PackageReferenceFilename);
         }
 
-        private void CreatePackagesConfig(bool nuspec, IList<KeyValuePair<string, List<IPackage>>> resolvedMappings, List<ManifestDependency> manifestDependencies)
+        private void CreatePackagesConfig(ICollection<IPackage> packagesToAdd)
         { 
             _console.WriteLine("Creating {0}", PackageReferenceFilename);
             var packagesConfig = new PackageReferenceFile(_projectFileSystem, PackageReferenceFilename);
-            foreach (var referenceMapping in resolvedMappings)
+            foreach (var package in packagesToAdd)
             {
-                //TODO We shouldnt need to resolve this twice....
-                var package = referenceMapping.Value.OrderBy(p => p.GetFiles().Count()).First();
                 if (!packagesConfig.EntryExists(package.Id, package.Version)) packagesConfig.AddEntry(package.Id, package.Version);
-                if (nuspec && manifestDependencies.All(m => m.Id != package.Id))
-                {
-                    manifestDependencies.Add(new ManifestDependency {Id = package.Id});
-                }
             }
         }
 
@@ -159,6 +133,14 @@ namespace NuGet.Extensions.ReferenceAnalysers
                 }
             }
             return referenceFiles;
+        }
+
+        public ICollection<ManifestDependency> GetManifestDependencies(ICollection<IPackage> packagesAdded)
+        {
+            var referencedProjectAssemblyNames = _vsProject.GetProjectReferences().Select(prf => prf.AssemblyName);
+            var assemblyNames = new HashSet<string>(referencedProjectAssemblyNames);
+            assemblyNames.AddRange(packagesAdded.Select(brf => brf.Id));
+            return assemblyNames.Select(name => new ManifestDependency{Id = name}).ToList();
         }
     }
 }

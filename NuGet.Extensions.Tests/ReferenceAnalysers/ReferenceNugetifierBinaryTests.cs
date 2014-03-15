@@ -14,7 +14,7 @@ namespace NuGet.Extensions.Tests.ReferenceAnalysers
         public void EmptyProjectHasNoNuggettedDependencies()
         {
             var nugetifier = ReferenceNugetifierTester.BuildNugetifier();
-            var nugettedDependencies = ReferenceNugetifierTester.GetManifestDependencies(nugetifier);
+            var nugettedDependencies = ReferenceNugetifierTester.AddReferenceMetadata(nugetifier);
             Assert.That(nugettedDependencies, Is.Empty);
         }
 
@@ -29,7 +29,7 @@ namespace NuGet.Extensions.Tests.ReferenceAnalysers
             var repositoriesConfig = new Mock<ISharedPackageRepository>();
 
             var nugetifier = ReferenceNugetifierTester.BuildNugetifier(vsProject: projectWithSingleDependency, packageRepository: packageRepositoryWithOnePackage, projectFileSystem: fileSystem);
-            var nugettedDependencies = ReferenceNugetifierTester.GetManifestDependencies(nugetifier, repositoriesConfig.Object);
+            var nugettedDependencies = ReferenceNugetifierTester.AddReferenceMetadata(nugetifier, repositoriesConfig, new DirectoryInfo(projectRoot));
 
             Assert.That(nugettedDependencies, Is.Not.Empty);
             repositoriesConfig.Verify(r => r.RegisterRepository(It.Is<string>(path => path.StartsWith(projectRoot))));
@@ -43,7 +43,7 @@ namespace NuGet.Extensions.Tests.ReferenceAnalysers
             var packageRepositoryWithOnePackage = ProjectReferenceTestData.CreateMockRepository();
 
             var nugetifier = ReferenceNugetifierTester.BuildNugetifier(vsProject: projectWithSingleDependency, packageRepository: packageRepositoryWithOnePackage);
-            var nugettedDependencies = ReferenceNugetifierTester.GetManifestDependencies(nugetifier);
+            var nugettedDependencies = ReferenceNugetifierTester.AddReferenceMetadata(nugetifier);
 
             Assert.That(nugettedDependencies, Is.Not.Empty);
             Assert.That(nugettedDependencies.Single().Id, Contains.Substring(ProjectReferenceTestData.PackageInRepository));
