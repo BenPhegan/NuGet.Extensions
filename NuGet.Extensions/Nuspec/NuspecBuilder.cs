@@ -9,7 +9,7 @@ namespace NuGet.Extensions.Nuspec
     public class NuspecBuilder 
     {
         private readonly Manifest _manifest;
-        private readonly string _nuspecFileDestination;
+        public string FilePath { get; private set; }
 
         public NuspecBuilder(string assemblyName)
         {
@@ -30,7 +30,7 @@ namespace NuGet.Extensions.Nuspec
                             Files = new List<ManifestFile> {file}
                         };
 
-            _nuspecFileDestination = assemblyName + Constants.ManifestExtension;
+            FilePath = assemblyName + Constants.ManifestExtension;
         }
 
         public void SetMetadata(INuspecDataSource nuspecData, List<ManifestDependency> manifestDependencies)
@@ -64,16 +64,15 @@ namespace NuGet.Extensions.Nuspec
 
         public void Save(IConsole console)
         {
-            var nuspecFile = _nuspecFileDestination;
             try
             {
-                console.WriteLine("Saving new NuSpec: {0}", nuspecFile);
+                console.WriteLine("Saving new NuSpec: {0}", FilePath);
                 var nuspecText = ToNuspecFileText();
-                File.WriteAllText(nuspecFile, nuspecText);
+                File.WriteAllText(FilePath, nuspecText);
             }
             catch (Exception)
             {
-                console.WriteError("Could not save file: {0}", nuspecFile);
+                console.WriteError("Could not save file: {0}", FilePath);
                 throw;
             }
         }
