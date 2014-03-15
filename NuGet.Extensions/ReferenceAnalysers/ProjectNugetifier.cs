@@ -75,10 +75,9 @@ namespace NuGet.Extensions.ReferenceAnalysers
             var manifestDependencies = new List<ManifestDependency>();
             if (!resolvedMappings.Any()) return manifestDependencies;
             var projectReferences = _vsProject.GetProjectReferences().Select(pRef => pRef.AssemblyName).ToList();
-            var packageReferenceFile = new PackageReferenceFile(_projectFileSystem, PackageReferenceFilename);
             //Now, create the packages.config for the resolved packages, and update the repositories.config
             _console.WriteLine("Creating {0}", PackageReferenceFilename);
-            var packagesConfig = packageReferenceFile;
+            var packagesConfig = new PackageReferenceFile(_projectFileSystem, PackageReferenceFilename);
             foreach (var referenceMapping in resolvedMappings)
             {
                 //TODO We shouldnt need to resolve this twice....
