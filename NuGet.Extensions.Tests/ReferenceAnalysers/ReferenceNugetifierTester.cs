@@ -45,7 +45,7 @@ namespace NuGet.Extensions.Tests.ReferenceAnalysers
 
         public static ICollection<IPackage> NugetifyReferencesInProject(ProjectNugetifier nugetifier)
         {
-            return nugetifier.NugetifyReferences(GetMockDirectory());
+            return nugetifier.NugetifyReferences(GetMockDirectory()).ToArray();
         }
     }
 }

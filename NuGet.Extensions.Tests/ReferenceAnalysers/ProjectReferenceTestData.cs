@@ -23,7 +23,7 @@ namespace NuGet.Extensions.Tests.ReferenceAnalysers
             return project;
         }
 
-        public static Mock<IReference> ConstructMockDependency(string includeFilename = null, string includeVersion = null)
+        public static Mock<IReference> ConstructMockDependency(string includeFilename = null, string includeVersion = null, bool hasHintpath = true)
         {
             includeFilename = includeFilename ?? AssemblyFilenameInPackageRepository;
 
@@ -33,7 +33,7 @@ namespace NuGet.Extensions.Tests.ReferenceAnalysers
             dependency.Setup(d => d.IsForAssembly(includeFilename)).Returns(true);
 
             string anydependencyHintpath = includeFilename;
-            dependency.Setup(d => d.TryGetHintPath(out anydependencyHintpath)).Returns(true);
+            dependency.Setup(d => d.TryGetHintPath(out anydependencyHintpath)).Returns(hasHintpath);
 
             return dependency;
         }
