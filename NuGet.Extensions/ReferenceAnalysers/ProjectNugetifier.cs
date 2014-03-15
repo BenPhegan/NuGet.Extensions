@@ -16,8 +16,6 @@ namespace NuGet.Extensions.ReferenceAnalysers
         private readonly IFileSystem _projectFileSystem;
         private readonly IVsProject _vsProject;
         private readonly IPackageRepository _packageRepository;
-        private readonly Lazy<IList<IReference>> _references;
-        private readonly Lazy<IList<KeyValuePair<string, List<IPackage>>>> _resolveReferenceMappings;
         private static readonly string PackageReferenceFilename = Constants.PackageReferenceFile;
         private readonly IHintPathGenerator _hintPathGenerator;
 
@@ -27,18 +25,17 @@ namespace NuGet.Extensions.ReferenceAnalysers
             _projectFileSystem = projectFileSystem;
             _vsProject = vsProject;
             _packageRepository = packageRepository;
-            _references = new Lazy<IList<IReference>>(() => _vsProject.GetBinaryReferences().ToList());
-            _resolveReferenceMappings = new Lazy<IList<KeyValuePair<string, List<IPackage>>>>(() => ResolveReferenceMappings(_references.Value).ToList());
             _hintPathGenerator = hintPathGenerator;
         }
 
         public ICollection<IPackage> NugetifyReferences(DirectoryInfo solutionDir)
         {
-            var resolvedMappings = _resolveReferenceMappings.Value;
+            var binaryReferences = _vsProject.GetBinaryReferences().ToList();
+            var resolvedMappings = ResolveReferenceMappings(binaryReferences).ToList();
             var packageReferencesAdded = new HashSet<IPackage>(new LambdaComparer<IPackage>(IPackageExtensions.Equals, IPackageExtensions.GetHashCode));
             foreach (var mapping in resolvedMappings)
             {
-                var referenceMatch = _references.Value.FirstOrDefault(r => r.IsForAssembly(mapping.Key));
+                var referenceMatch = binaryReferences.FirstOrDefault(r => r.IsForAssembly(mapping.Key));
                 if (referenceMatch != null)
                 {
                     var includeName = referenceMatch.AssemblyName;
