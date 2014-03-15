@@ -68,18 +68,24 @@ namespace NuGet.Extensions.Nuspec
             try
             {
                 console.WriteLine("Saving new NuSpec: {0}", nuspecFile);
-                using (var stream = new MemoryStream())
-                {
-                    _manifest.Save(stream, validate: false);
-                    stream.Seek(0, SeekOrigin.Begin);
-                    var content = stream.ReadToEnd();
-                    File.WriteAllText(nuspecFile, RemoveSchemaNamespace(content));
-                }
+                var nuspecText = ToNuspecFileText();
+                File.WriteAllText(nuspecFile, nuspecText);
             }
             catch (Exception)
             {
                 console.WriteError("Could not save file: {0}", nuspecFile);
                 throw;
+            }
+        }
+
+        private string ToNuspecFileText()
+        {
+            using (var stream = new MemoryStream())
+            {
+                _manifest.Save(stream, validate: false);
+                stream.Seek(0, SeekOrigin.Begin);
+                var content = stream.ReadToEnd();
+                return RemoveSchemaNamespace(content);
             }
         }
 
