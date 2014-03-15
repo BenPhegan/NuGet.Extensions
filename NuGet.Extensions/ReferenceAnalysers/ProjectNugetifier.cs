@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using NuGet.Common;
+using NuGet.Extensions.Comparers;
+using NuGet.Extensions.ExtensionMethods;
 using NuGet.Extensions.MSBuild;
 using NuGet.Extensions.Repositories;
 
@@ -31,10 +32,10 @@ namespace NuGet.Extensions.ReferenceAnalysers
             _hintPathGenerator = hintPathGenerator;
         }
 
-        public void NugetifyReferences(DirectoryInfo solutionDir)
+        public ICollection<IPackage> NugetifyReferences(DirectoryInfo solutionDir)
         {
             var resolvedMappings = _resolveReferenceMappings.Value;
-            if (!resolvedMappings.Any()) return;
+            var packageReferencesAdded = new HashSet<IPackage>(new LambdaComparer<IPackage>(IPackageExtensions.Equals, IPackageExtensions.GetHashCode));
             foreach (var mapping in resolvedMappings)
             {
                 var referenceMatch = _references.Value.FirstOrDefault(r => r.IsForAssembly(mapping.Key));
@@ -43,7 +44,7 @@ namespace NuGet.Extensions.ReferenceAnalysers
                     var includeName = referenceMatch.AssemblyName;
                     var includeVersion = referenceMatch.AssemblyVersion;
                     var package = mapping.Value.OrderBy(p => p.GetFiles().Count()).First();
-
+                    packageReferencesAdded.Add(package);
                     LogHintPathRewriteMessage(package, includeName, includeVersion);
 
                     var newHintPath = _hintPathGenerator.ForAssembly(solutionDir, _vsProject.ProjectDirectory, package, mapping.Key);
@@ -51,6 +52,8 @@ namespace NuGet.Extensions.ReferenceAnalysers
                     referenceMatch.ConvertToNugetReferenceWithHintPath(newHintPath);
                 }
             }
+
+            return packageReferencesAdded;
         }
 
         private void LogHintPathRewriteMessage(IPackage package, string includeName, string includeVersion)

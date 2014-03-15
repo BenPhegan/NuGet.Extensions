@@ -126,7 +126,7 @@ namespace NuGet.Extensions.Commands
         private void NugetifyProject(IVsProject projectAdapter, DirectoryInfo solutionRoot, ISharedPackageRepository existingSolutionPackagesRepo)
         {
             var projectNugetifier = CreateProjectNugetifier(projectAdapter);
-            projectNugetifier.NugetifyReferences(solutionRoot);
+            var packagesAdded = projectNugetifier.NugetifyReferences(solutionRoot);
             var manifestDependencies = projectNugetifier.AddNugetReferenceMetadata(existingSolutionPackagesRepo, NuSpec);
             projectAdapter.Save();
 
