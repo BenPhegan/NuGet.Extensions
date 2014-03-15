@@ -6,7 +6,8 @@ using NuGet.Common;
 
 namespace NuGet.Extensions.Nuspec
 {
-    public class NuspecBuilder {
+    public class NuspecBuilder 
+    {
         private readonly Manifest _manifest;
         private readonly string _nuspecFileDestination;
 
