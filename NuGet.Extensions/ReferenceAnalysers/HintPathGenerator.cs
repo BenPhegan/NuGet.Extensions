@@ -13,6 +13,7 @@ namespace NuGet.Extensions.ReferenceAnalysers
         public string ForAssembly(DirectoryInfo solutionDir, DirectoryInfo projectDir, IPackage package, string assemblyFilename)
         {
             var fileLocation = GetFileLocationFromPackage(package, assemblyFilename);
+            //TODO make version available, currently only works for non versioned package directories...
             var newHintPathFull = Path.Combine(solutionDir.FullName, "packages", package.Id, fileLocation);
             var newHintPathRelative = GetRelativePath(projectDir.FullName, newHintPathFull);
             return newHintPathRelative;

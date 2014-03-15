@@ -45,7 +45,6 @@ namespace NuGet.Extensions.ReferenceAnalysers
                     LogHintPathRewriteMessage(package, includeName, includeVersion);
 
                     var newHintPath = _hintPathGenerator.ForAssembly(solutionDir, _vsProject.ProjectDirectory, package, mapping.Key);
-                    //TODO make version available, currently only works for non versioned package directories...
                     referenceMatch.ConvertToNugetReferenceWithHintPath(newHintPath);
                 }
             }
@@ -76,21 +75,21 @@ namespace NuGet.Extensions.ReferenceAnalysers
             RegisterPackagesConfig(sharedPackagesRepository);
         }
 
-        private void RegisterPackagesConfig(ISharedPackageRepository sharedPackagesRepository)
-        {
-            var packagesConfigFilePath = Path.Combine(_vsProject.ProjectDirectory.FullName + "\\", PackageReferenceFilename);
-            sharedPackagesRepository.RegisterRepository(packagesConfigFilePath);
-            _vsProject.AddFile(PackageReferenceFilename);
-        }
-
         private void CreatePackagesConfig(ICollection<IPackage> packagesToAdd)
-        { 
+        {
             _console.WriteLine("Creating {0}", PackageReferenceFilename);
             var packagesConfig = new PackageReferenceFile(_projectFileSystem, PackageReferenceFilename);
             foreach (var package in packagesToAdd)
             {
                 if (!packagesConfig.EntryExists(package.Id, package.Version)) packagesConfig.AddEntry(package.Id, package.Version);
             }
+        }
+
+        private void RegisterPackagesConfig(ISharedPackageRepository sharedPackagesRepository)
+        {
+            var packagesConfigFilePath = Path.Combine(_vsProject.ProjectDirectory.FullName + "\\", PackageReferenceFilename);
+            sharedPackagesRepository.RegisterRepository(packagesConfigFilePath);
+            _vsProject.AddFile(PackageReferenceFilename);
         }
 
         private IEnumerable<KeyValuePair<string, List<IPackage>>> ResolveReferenceMappings(IEnumerable<IReference> references)
