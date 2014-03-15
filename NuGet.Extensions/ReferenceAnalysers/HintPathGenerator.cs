@@ -15,19 +15,19 @@ namespace NuGet.Extensions.ReferenceAnalysers
             var fileLocation = GetFileLocationFromPackage(package, assemblyFilename);
             //TODO make version available, currently only works for non versioned package directories...
             var newHintPathFull = Path.Combine(solutionDir.FullName, "packages", package.Id, fileLocation);
-            var newHintPathRelative = GetRelativePath(projectDir.FullName, newHintPathFull);
+            var newHintPathRelative = GetRelativePath(projectDir.FullName + Path.DirectorySeparatorChar, newHintPathFull);
             return newHintPathRelative;
         }
 
-        private static String GetRelativePath(string root, string child)
+        private static String GetRelativePath(string rootWithTrailingSlash, string childWithTrailingSlash)
         {
             // Validate paths.
-            Contract.Assert(!String.IsNullOrEmpty(root));
-            Contract.Assert(!String.IsNullOrEmpty(child));
+            Contract.Assert(!String.IsNullOrEmpty(rootWithTrailingSlash));
+            Contract.Assert(!String.IsNullOrEmpty(childWithTrailingSlash));
 
             // Create Uris
-            var rootUri = new Uri(root);
-            var childUri = new Uri(child);
+            var rootUri = new Uri(rootWithTrailingSlash);
+            var childUri = new Uri(childWithTrailingSlash);
 
             // Get relative path.
             var relativeUri = rootUri.MakeRelativeUri(childUri);

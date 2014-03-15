@@ -78,6 +78,7 @@
     <Compile Include="Packages\PackageAggregatorTests.cs" />
     <Compile Include="Packages\PackageEnumeratorTests.cs" />
     <Compile Include="Packages\PackageResolutionManagerTests.cs" />
+    <Compile Include="ReferenceAnalysers\HintPathGeneratorTests.cs" />
     <Compile Include="ReferenceAnalysers\ProjectReferenceTestData.cs" />
     <Compile Include="ReferenceAnalysers\ReferenceNugetifierBinaryTests.cs" />
     <Compile Include="ReferenceAnalysers\ReferenceNugetifierTester.cs" />
