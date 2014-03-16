@@ -21,11 +21,6 @@ namespace NuGet.Extensions.MSBuild
             _projectLoader = new CachingProjectLoader(globalMsBuildProperties, console);
             _projectsInSolution = new Lazy<ICollection<IVsProject>>(LoadProjectsInSolutionByGuid);
         }
-        
-        public CachingProjectLoader ProjectLoader
-        {
-            get { return _projectLoader; }
-        }
 
         public List<IVsProject> GetProjects()
         {
