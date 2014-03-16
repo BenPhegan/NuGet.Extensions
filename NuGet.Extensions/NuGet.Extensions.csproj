@@ -71,7 +71,6 @@
     <Compile Include="Commands\Audit.cs" />
     <Compile Include="ExtensionMethods\IPackageExtensions.cs" />
     <Compile Include="MSBuild\ProjectLoader.cs" />
-    <Compile Include="MSBuild\ReallyLazy.cs" />
     <Compile Include="MSBuild\NullProjectAdapter.cs" />
     <Compile Include="MSBuild\SolutionProjectLoader.cs" />
     <Compile Include="Nuspec\INuspecDataSource.cs" />
