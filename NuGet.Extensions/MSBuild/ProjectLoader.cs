@@ -35,7 +35,6 @@ namespace NuGet.Extensions.MSBuild
             if (_projectsByGuid.TryGetValue(projectGuid, out projectAdapter)) return projectAdapter;
 
             projectAdapter = GetProjectAdapterFromPath(absoluteProjectPath);
-            _console.WriteLine("Potential authoring issue: Project {0} should have been referenced in the solution with guid {1}", Path.GetFileName(absoluteProjectPath), projectGuid);
             _projectsByGuid.Add(projectGuid, projectAdapter); //TODO This could cause an incorrect mapping, get the guid from the loaded project
             return projectAdapter;
         }
