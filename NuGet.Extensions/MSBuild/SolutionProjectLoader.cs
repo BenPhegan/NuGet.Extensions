@@ -13,7 +13,7 @@ namespace NuGet.Extensions.MSBuild
         private readonly ProjectLoader _projectLoader;
         private readonly Lazy<ICollection<IVsProject>> _projectsInSolution;
 
-        public SolutionProjectLoader(FileInfo solutionFile, IConsole console, IDictionary<string, string> globalMsBuildProperties)
+        public SolutionProjectLoader(FileInfo solutionFile, IDictionary<string, string> globalMsBuildProperties, IConsole console)
         {
             _solutionFile = solutionFile;
             _console = console;
