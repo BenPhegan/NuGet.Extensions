@@ -17,7 +17,6 @@ namespace NuGet.Extensions.MSBuild
         {
             _solutionFile = solutionFile;
             _console = console;
-            globalMsBuildProperties["SolutionDir"] = solutionFile.Directory.FullName;
             _projectLoader = new CachingProjectLoader(globalMsBuildProperties, console);
             _projectsInSolution = new Lazy<ICollection<IVsProject>>(LoadProjectsInSolutionByGuid);
         }

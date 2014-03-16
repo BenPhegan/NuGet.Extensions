@@ -30,7 +30,7 @@ namespace NuGet.Extensions.Commands
             get { return _sources; }
         }
 
-        [Option("Comma separated list of key=value pairs of parameters to be used when loading projects")]
+        [Option("Comma separated list of key=value pairs of parameters to be used when loading projects, note that SolutionDir is automatically set.")]
         public string MsBuildProperties { get; set; }
 
         [Option("NuSpec project URL")]
@@ -93,7 +93,7 @@ namespace NuGet.Extensions.Commands
             Console.WriteLine("Loading projects from solution {0}", solutionFile.Name);
 
             var existingSolutionPackagesRepo = new SharedPackageRepository(Path.Combine(solutionFile.Directory.FullName, "packages"));
-            using (var solutionAdapter = new CachingSolutionLoader(solutionFile, ParsedBuildProperties, Console))
+            using (var solutionAdapter = new CachingSolutionLoader(solutionFile, GetMsBuildProperties(solutionFile), Console))
             {
                 var projectAdapters = solutionAdapter.GetProjects();
 
@@ -109,18 +109,6 @@ namespace NuGet.Extensions.Commands
                 }
             }
             Console.WriteLine("Complete!");
-        }
-
-        public IDictionary<string, string> ParsedBuildProperties
-        {
-            get
-            {
-                if (MsBuildProperties == null) return new Dictionary<string, string>();
-                var keyValuePairs = MsBuildProperties.Split(',');
-                var twoElementArrays = keyValuePairs.Select(kvp => kvp.Split('=')).ToList();
-                foreach (var errorKvp  in twoElementArrays.Where(a => a.Length != 2)) throw new ArgumentException(string.Format("Key value pair near {0} is formatted incorrectly", string.Join(",", errorKvp[0])));
-                return twoElementArrays.ToDictionary(kvp => kvp[0].Trim(), kvp => kvp[1].Trim());
-            }
         }
 
         private void NugetifyProject(IVsProject projectAdapter, DirectoryInfo solutionRoot, ISharedPackageRepository existingSolutionPackagesRepo)
@@ -148,6 +136,22 @@ namespace NuGet.Extensions.Commands
             repository.Logger = Console;
             var hintPathGenerator = new HintPathGenerator();
             return new ProjectNugetifier(projectAdapter, repository, projectFileSystem, Console, hintPathGenerator);
+        }
+
+        private IDictionary<string, string> GetMsBuildProperties(FileInfo solutionFile)
+        {
+            var buildProperties = GetParsedBuildProperties();
+            buildProperties["SolutionDir"] = solutionFile.Directory.FullName;
+            return buildProperties;
+        }
+
+        private IDictionary<string, string> GetParsedBuildProperties()
+        {
+            if (MsBuildProperties == null) return new Dictionary<string, string>();
+            var keyValuePairs = MsBuildProperties.Split(',');
+            var twoElementArrays = keyValuePairs.Select(kvp => kvp.Split('=')).ToList();
+            foreach (var errorKvp in twoElementArrays.Where(a => a.Length != 2)) throw new ArgumentException(string.Format("Key value pair near {0} is formatted incorrectly", string.Join(",", errorKvp[0])));
+            return twoElementArrays.ToDictionary(kvp => kvp[0].Trim(), kvp => kvp[1].Trim());
         }
     }
 }
