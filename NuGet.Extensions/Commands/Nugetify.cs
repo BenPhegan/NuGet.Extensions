@@ -118,7 +118,6 @@ namespace NuGet.Extensions.Commands
             projectNugetifier.AddNugetReferenceMetadata(existingSolutionPackagesRepo, packagesAdded);
             projectAdapter.Save();
 
-            //Create nuspec regardless of whether we have added dependencies
             if (NuSpec)
             {
                 var manifestDependencies = projectNugetifier.GetManifestDependencies(packagesAdded);
