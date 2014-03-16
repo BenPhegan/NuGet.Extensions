@@ -28,7 +28,7 @@ namespace NuGet.Extensions.Tests.MSBuild
         public void SetUpProjectAdapterAndBinaryDependencies()
         {
             _console = new Mock<IConsole>();
-            _solutionProjectLoader = new SolutionProjectLoader(Paths.AdapterTestsSolutionFile, _console.Object);
+            _solutionProjectLoader = new SolutionProjectLoader(Paths.AdapterTestsSolutionFile, _console.Object, (IDictionary<string, string>)new Dictionary<string, string>());
             var projectAdapters = _solutionProjectLoader.GetProjects();
             _projectWithDependenciesAdapter = projectAdapters.Single(p => p.ProjectName.Equals(ProjectWithDependenciesName, StringComparison.OrdinalIgnoreCase));
             _projectBinaryReferenceAdapters = _projectWithDependenciesAdapter.GetBinaryReferences();
@@ -148,9 +148,10 @@ namespace NuGet.Extensions.Tests.MSBuild
         [Test]
         public void PassingWrongGuidGetsProjectByPath()
         {
-            var anyProject =_solutionProjectLoader.GetProjects().First();
-            var sameProject = _solutionProjectLoader.GetProject(Guid.Empty, Path.Combine(anyProject.ProjectDirectory.FullName, anyProject.ProjectName + ".csproj"));
-            Assert.That(anyProject.ProjectName, Is.EqualTo(sameProject.ProjectName));
+            var anyProject = _solutionProjectLoader.GetProjects().First();
+            var projectLoader = new ProjectLoader(new Dictionary<string, string>(), _console.Object);
+            var loadedByPathOnly = projectLoader.GetProject(Guid.Empty, Path.Combine(anyProject.ProjectDirectory.FullName, anyProject.ProjectName + ".csproj"));
+            Assert.That(anyProject.ProjectName, Is.EqualTo(loadedByPathOnly.ProjectName));
         }
 
         [Test]
@@ -170,8 +171,9 @@ namespace NuGet.Extensions.Tests.MSBuild
         {
             var anyProject = _solutionProjectLoader.GetProjects().First();
             var nonCanonicalPath = Path.Combine(anyProject.ProjectDirectory.FullName.ToLower(), "randomFolder", "..", anyProject.ProjectName.ToUpper() + ".csproj");
-            var sameProject = _solutionProjectLoader.GetProject(Guid.Empty, nonCanonicalPath);
-            Assert.That(anyProject, Is.EqualTo(sameProject));
+            var projectLoader = new ProjectLoader(new Dictionary<string, string>(), _console.Object);
+            var loadedByNonCanonPath = projectLoader.GetProject(Guid.Empty, nonCanonicalPath);
+            Assert.That(anyProject, Is.EqualTo(loadedByNonCanonPath));
         }
 
         private static bool IsExpectedBinaryDependency(IReference r)

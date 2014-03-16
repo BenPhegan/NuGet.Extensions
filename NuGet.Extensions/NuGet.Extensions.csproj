@@ -70,8 +70,10 @@
     <Compile Include="Caches\NuGetCacheManager.cs" />
     <Compile Include="Commands\Audit.cs" />
     <Compile Include="ExtensionMethods\IPackageExtensions.cs" />
+    <Compile Include="MSBuild\ProjectLoader.cs" />
     <Compile Include="MSBuild\ReallyLazy.cs" />
     <Compile Include="MSBuild\NullProjectAdapter.cs" />
+    <Compile Include="MSBuild\SolutionProjectLoader.cs" />
     <Compile Include="Nuspec\INuspecDataSource.cs" />
     <Compile Include="Nuspec\NuspecBuilder.cs" />
     <Compile Include="MSBuild\BinaryReferenceAdapter.cs" />
@@ -81,7 +83,6 @@
     <Compile Include="MSBuild\IVsProject.cs" />
     <Compile Include="MSBuild\ProjectAdapter.cs" />
     <Compile Include="MSBuild\ProjectReferenceAdapter.cs" />
-    <Compile Include="MSBuild\SolutionProjectLoader.cs" />
     <Compile Include="ReferenceAnalysers\HintPathGenerator.cs" />
     <Compile Include="ReferenceAnalysers\IHintPathGenerator.cs" />
     <Compile Include="ReferenceAnalysers\ProjectNugetifier.cs" />
