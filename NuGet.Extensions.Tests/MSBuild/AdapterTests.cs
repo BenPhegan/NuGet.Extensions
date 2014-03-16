@@ -149,7 +149,7 @@ namespace NuGet.Extensions.Tests.MSBuild
         public void PassingWrongGuidGetsProjectByPath()
         {
             var anyProject = _solutionProjectLoader.GetProjects().First();
-            var projectLoader = new ProjectLoader(new Dictionary<string, string>(), _console.Object);
+            var projectLoader = new CachingProjectLoader(new Dictionary<string, string>(), _console.Object);
             var loadedByPathOnly = projectLoader.GetProject(Guid.Empty, Path.Combine(anyProject.ProjectDirectory.FullName, anyProject.ProjectName + ".csproj"));
             Assert.That(anyProject.ProjectName, Is.EqualTo(loadedByPathOnly.ProjectName));
         }
@@ -171,7 +171,7 @@ namespace NuGet.Extensions.Tests.MSBuild
         {
             var anyProject = _solutionProjectLoader.GetProjects().First();
             var nonCanonicalPath = Path.Combine(anyProject.ProjectDirectory.FullName.ToLower(), "randomFolder", "..", anyProject.ProjectName.ToUpper() + ".csproj");
-            var projectLoader = new ProjectLoader(new Dictionary<string, string>(), _console.Object);
+            var projectLoader = new CachingProjectLoader(new Dictionary<string, string>(), _console.Object);
             var loadedByNonCanonPath = projectLoader.GetProject(Guid.Empty, nonCanonicalPath);
             Assert.That(anyProject, Is.EqualTo(loadedByNonCanonPath));
         }

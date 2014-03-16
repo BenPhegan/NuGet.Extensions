@@ -7,7 +7,7 @@ using NuGet.Common;
 
 namespace NuGet.Extensions.MSBuild
 {
-    public class ProjectLoader : IProjectLoader
+    public class CachingProjectLoader : IProjectLoader
     {
         private readonly IConsole _console;
         private readonly ProjectCollection _projectCollection;
@@ -15,7 +15,7 @@ namespace NuGet.Extensions.MSBuild
         private readonly IDictionary<string, string> _globalMsBuildProperties;
         private readonly IProjectLoader _projectLoader;
 
-        public ProjectLoader(IDictionary<string, string> globalMsBuildProperties, IConsole console)
+        public CachingProjectLoader(IDictionary<string, string> globalMsBuildProperties, IConsole console)
         {
             _globalMsBuildProperties = globalMsBuildProperties;
             _console = console;

@@ -10,7 +10,7 @@ namespace NuGet.Extensions.MSBuild
     {
         private readonly FileInfo _solutionFile;
         private readonly IConsole _console;
-        private readonly ProjectLoader _projectLoader;
+        private readonly CachingProjectLoader _projectLoader;
         private readonly Lazy<ICollection<IVsProject>> _projectsInSolution;
 
         public SolutionProjectLoader(FileInfo solutionFile, IDictionary<string, string> globalMsBuildProperties, IConsole console)
@@ -18,11 +18,11 @@ namespace NuGet.Extensions.MSBuild
             _solutionFile = solutionFile;
             _console = console;
             globalMsBuildProperties["SolutionDir"] = solutionFile.Directory.FullName;
-            _projectLoader = new ProjectLoader(globalMsBuildProperties, console);
+            _projectLoader = new CachingProjectLoader(globalMsBuildProperties, console);
             _projectsInSolution = new Lazy<ICollection<IVsProject>>(LoadProjectsInSolutionByGuid);
         }
         
-        public ProjectLoader ProjectLoader
+        public CachingProjectLoader ProjectLoader
         {
             get { return _projectLoader; }
         }
