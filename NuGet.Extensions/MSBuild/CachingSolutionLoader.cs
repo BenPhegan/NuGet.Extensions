@@ -6,14 +6,14 @@ using NuGet.Common;
 
 namespace NuGet.Extensions.MSBuild
 {
-    public class SolutionProjectLoader : IDisposable
+    public class CachingSolutionLoader : IDisposable
     {
         private readonly FileInfo _solutionFile;
         private readonly IConsole _console;
         private readonly CachingProjectLoader _projectLoader;
         private readonly Lazy<ICollection<IVsProject>> _projectsInSolution;
 
-        public SolutionProjectLoader(FileInfo solutionFile, IDictionary<string, string> globalMsBuildProperties, IConsole console)
+        public CachingSolutionLoader(FileInfo solutionFile, IDictionary<string, string> globalMsBuildProperties, IConsole console)
         {
             _solutionFile = solutionFile;
             _console = console;

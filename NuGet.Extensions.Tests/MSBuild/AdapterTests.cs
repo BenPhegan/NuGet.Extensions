@@ -17,7 +17,7 @@ namespace NuGet.Extensions.Tests.MSBuild
     {
         private IVsProject _projectWithDependenciesAdapter;
         private IEnumerable<IReference> _projectBinaryReferenceAdapters;
-        private SolutionProjectLoader _solutionProjectLoader;
+        private CachingSolutionLoader _solutionProjectLoader;
         private Mock<IConsole> _console;
         private const string ProjectWithDependenciesName = "ProjectWithDependencies";
         private const string ExpectedBinaryDependencyAssemblyName = "Newtonsoft.Json";
@@ -28,7 +28,7 @@ namespace NuGet.Extensions.Tests.MSBuild
         public void SetUpProjectAdapterAndBinaryDependencies()
         {
             _console = new Mock<IConsole>();
-            _solutionProjectLoader = new SolutionProjectLoader(Paths.AdapterTestsSolutionFile, (IDictionary<string, string>)new Dictionary<string, string>(), _console.Object);
+            _solutionProjectLoader = new CachingSolutionLoader(Paths.AdapterTestsSolutionFile, (IDictionary<string, string>)new Dictionary<string, string>(), _console.Object);
             var projectAdapters = _solutionProjectLoader.GetProjects();
             _projectWithDependenciesAdapter = projectAdapters.Single(p => p.ProjectName.Equals(ProjectWithDependenciesName, StringComparison.OrdinalIgnoreCase));
             _projectBinaryReferenceAdapters = _projectWithDependenciesAdapter.GetBinaryReferences();
@@ -80,7 +80,7 @@ namespace NuGet.Extensions.Tests.MSBuild
         
         public IEnumerable<IReference> GetReferencesForProjectWithDependencies(IDictionary<string, string> globalMsBuildProperties)
         {
-            var loader = new SolutionProjectLoader(Paths.AdapterTestsSolutionFile, globalMsBuildProperties, _console.Object);
+            var loader = new CachingSolutionLoader(Paths.AdapterTestsSolutionFile, globalMsBuildProperties, _console.Object);
             var projectAdapters = loader.GetProjects();
             var projectWithDependenciesAdapter = projectAdapters.Single(p => p.ProjectName.Equals(ProjectWithDependenciesName, StringComparison.OrdinalIgnoreCase));
             return projectWithDependenciesAdapter.GetBinaryReferences();

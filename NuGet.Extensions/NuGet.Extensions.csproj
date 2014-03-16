@@ -72,7 +72,7 @@
     <Compile Include="ExtensionMethods\IPackageExtensions.cs" />
     <Compile Include="MSBuild\CachingProjectLoader.cs" />
     <Compile Include="MSBuild\NullProjectAdapter.cs" />
-    <Compile Include="MSBuild\SolutionProjectLoader.cs" />
+    <Compile Include="MSBuild\CachingSolutionLoader.cs" />
     <Compile Include="Nuspec\INuspecDataSource.cs" />
     <Compile Include="Nuspec\NuspecBuilder.cs" />
     <Compile Include="MSBuild\BinaryReferenceAdapter.cs" />
