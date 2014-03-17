@@ -173,7 +173,7 @@ namespace NuGet.Extensions.Tests.MSBuild
             var nonCanonicalPath = Path.Combine(anyProject.ProjectDirectory.FullName.ToLower(), "randomFolder", "..", anyProject.ProjectName.ToUpper() + ".csproj");
             var projectLoader = new CachingProjectLoader(new Dictionary<string, string>(), _console.Object);
             var loadedByNonCanonPath = projectLoader.GetProject(Guid.Empty, nonCanonicalPath);
-            Assert.That(anyProject, Is.EqualTo(loadedByNonCanonPath));
+            Assert.That(ReferenceEquals(anyProject,loadedByNonCanonPath), Is.True);
         }
 
         private static bool IsExpectedBinaryDependency(IReference r)
