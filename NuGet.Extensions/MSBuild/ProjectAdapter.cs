@@ -72,12 +72,13 @@ namespace NuGet.Extensions.MSBuild
             var csprojRelativePath = r.EvaluatedInclude;
             var absoluteProjectPath = Path.Combine(ProjectDirectory.FullName, csprojRelativePath);
             var referencedProjectAdapter = _projectLoader.GetProject(Guid.Parse(projectGuid), absoluteProjectPath);
-            return new ProjectReferenceAdapter(referencedProjectAdapter, () => _project.RemoveItem(r), AddBinaryReference, conditionTrue);
+            return new ProjectReferenceAdapter(referencedProjectAdapter, () => _project.RemoveItem(r), AddBinaryReferenceIfNotExists, conditionTrue);
         }
 
-        private void AddBinaryReference(string includePath, KeyValuePair<string, string> metadata)
+        private void AddBinaryReferenceIfNotExists(string includePath, KeyValuePair<string, string> metadata)
         {
-            _project.AddItem("Reference", includePath, new[]{metadata});
+            var existingReferences = GetBinaryReferences().Where(r => string.Equals(r.AssemblyName, includePath, StringComparison.InvariantCultureIgnoreCase));
+            if (!existingReferences.Any()) _project.AddItem("Reference", includePath, new[]{metadata});
         }
     }
 }

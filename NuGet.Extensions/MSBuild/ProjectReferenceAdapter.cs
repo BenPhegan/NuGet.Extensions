@@ -9,13 +9,13 @@ namespace NuGet.Extensions.MSBuild
     {
         private readonly Func<bool> _removeFromParentProject;
         private readonly IVsProject _project;
-        private readonly Action<string, KeyValuePair<string, string>> _addBinaryReferenceWithMetadata;
+        private readonly Action<string, KeyValuePair<string, string>> _addBinaryReferenceWithMetadataIfNotExists;
 
-        public ProjectReferenceAdapter(IVsProject project, Func<bool> removeFromParentProject, Action<string, KeyValuePair<string, string>> addBinaryReferenceWithMetadata, bool conditionTrue)
+        public ProjectReferenceAdapter(IVsProject project, Func<bool> removeFromParentProject, Action<string, KeyValuePair<string, string>> addBinaryReferenceWithMetadataIfNotExists, bool conditionTrue)
         {
             _project = project;
             _removeFromParentProject = removeFromParentProject;
-            _addBinaryReferenceWithMetadata = addBinaryReferenceWithMetadata;
+            _addBinaryReferenceWithMetadataIfNotExists = addBinaryReferenceWithMetadataIfNotExists;
             Condition = conditionTrue;
         }
 
@@ -28,7 +28,7 @@ namespace NuGet.Extensions.MSBuild
         public void ConvertToNugetReferenceWithHintPath(string hintPath)
         {
             _removeFromParentProject();
-            _addBinaryReferenceWithMetadata(_project.AssemblyName, new KeyValuePair<string, string>("HintPath", hintPath));
+            _addBinaryReferenceWithMetadataIfNotExists(_project.AssemblyName, new KeyValuePair<string, string>("HintPath", hintPath));
         }
 
         public string AssemblyVersion
