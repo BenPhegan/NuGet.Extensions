@@ -31,7 +31,7 @@ namespace NuGet.Extensions.ReferenceAnalysers
 
         public ICollection<IPackage> NugetifyReferences(DirectoryInfo solutionDir)
         {
-            var binaryReferences = _vsProject.GetBinaryReferences().ToList();
+            var binaryReferences = GetReferences().ToList();
             var resolvedMappings = ResolveReferenceMappings(binaryReferences).ToList();
             var packageReferencesAdded = new HashSet<IPackage>(new LambdaComparer<IPackage>(IPackageExtensions.Equals, IPackageExtensions.GetHashCode));
             foreach (var mapping in resolvedMappings)
@@ -51,6 +51,11 @@ namespace NuGet.Extensions.ReferenceAnalysers
             }
 
             return packageReferencesAdded;
+        }
+
+        private IEnumerable<IReference> GetReferences()
+        {
+            return _vsProject.GetBinaryReferences();
         }
 
         private void LogHintPathRewriteMessage(IPackage package, string includeName, string includeVersion)
