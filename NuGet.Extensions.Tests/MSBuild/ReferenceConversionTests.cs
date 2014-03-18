@@ -36,14 +36,15 @@ namespace NuGet.Extensions.Tests.MSBuild
             _solutionDir.Delete(true);
         }
 
-        [Test]
-        public void ConvertingProjectReferenceAddsBinaryReference()
+        [TestCase(1)]
+        [TestCase(2)]
+        public void ConvertingProjectReferenceMutlipleTimesAddsOneBinaryReference(int timesToConvert)
         {
             var projectWithDependencies = LoadProjectWithDependenciesFromDisk();
             var projectReference = projectWithDependencies.GetProjectReferences().First();
             var anEasilyRecognisableString = "an easily recognisable string";
 
-            projectReference.ConvertToNugetReferenceWithHintPath(anEasilyRecognisableString);
+            for (int i = 0; i < timesToConvert; i++) projectReference.ConvertToNugetReferenceWithHintPath(anEasilyRecognisableString);
             projectWithDependencies.Save();
 
             var reloadedProject = LoadProjectWithDependenciesFromDisk();
