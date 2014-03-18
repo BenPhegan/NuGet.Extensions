@@ -12,19 +12,33 @@ namespace NuGet.Extensions.Tests.Commands
 {
     public class NugetifyTests
     {
+        private DirectoryInfo _solutionDir;
+        private string _solutionFile;
+        private DirectoryInfo _packageSource;
+
+        [SetUp]
+        public void SetupIsolatedSolutionAndUnrelatedPackages()
+        {
+            _solutionDir = GetIsolatedTestSolutionDir();
+            _solutionFile = Path.Combine(_solutionDir.FullName, Paths.AdapterTestsSolutionFile.Name);
+            _packageSource = GetIsolatedPackageSourceFromThisSolution();
+        }
+
+        [TearDown]
+        public void DeleteIsolatedSolutionAndPackagesFolder()
+        {
+            _packageSource.Delete(true);
+            _solutionDir.Delete(true);
+        }
+
         [Test]
         public void NugetifyThrowsNoErrorsWhenNoPackagesFound()
         {
             var console = new Mock<IConsole>();
-            var solutionDir = GetIsolatedTestSolutionDir();
-            var solutionFile = Path.Combine(solutionDir.FullName, Paths.AdapterTestsSolutionFile.Name);
-            var packageSource = GetIsolatedPackageSourceFromThisSolution();
 
-            var nugetify = GetNugetifyCommand(console, solutionFile, packageSource);
+            var nugetify = GetNugetifyCommand(console, _solutionFile, _packageSource);
             nugetify.ExecuteCommand();
 
-            packageSource.Delete(true);
-            solutionDir.Delete(true);
             ConsoleMock.AssertConsoleHasNoErrorsOrWarnings(console);
         }
 
