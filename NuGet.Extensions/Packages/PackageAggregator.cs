@@ -12,7 +12,7 @@ namespace NuGet.Extensions.Packages
     /// <summary>
     /// Manages the saving of the aggregated packages.config file.
     /// </summary>
-    public class PackageAggregator : IDisposable
+    public sealed class PackageAggregator : IDisposable
     {
         private readonly IRepositoryManager _repositoryManager;
         private readonly IPackageEnumerator _packageEnumerator;

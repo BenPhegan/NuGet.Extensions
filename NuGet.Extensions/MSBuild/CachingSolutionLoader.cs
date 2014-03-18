@@ -6,7 +6,7 @@ using NuGet.Common;
 
 namespace NuGet.Extensions.MSBuild
 {
-    public class CachingSolutionLoader : IDisposable
+    public sealed class CachingSolutionLoader : IDisposable
     {
         private readonly FileInfo _solutionFile;
         private readonly IConsole _console;
