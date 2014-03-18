@@ -141,7 +141,7 @@ namespace NuGet.Extensions.ReferenceAnalysers
                 else if (GacResolver.AssemblyExist(reference.AssemblyName, out gacPath))
                 {
                     var publicKeyToken = GetPublicKeyTokenFromGacPath(gacPath);
-                    _console.WriteLine("Ignoring {0} because it was found in the GAC (with public key token {1})", reference.AssemblyName, publicKeyToken);
+                    WarnAboutIgnoredReference(reference, publicKeyToken);
                 }
                 else
                 {
@@ -150,6 +150,14 @@ namespace NuGet.Extensions.ReferenceAnalysers
             }
 
             return referenceFiles;
+        }
+
+        private void WarnAboutIgnoredReference(IReference reference, string publicKeyToken)
+        {
+            if (!PublicKeyTokens.UsedInNetFramework.Contains(publicKeyToken))
+            {
+                _console.WriteWarning("Ignoring {0} because it was found in the GAC (with public key token {1})", reference.AssemblyName, publicKeyToken);
+            }
         }
 
         private static string GetPublicKeyTokenFromGacPath(string hintPath)
