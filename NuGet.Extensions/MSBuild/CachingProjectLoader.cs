@@ -7,7 +7,7 @@ using NuGet.Common;
 
 namespace NuGet.Extensions.MSBuild
 {
-    public class CachingProjectLoader : IProjectLoader
+    public class CachingProjectLoader : IProjectLoader, IDisposable
     {
         private readonly IConsole _console;
         private readonly ProjectCollection _projectCollection;
