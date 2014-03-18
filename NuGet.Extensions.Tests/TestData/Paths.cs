@@ -11,6 +11,7 @@ namespace NuGet.Extensions.Tests.TestData
 
         public static string TestSolutionForAdapterFolder { get { return Path.Combine(RootFolder, "TestSolutionForAdapter"); } }
         public static FileInfo AdapterTestsSolutionFile { get { return new FileInfo(Path.Combine(TestSolutionForAdapterFolder, "TestSolutionForAdapter.sln")); } }
-        public static string ProjectWithDependencies { get { return Path.Combine(TestSolutionForAdapterFolder, "ProjectWithDependencies", "ProjectWithDependencies.csproj"); } }
+        public static string ProjectWithDependencies { get { return Path.Combine(TestSolutionForAdapterFolder, ProjectWithDependenciesRelativeToSolutionDir); } }
+        public static string ProjectWithDependenciesRelativeToSolutionDir{ get { return Path.Combine("ProjectWithDependencies", "ProjectWithDependencies.csproj"); } }
     }
 }

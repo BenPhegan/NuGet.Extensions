@@ -63,6 +63,7 @@
   <ItemGroup>
     <Compile Include="Commands\FindAssemblyTests.cs" />
     <Compile Include="Commands\FixReferencesTests.cs" />
+    <Compile Include="MSBuild\ReferenceConversionTests.cs" />
     <Compile Include="TestData\Isolation.cs" />
     <Compile Include="Commands\NugetifyTests.cs" />
     <Compile Include="Comparers\PackageReferenceEqualityComparerTests.cs" />

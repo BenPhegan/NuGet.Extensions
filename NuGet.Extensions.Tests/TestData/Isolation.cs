@@ -2,7 +2,8 @@
 
 namespace NuGet.Extensions.Tests.TestData
 {
-    public class Isolation {
+    public class Isolation 
+    {
         public static DirectoryInfo GetIsolatedTestSolutionDir()
         {
             var solutionDir = new DirectoryInfo(Path.GetRandomFileName());
