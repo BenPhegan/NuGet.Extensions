@@ -3,7 +3,6 @@ using System.IO;
 using Moq;
 using NuGet.Common;
 using NuGet.Extensions.Commands;
-using NuGet.Extensions.ExtensionMethods;
 using NuGet.Extensions.Tests.MSBuild;
 using NuGet.Extensions.Tests.TestData;
 using NUnit.Framework;
@@ -19,9 +18,9 @@ namespace NuGet.Extensions.Tests.Commands
         [SetUp]
         public void SetupIsolatedSolutionAndUnrelatedPackages()
         {
-            _solutionDir = GetIsolatedTestSolutionDir();
+            _solutionDir = Isolation.GetIsolatedTestSolutionDir();
             _solutionFile = Path.Combine(_solutionDir.FullName, Paths.AdapterTestsSolutionFile.Name);
-            _packageSource = GetIsolatedPackageSourceFromThisSolution();
+            _packageSource = Isolation.GetIsolatedPackageSourceFromThisSolution();
         }
 
         [TearDown]
@@ -54,29 +53,6 @@ namespace NuGet.Extensions.Tests.Commands
                            };
             nugetify.Arguments.AddRange(new[] {solutionFile, packageSource.FullName});
             return nugetify;
-        }
-
-        private static DirectoryInfo GetIsolatedTestSolutionDir()
-        {
-            var solutionDir = new DirectoryInfo(Path.GetRandomFileName());
-            CopyFilesRecursively(new DirectoryInfo(Paths.TestSolutionForAdapterFolder), solutionDir);
-            return solutionDir;
-        }
-
-        private static DirectoryInfo GetIsolatedPackageSourceFromThisSolution()
-        {
-            var packageSource = new DirectoryInfo(Path.GetRandomFileName());
-            CopyFilesRecursively(new DirectoryInfo("../packages"), packageSource);
-            return packageSource;
-        }
-
-        public static void CopyFilesRecursively(DirectoryInfo source, DirectoryInfo target)
-        {
-            if (!target.Exists) target.Create();
-            foreach (DirectoryInfo dir in source.GetDirectories())
-                CopyFilesRecursively(dir, target.CreateSubdirectory(dir.Name));
-            foreach (FileInfo file in source.GetFiles())
-                file.CopyTo(Path.Combine(target.FullName, file.Name));
         }
     }
 
