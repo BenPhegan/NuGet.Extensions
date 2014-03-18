@@ -28,7 +28,7 @@ namespace NuGet.Extensions.Tests.ReferenceAnalysers
             includeFilename = includeFilename ?? AssemblyFilenameInPackageRepository;
 
             var dependency = new Mock<IReference>();
-            dependency.SetupGet(d => d.AssemblyName).Returns(includeFilename);
+            dependency.SetupGet(d => d.AssemblyName).Returns(Path.GetFileNameWithoutExtension(includeFilename));
             dependency.SetupGet(d => d.AssemblyVersion).Returns(includeVersion ?? "0.0.0.0");
             dependency.Setup(d => d.IsForAssembly(includeFilename)).Returns(true);
 
