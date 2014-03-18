@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using Moq;
@@ -10,6 +11,7 @@ namespace NuGet.Extensions.Tests.ReferenceAnalysers
         public const string AssemblyInPackageRepository = "Assembly11.dll";
         public const string AnotherAssemblyInPackageRepository = "Assembly21.dll";
         public const string PackageInRepository = "Test1";
+        public static readonly Guid ProjectWithDependenciesGuid = new Guid("{5F49060A-3F64-4227-90C4-09F54783F1EC}");
 
         public static Mock<IVsProject> ConstructMockProject(IReference[] references = null, string outputAssembly = null)
         {

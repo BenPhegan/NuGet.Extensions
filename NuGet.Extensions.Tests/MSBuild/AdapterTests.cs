@@ -5,7 +5,9 @@ using System.Linq;
 using Microsoft.Build.Evaluation;
 using Moq;
 using NuGet.Common;
+using NuGet.Extensions.ExtensionMethods;
 using NuGet.Extensions.MSBuild;
+using NuGet.Extensions.Tests.ReferenceAnalysers;
 using NuGet.Extensions.Tests.TestData;
 using NUnit.Framework;
 using NUnit.Framework.Constraints;
@@ -169,11 +171,13 @@ namespace NuGet.Extensions.Tests.MSBuild
         [Test(Description = "The same IVsProject must be returned so we don't end up with two out-of-sync views of the project")]
         public void PassingWrongGuidAndNonCanonicalPathGetsSameReference()
         {
-            var anyProject = _solutionProjectLoader.GetProjects().First();
-            var nonCanonicalPath = Path.Combine(anyProject.ProjectDirectory.FullName.ToLower(), "randomFolder", "..", anyProject.ProjectName.ToUpper() + ".csproj");
             var projectLoader = new CachingProjectLoader(new Dictionary<string, string>(), _console.Object);
+            var loadedWithCorrectGuid = projectLoader.GetProject(ProjectReferenceTestData.ProjectWithDependenciesGuid, Paths.ProjectWithDependencies);
+            var nonCanonicalPath = Path.Combine(loadedWithCorrectGuid.ProjectDirectory.FullName.ToLower(), "randomFolder", "..", loadedWithCorrectGuid.ProjectName.ToUpper() + ".csproj");
+
             var loadedByNonCanonPath = projectLoader.GetProject(Guid.Empty, nonCanonicalPath);
-            Assert.That(ReferenceEquals(anyProject,loadedByNonCanonPath), Is.True);
+
+            Assert.That(ReferenceEquals(loadedWithCorrectGuid, loadedByNonCanonPath), Is.True);
         }
 
         private static bool IsExpectedBinaryDependency(IReference r)
