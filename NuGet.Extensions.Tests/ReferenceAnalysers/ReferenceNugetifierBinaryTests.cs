@@ -64,7 +64,7 @@ namespace NuGet.Extensions.Tests.ReferenceAnalysers
         [Test]
         public void TwoDependenciesWithCorrespondingPackagesGetNugetted()
         {
-            var defaultDependency = ProjectReferenceTestData.ConstructMockDependency(ProjectReferenceTestData.AssemblyInPackageRepository);
+            var defaultDependency = ProjectReferenceTestData.ConstructMockDependency(ProjectReferenceTestData.AssemblyFilenameInPackageRepository);
             var secondDependency = ProjectReferenceTestData.ConstructMockDependency(ProjectReferenceTestData.AnotherAssemblyInPackageRepository);
             var projectWithSingleDependency = ProjectReferenceTestData.ConstructMockProject(new[] { defaultDependency.Object, secondDependency.Object });
             var packageRepositoryWithCorrespondingPackage = ProjectReferenceTestData.CreateMockRepository();
