@@ -55,7 +55,9 @@ namespace NuGet.Extensions.ReferenceAnalysers
 
         private IEnumerable<IReference> GetReferences()
         {
-            return _vsProject.GetBinaryReferences();
+            var binaryReferences = _vsProject.GetBinaryReferences();
+            var projectReferences = _vsProject.GetProjectReferences();
+            return binaryReferences.Concat(projectReferences);
         }
 
         private void LogHintPathRewriteMessage(IPackage package, string includeName, string includeVersion)
