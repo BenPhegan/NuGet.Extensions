@@ -48,10 +48,9 @@ namespace NuGet.Extensions.MSBuild
             }
             catch (Exception e)
             {
-                var nullProjectAdapter = new NullProjectAdapter(absoluteProjectPath);
                 _console.WriteWarning("Problem loading {0}, any future messages about modifications to it are speculative only:");
                 _console.WriteWarning("  {0}", e.Message);
-                return nullProjectAdapter;
+                return new NullProjectAdapter(absoluteProjectPath);
             }
         }
 
