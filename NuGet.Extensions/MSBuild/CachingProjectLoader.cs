@@ -78,10 +78,14 @@ namespace NuGet.Extensions.MSBuild
 
         private Project GetMsBuildProject(string projectPath)
         {
-            ProjectCollection projectCollection = _projectCollection;
-            var canonicalProjectPath = Path.GetFullPath(projectPath).ToLowerInvariant();
-            var existing = projectCollection.GetLoadedProjects(canonicalProjectPath).SingleOrDefault();
-            return existing ?? new Project(canonicalProjectPath, _globalMsBuildProperties, null, projectCollection);
+            var canonicalProjectPath = GetCanonicalPath(projectPath);
+            var existing = _projectCollection.GetLoadedProjects(canonicalProjectPath).SingleOrDefault();
+            return existing ?? new Project(canonicalProjectPath, _globalMsBuildProperties, null, _projectCollection);
+        }
+
+        private static string GetCanonicalPath(string projectPath)
+        {
+            return Path.GetFullPath(projectPath).ToLowerInvariant();
         }
     }
 }
