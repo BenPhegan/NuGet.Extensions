@@ -54,8 +54,8 @@ namespace NuGet.Extensions.MSBuild
 
         private IVsProject GetMsBuildProjectAdapterFromPath(string absoluteProjectPath)
         {
-            var msBuildProject = GetMsBuildProject(absoluteProjectPath, _projectCollection, _globalMsBuildProperties);
-            return GetRealProjectAdapter(_projectLoader, msBuildProject, _projectsByGuid);
+            var msBuildProject = GetMsBuildProject(absoluteProjectPath);
+            return GetRealProjectAdapter(msBuildProject);
         }
 
         private void LogProjectLoadException(Exception e)
@@ -64,11 +64,11 @@ namespace NuGet.Extensions.MSBuild
             _console.WriteWarning("  {0}", e.Message);
         }
 
-        private static IVsProject GetRealProjectAdapter(IProjectLoader projectLoader, Project msBuildProject, IDictionary<Guid, IVsProject> projectsByGuidCache)
+        private IVsProject GetRealProjectAdapter(Project msBuildProject)
         {
             var projectGuid = Guid.Parse(GetProjectGuid(msBuildProject));
             IVsProject projectAdapter;
-            return projectsByGuidCache.TryGetValue(projectGuid, out projectAdapter) ? projectAdapter : new ProjectAdapter(msBuildProject, projectLoader);
+            return _projectsByGuid.TryGetValue(projectGuid, out projectAdapter) ? projectAdapter : new ProjectAdapter(msBuildProject, _projectLoader);
         }
 
         private static string GetProjectGuid(Project msBuildProject)
@@ -76,11 +76,12 @@ namespace NuGet.Extensions.MSBuild
             return msBuildProject.GetPropertyValue("ProjectGuid");
         }
 
-        private static Project GetMsBuildProject(string projectPath, ProjectCollection projectCollection, IDictionary<string, string> globalMsBuildProperties)
+        private Project GetMsBuildProject(string projectPath)
         {
+            ProjectCollection projectCollection = _projectCollection;
             var canonicalProjectPath = Path.GetFullPath(projectPath).ToLowerInvariant();
             var existing = projectCollection.GetLoadedProjects(canonicalProjectPath).SingleOrDefault();
-            return existing ?? new Project(canonicalProjectPath, globalMsBuildProperties, null, projectCollection);
+            return existing ?? new Project(canonicalProjectPath, _globalMsBuildProperties, null, projectCollection);
         }
     }
 }
