@@ -48,10 +48,15 @@ namespace NuGet.Extensions.MSBuild
             }
             catch (Exception e)
             {
-                _console.WriteWarning("Problem loading {0}, any future messages about modifications to it are speculative only:");
-                _console.WriteWarning("  {0}", e.Message);
+                LogProjectLoadException(e);
                 return new NullProjectAdapter(absoluteProjectPath);
             }
+        }
+
+        private void LogProjectLoadException(Exception e)
+        {
+            _console.WriteWarning("Problem loading {0}, any future messages about modifications to it are speculative only:");
+            _console.WriteWarning("  {0}", e.Message);
         }
 
         private static IVsProject GetRealProjectAdapter(IProjectLoader projectLoader, Project msBuildProject, IDictionary<Guid, IVsProject> projectsByGuidCache)
