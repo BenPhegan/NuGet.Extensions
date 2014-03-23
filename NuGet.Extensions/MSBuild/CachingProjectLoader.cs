@@ -66,14 +66,14 @@ namespace NuGet.Extensions.MSBuild
 
         private IVsProject GetRealProjectAdapter(Project msBuildProject)
         {
-            var projectGuid = Guid.Parse(GetProjectGuid(msBuildProject));
+            var projectGuid = GetProjectGuid(msBuildProject);
             IVsProject projectAdapter;
             return _projectsByGuid.TryGetValue(projectGuid, out projectAdapter) ? projectAdapter : new ProjectAdapter(msBuildProject, _projectLoader);
         }
 
-        private static string GetProjectGuid(Project msBuildProject)
+        private static Guid GetProjectGuid(Project msBuildProject)
         {
-            return msBuildProject.GetPropertyValue("ProjectGuid");
+            return Guid.Parse(msBuildProject.GetPropertyValue("ProjectGuid"));
         }
 
         private Project GetMsBuildProject(string projectPath)
