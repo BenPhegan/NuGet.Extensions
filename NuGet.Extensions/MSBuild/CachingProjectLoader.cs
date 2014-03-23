@@ -34,12 +34,12 @@ namespace NuGet.Extensions.MSBuild
             IVsProject projectAdapter;
             if (_projectsByGuid.TryGetValue(projectGuid, out projectAdapter)) return projectAdapter;
 
-            projectAdapter = GetProjectAdapterFromPath(absoluteProjectPath);
+            projectAdapter = GetVsProjectFromPath(absoluteProjectPath);
             _projectsByGuid.Add(projectGuid, projectAdapter); //TODO This could cause an incorrect mapping, get the guid from the loaded project
             return projectAdapter;
         }
 
-        private IVsProject GetProjectAdapterFromPath(string absoluteProjectPath)
+        private IVsProject GetVsProjectFromPath(string absoluteProjectPath)
         {
             try
             {
