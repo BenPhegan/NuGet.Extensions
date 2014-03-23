@@ -43,14 +43,19 @@ namespace NuGet.Extensions.MSBuild
         {
             try
             {
-                var msBuildProject = GetMsBuildProject(absoluteProjectPath, _projectCollection, _globalMsBuildProperties);
-                return GetRealProjectAdapter(_projectLoader, msBuildProject, _projectsByGuid);
+                return GetMsBuildProjectAdapterFromPath(absoluteProjectPath);
             }
             catch (Exception e)
             {
                 LogProjectLoadException(e);
                 return new NullProjectAdapter(absoluteProjectPath);
             }
+        }
+
+        private IVsProject GetMsBuildProjectAdapterFromPath(string absoluteProjectPath)
+        {
+            var msBuildProject = GetMsBuildProject(absoluteProjectPath, _projectCollection, _globalMsBuildProperties);
+            return GetRealProjectAdapter(_projectLoader, msBuildProject, _projectsByGuid);
         }
 
         private void LogProjectLoadException(Exception e)
