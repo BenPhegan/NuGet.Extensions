@@ -40,6 +40,7 @@ namespace NuGet.Extensions.Tests.MSBuild
         public void CheckForConsoleErrors()
         {
             ConsoleMock.AssertConsoleHasNoErrorsOrWarnings(_console);
+            _solutionProjectLoader.Dispose();
         }
 
         [Test]
@@ -82,10 +83,12 @@ namespace NuGet.Extensions.Tests.MSBuild
         
         public IEnumerable<IReference> GetReferencesForProjectWithDependencies(IDictionary<string, string> globalMsBuildProperties)
         {
-            var loader = new CachingSolutionLoader(Paths.AdapterTestsSolutionFile, globalMsBuildProperties, _console.Object);
-            var projectAdapters = loader.GetProjects();
-            var projectWithDependenciesAdapter = projectAdapters.Single(p => p.ProjectName.Equals(ProjectWithDependenciesName, StringComparison.OrdinalIgnoreCase));
-            return projectWithDependenciesAdapter.GetBinaryReferences();
+            using (var loader = new CachingSolutionLoader(Paths.AdapterTestsSolutionFile, globalMsBuildProperties, _console.Object))
+            {
+                var projectAdapters = loader.GetProjects();
+                var projectWithDependenciesAdapter = projectAdapters.Single(p => p.ProjectName.Equals(ProjectWithDependenciesName, StringComparison.OrdinalIgnoreCase));
+                return projectWithDependenciesAdapter.GetBinaryReferences();
+            }
         }
 
         [Test]
@@ -151,9 +154,11 @@ namespace NuGet.Extensions.Tests.MSBuild
         public void PassingWrongGuidGetsProjectByPath()
         {
             var anyProject = _solutionProjectLoader.GetProjects().First();
-            var projectLoader = new CachingProjectLoader(new Dictionary<string, string>(), _console.Object);
-            var loadedByPathOnly = projectLoader.GetProject(Guid.Empty, Path.Combine(anyProject.ProjectDirectory.FullName, anyProject.ProjectName + ".csproj"));
-            Assert.That(anyProject.ProjectName, Is.EqualTo(loadedByPathOnly.ProjectName));
+            using (var projectLoader = new CachingProjectLoader(new Dictionary<string, string>(), _console.Object))
+            {
+                var loadedByPathOnly = projectLoader.GetProject(Guid.Empty, Path.Combine(anyProject.ProjectDirectory.FullName, anyProject.ProjectName + ".csproj"));
+                Assert.That(anyProject.ProjectName, Is.EqualTo(loadedByPathOnly.ProjectName));
+            }
         }
 
         [Test]
@@ -171,13 +176,15 @@ namespace NuGet.Extensions.Tests.MSBuild
         [Test(Description = "The same IVsProject must be returned so we don't end up with two out-of-sync views of the project")]
         public void PassingWrongGuidAndNonCanonicalPathGetsSameReference()
         {
-            var projectLoader = new CachingProjectLoader(new Dictionary<string, string>(), _console.Object);
-            var loadedWithCorrectGuid = projectLoader.GetProject(ProjectReferenceTestData.ProjectWithDependenciesGuid, Paths.ProjectWithDependencies);
-            var nonCanonicalPath = Path.Combine(loadedWithCorrectGuid.ProjectDirectory.FullName.ToLower(), "randomFolder", "..", loadedWithCorrectGuid.ProjectName.ToUpper() + ".csproj");
+            using (var projectLoader = new CachingProjectLoader(new Dictionary<string, string>(), _console.Object))
+            {
+                var loadedWithCorrectGuid = projectLoader.GetProject(ProjectReferenceTestData.ProjectWithDependenciesGuid, Paths.ProjectWithDependencies);
+                var nonCanonicalPath = Path.Combine(loadedWithCorrectGuid.ProjectDirectory.FullName.ToLower(), "randomFolder", "..", loadedWithCorrectGuid.ProjectName.ToUpper() + ".csproj");
 
-            var loadedByNonCanonPath = projectLoader.GetProject(Guid.Empty, nonCanonicalPath);
+                var loadedByNonCanonPath = projectLoader.GetProject(Guid.Empty, nonCanonicalPath);
 
-            Assert.That(ReferenceEquals(loadedWithCorrectGuid, loadedByNonCanonPath), Is.True);
+                Assert.That(ReferenceEquals(loadedWithCorrectGuid, loadedByNonCanonPath), Is.True);
+            }
         }
 
         private static bool IsExpectedBinaryDependency(IReference r)
