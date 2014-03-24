@@ -6,14 +6,19 @@ namespace NuGet.Extensions.Tests.TestData
     {
         public static DirectoryInfo GetIsolatedTestSolutionDir()
         {
-            var solutionDir = new DirectoryInfo(Path.GetRandomFileName());
+            var solutionDir = new DirectoryInfo(GetRandomTempDirectoryPath());
             CopyFilesRecursively(new DirectoryInfo(Paths.TestSolutionForAdapterFolder), solutionDir);
             return solutionDir;
         }
 
+        private static string GetRandomTempDirectoryPath()
+        {
+            return Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+        }
+
         public static DirectoryInfo GetIsolatedPackageSourceFromThisSolution()
         {
-            var packageSource = new DirectoryInfo(Path.GetRandomFileName());
+            var packageSource = new DirectoryInfo(GetRandomTempDirectoryPath());
             CopyFilesRecursively(new DirectoryInfo("../packages"), packageSource);
             return packageSource;
         }
