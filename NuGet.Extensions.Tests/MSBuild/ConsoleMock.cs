@@ -23,5 +23,10 @@ namespace NuGet.Extensions.Tests.MSBuild
             _console.Verify(c => c.WriteError(It.IsAny<object>()), Times.Never());
             _console.Verify(c => c.WriteWarning(It.IsAny<string>()), Times.Never());
         }
+
+        public void AssertConsoleHasErrors()
+        {
+            _console.Verify(c => c.WriteError(It.IsAny<object>()), Times.AtLeastOnce());
+        }
     }
 }

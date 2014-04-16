@@ -41,6 +41,17 @@ namespace NuGet.Extensions.Tests.Commands
             console.AssertConsoleHasNoErrorsOrWarnings();
         }
 
+        [Test]
+        public void NugetifyThrowsErrorsWhenSolutionNotFound()
+        {
+            var console = new ConsoleMock();
+
+            var nugetify = GetNugetifyCommand(console, "non-existent-solution.sln", _packageSource);
+            nugetify.ExecuteCommand();
+
+            console.AssertConsoleHasErrors();
+        }
+
         private static Nugetify GetNugetifyCommand(ConsoleMock console, string solutionFile, DirectoryInfo packageSource)
         {
             var repositoryFactory = new Mock<IPackageRepositoryFactory>();
