@@ -33,15 +33,15 @@ namespace NuGet.Extensions.Tests.Commands
         [Test]
         public void NugetifyThrowsNoErrorsWhenNoPackagesFound()
         {
-            var console = new Mock<IConsole>();
+            var console = new ConsoleMock();
 
             var nugetify = GetNugetifyCommand(console, _solutionFile, _packageSource);
             nugetify.ExecuteCommand();
 
-            ConsoleMock.AssertConsoleHasNoErrorsOrWarnings(console);
+            console.AssertConsoleHasNoErrorsOrWarnings();
         }
 
-        private static Nugetify GetNugetifyCommand(Mock<IConsole> console, string solutionFile, DirectoryInfo packageSource)
+        private static Nugetify GetNugetifyCommand(ConsoleMock console, string solutionFile, DirectoryInfo packageSource)
         {
             var repositoryFactory = new Mock<IPackageRepositoryFactory>();
             var packageSourceProvider = new Mock<IPackageSourceProvider>();

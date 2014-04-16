@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using Microsoft.Build.Evaluation;
 using Moq;
 using NuGet.Common;
@@ -20,7 +21,7 @@ namespace NuGet.Extensions.Tests.MSBuild
         private IVsProject _projectWithDependenciesAdapter;
         private IEnumerable<IReference> _projectBinaryReferenceAdapters;
         private CachingSolutionLoader _solutionProjectLoader;
-        private Mock<IConsole> _console;
+        private ConsoleMock _console;
         private const string ProjectWithDependenciesName = "ProjectWithDependencies";
         private const string ExpectedBinaryDependencyAssemblyName = "Newtonsoft.Json";
         private const string ExpectedBinaryDependencyVersion = "6.0.0.0";
@@ -29,7 +30,7 @@ namespace NuGet.Extensions.Tests.MSBuild
         [SetUp]
         public void SetUpProjectAdapterAndBinaryDependencies()
         {
-            _console = new Mock<IConsole>();
+            _console = new ConsoleMock();
             _solutionProjectLoader = new CachingSolutionLoader(Paths.AdapterTestsSolutionFile, new Dictionary<string, string>(), _console.Object);
             var projectAdapters = _solutionProjectLoader.GetProjects();
             _projectWithDependenciesAdapter = projectAdapters.Single(p => p.ProjectName.Equals(ProjectWithDependenciesName, StringComparison.OrdinalIgnoreCase));
@@ -39,7 +40,7 @@ namespace NuGet.Extensions.Tests.MSBuild
         [TearDown]
         public void CheckForConsoleErrors()
         {
-            ConsoleMock.AssertConsoleHasNoErrorsOrWarnings(_console);
+            _console.AssertConsoleHasNoErrorsOrWarnings();
             _solutionProjectLoader.Dispose();
         }
 

@@ -6,6 +6,7 @@ using NuGet.Common;
 using NuGet.Extensions.MSBuild;
 using NuGet.Extensions.ReferenceAnalysers;
 using NuGet.Extensions.Tests.Mocks;
+using NuGet.Extensions.Tests.MSBuild;
 
 namespace NuGet.Extensions.Tests.ReferenceAnalysers
 {
@@ -22,7 +23,7 @@ namespace NuGet.Extensions.Tests.ReferenceAnalysers
 
         public static ProjectNugetifier BuildNugetifier(IFileSystem projectFileSystem = null, Mock<IVsProject> vsProject = null, IPackageRepository packageRepository = null)
         {
-            var console = new Mock<IConsole>();
+            var console = new ConsoleMock();
             var solutionRoot = GetMockDirectory();
             projectFileSystem = projectFileSystem ?? GetMockFileSystem(solutionRoot);
             vsProject = vsProject ?? new Mock<IVsProject>();

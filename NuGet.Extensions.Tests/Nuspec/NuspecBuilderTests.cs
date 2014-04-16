@@ -17,7 +17,7 @@ namespace NuGet.Extensions.Tests.Nuspec
         [Test]
         public void AssemblyNameReplacesNullDescription()
         {
-            var console = new Mock<IConsole>();
+            var console = new ConsoleMock();
             const string anyAssemblyName = "any.assembly.name";
             var nullDataSource = new Mock<INuspecDataSource>().Object;
 
@@ -27,7 +27,7 @@ namespace NuGet.Extensions.Tests.Nuspec
 
             var nuspecContents = File.ReadAllText(nuspecBuilder.FilePath);
             Assert.That(nuspecContents, Contains.Substring("<description>" + anyAssemblyName + "</description>"));
-            ConsoleMock.AssertConsoleHasNoErrorsOrWarnings(console);
+            console.AssertConsoleHasNoErrorsOrWarnings();
         }
 
         [TestCase("net40")]
@@ -35,7 +35,7 @@ namespace NuGet.Extensions.Tests.Nuspec
         [TestCase("notARealTargetFramework", Description = "Characterisation: There is no validation on the target framework")]
         public void TargetFrameworkAppearsVerbatimInOutput(string targetFramework)
         {
-            var console = new Mock<IConsole>();
+            var console = new ConsoleMock();
 
             var nuspecBuilder = new NuspecBuilder("anyAssemblyName");
             var anyDependencies = new List<ManifestDependency>{new ManifestDependency {Id="anyDependency", Version = "0.0.0.0"}};
@@ -45,7 +45,7 @@ namespace NuGet.Extensions.Tests.Nuspec
             var nuspecContents = File.ReadAllText(nuspecBuilder.FilePath);
             var expectedAssemblyGroupStartTag = string.Format("<group targetFramework=\"{0}\">", targetFramework);
             Assert.That(nuspecContents, Contains.Substring(expectedAssemblyGroupStartTag));
-            ConsoleMock.AssertConsoleHasNoErrorsOrWarnings(console);
+            console.AssertConsoleHasNoErrorsOrWarnings();
         }
     }
 }

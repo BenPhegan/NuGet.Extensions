@@ -17,7 +17,7 @@ namespace NuGet.Extensions.Tests.MSBuild
     {
         private DirectoryInfo _solutionDir;
         private FileInfo _solutionFile;
-        private Mock<IConsole> _console;
+        private ConsoleMock _console;
         private const string ProjectWithDependenciesName = "ProjectWithDependencies";
         private FileInfo _projectWithDependenciesFile;
 
@@ -27,7 +27,7 @@ namespace NuGet.Extensions.Tests.MSBuild
             _solutionDir = Isolation.GetIsolatedTestSolutionDir();
             _solutionFile = new FileInfo(Path.Combine(_solutionDir.FullName, Paths.AdapterTestsSolutionFile.Name));
             _projectWithDependenciesFile = new FileInfo(Path.Combine(_solutionDir.FullName, Paths.ProjectWithDependenciesRelativeToSolutionDir));
-            _console = new Mock<IConsole>();
+            _console = new ConsoleMock();
         }
 
         [TearDown]
