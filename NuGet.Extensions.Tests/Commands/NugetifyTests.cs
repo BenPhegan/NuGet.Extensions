@@ -20,7 +20,7 @@ namespace NuGet.Extensions.Tests.Commands
         {
             _solutionDir = Isolation.GetIsolatedTestSolutionDir();
             _solutionFile = Path.Combine(_solutionDir.FullName, Paths.AdapterTestsSolutionFile.Name);
-            _packageSource = Isolation.GetIsolatedPackageSourceFromThisSolution();
+            _packageSource = Isolation.GetIsolatedEmptyPackageSource();
         }
 
         [TearDown]

@@ -16,11 +16,11 @@ namespace NuGet.Extensions.Tests.TestData
             return Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
         }
 
-        public static DirectoryInfo GetIsolatedPackageSourceFromThisSolution()
+        public static DirectoryInfo GetIsolatedEmptyPackageSource()
         {
-            var packageSource = new DirectoryInfo(GetRandomTempDirectoryPath());
-            CopyFilesRecursively(new DirectoryInfo("../packages"), packageSource);
-            return packageSource;
+            var isolatedPackageSourceFromThisSolution = new DirectoryInfo(GetRandomTempDirectoryPath());
+            isolatedPackageSourceFromThisSolution.Create();
+            return isolatedPackageSourceFromThisSolution;
         }
 
         public static void CopyFilesRecursively(DirectoryInfo source, DirectoryInfo target)
