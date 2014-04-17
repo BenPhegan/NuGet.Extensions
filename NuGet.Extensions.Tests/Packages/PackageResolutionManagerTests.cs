@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Versioning;
+using NuGet.Extensions.Tests.Mocks;
 using NUnit.Framework;
 using Moq;
 using NuGet.Extensions.Caches;

@@ -1,7 +1,5 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using Moq;
-using NuGet.Common;
 using NuGet.Extensions.Commands;
 using NuGet.Extensions.Tests.MSBuild;
 using NuGet.Extensions.Tests.TestData;
