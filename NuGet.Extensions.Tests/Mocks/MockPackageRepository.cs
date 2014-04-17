@@ -44,7 +44,6 @@ namespace NuGet.Extensions.Tests.Mocks
 
         public override IQueryable<IPackage> GetPackages()
         {
-            var m = Packages.Values.SelectMany(p => p);
             return Packages.Values.SelectMany(p => p).AsQueryable();
         }
 
