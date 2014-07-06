@@ -176,8 +176,8 @@
 copy "$(TargetDir)NuGet.Extensions.nuspec" "$(TargetDir)Merged\Nuget.Extensions.nuspec" /y 
 
 "$(SolutionDir)tools\ilmerge\ilmerge.exe" /v4 /t:library /out:"$(TargetDir)Merged\$(TargetFileName)" "$(TargetPath)" "$(TargetDir)QuickGraph.dll" "$(TargetDir)QuickGraph.Serialization.dll" "$(TargetDir)RestSharp.dll"
-if "%25version%25"=="" set version=1.0.0.0
-"$(SolutionDir)packages\NuGet.CommandLine.2.7.1\tools\nuget.exe" pack "$(TargetDir)Merged\Nuget.Extensions.nuspec" -version %25version%25 -outputdirectory "$(TargetDir)Merged"</PostBuildEvent>
+if "%25APPVEYOR_BUILD_VERSION%25"=="" set APPVEYOR_BUILD_VERSION=1.0.0.0
+"$(SolutionDir)packages\NuGet.CommandLine.2.7.1\tools\nuget.exe" pack "$(TargetDir)Merged\Nuget.Extensions.nuspec" -version %25APPVEYOR_BUILD_VERSION%25 -outputdirectory "$(TargetDir)Merged"</PostBuildEvent>
   </PropertyGroup>
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
