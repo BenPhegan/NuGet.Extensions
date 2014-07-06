@@ -3,7 +3,7 @@ using Moq;
 using NuGet.Extensions.Tests.Mocks;
 using NuGet.Extensions.ExtensionMethods;
 using NUnit.Framework;
-using MockPackageRepository = NuGet.Extensions.Tests.TestObjects.MockPackageRepository;
+using MockPackageRepository = NuGet.Extensions.Tests.Mocks.MockPackageRepository;
 using PackageUtility = NuGet.Extensions.Tests.TestObjects.PackageUtility;
 
 namespace NuGet.Extensions.Tests.Extensions

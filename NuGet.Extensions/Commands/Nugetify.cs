@@ -1,26 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
-using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
-using Microsoft.Build.Evaluation;
 using NuGet.Commands;
 using NuGet.Common;
-using NuGet.Extensions.GetLatest.MSBuild;
-using NuGet.Extensions.Repositories;
+using NuGet.Extensions.MSBuild;
+using NuGet.Extensions.Nuspec;
+using NuGet.Extensions.ReferenceAnalysers;
 
 namespace NuGet.Extensions.Commands
 {
     [Command("nugetify", "Given a solution, attempts to replace all file references with package references, adding all required" +
                          " packages.config files as it goes.", MinArgs = 1, MaxArgs = 1)]
-    public class Nugetify : Command
+    public class Nugetify : Command, INuspecDataSource
     {
         private readonly List<string> _sources = new List<string>();
 
         [ImportingConstructor]
-        public Nugetify() {}
+        public Nugetify()
+        {
+        }
 
         [Option("A list of sources to search")]
         public ICollection<string> Source
@@ -28,13 +28,16 @@ namespace NuGet.Extensions.Commands
             get { return _sources; }
         }
 
-        [Option("NuSpec Project URL")]
+        [Option("Comma separated list of key=value pairs of parameters to be used when loading projects, note that SolutionDir is automatically set.")]
+        public string MsBuildProperties { get; set; }
+
+        [Option("NuSpec project URL")]
         public string ProjectUrl { get; set; }
 
-        [Option("NuSpec LicenseUrl")]
+        [Option("NuSpec license URL")]
         public string LicenseUrl { get; set; }
 
-        [Option("NuSpec Icon URL")]
+        [Option("NuSpec icon URL")]
         public string IconUrl { get; set; }
 
         [Option("NuSpec tags")]
@@ -55,16 +58,16 @@ namespace NuGet.Extensions.Commands
         [Option("NuSpec title")]
         public string Title { get; set; }
 
-        [Option("NuSpec Author")]
+        [Option("NuSpec author")]
         public string Author { get; set; }
 
-        [Option("NuSpec RequireLicenseAcceptance (defaults to false)")]
+        [Option("NuSpec require license acceptance (defaults to false)")]
         public bool RequireLicenseAcceptance { get; set; }
 
-        [Option(("NuSpec Copyright"))]
+        [Option(("NuSpec copyright"))]
         public string Copyright { get; set; }
 
-        [Option("NuSpec Owners")]
+        [Option("NuSpec owners")]
         public string Owners { get; set; }
 
         public override void ExecuteCommand()
@@ -74,49 +77,7 @@ namespace NuGet.Extensions.Commands
                 var solutionFile = new FileInfo(Arguments[0]);
                 if (solutionFile.Exists && solutionFile.Extension == ".sln")
                 {
-                    var solutionRoot = solutionFile.Directory;
-                    var sharedPackagesRepository = new SharedPackageRepository(Path.Combine(solutionRoot.FullName, "packages"));
-                    var solution = new Solution(solutionFile.FullName);
-                    var simpleProjectObjects = solution.Projects;
-
-                    Console.WriteLine("Processing {0} projects in solution {1}...", simpleProjectObjects.Count, solutionFile.Name);
-                    foreach (var simpleProject in simpleProjectObjects)
-                    {
-                        var manifestDependencies = new List<ManifestDependency>();
-                        var projectPath = Path.Combine(solutionFile.Directory.FullName, simpleProject.RelativePath);
-                        if (File.Exists(projectPath))
-                        {
-                            Console.WriteLine();
-                            Console.WriteLine("Processing Project: {0}", simpleProject.ProjectName);
-                            var projectFileInfo = new FileInfo(projectPath);
-                            var project = new Project(projectPath,new Dictionary<string, string>(),null,new ProjectCollection());
-                            var assemblyOutput = project.GetPropertyValue("AssemblyName");
-
-                            var references = project.GetItems("Reference");
-
-                            var resolvedMappings = ResolveReferenceMappings(references, projectFileInfo);
-
-                            if (resolvedMappings != null && resolvedMappings.Any())
-                            {
-                                UpdateProjectFileReferenceHintPaths(solutionRoot, project, projectPath, resolvedMappings, references);
-                                var projectReferences = ParseProjectReferences(project);
-                                CreateNuGetScaffolding(sharedPackagesRepository, manifestDependencies, resolvedMappings, projectFileInfo, project, projectReferences);
-                            }
-
-                            //Create nuspec regardless of whether we have added dependencies
-                            if (NuSpec)
-                            {
-                                CreateAndOutputNuSpecFile(assemblyOutput, manifestDependencies);
-                            }
-
-                            Console.WriteLine("Project completed!");
-                        }
-                        else
-                        {
-                            Console.WriteWarning("Project: {0} was not found on disk", simpleProject.ProjectName);
-                        }
-                    }
-                    Console.WriteLine("Complete!");
+                    NugetifySolution(solutionFile);
                 }
                 else
                 {
@@ -125,265 +86,69 @@ namespace NuGet.Extensions.Commands
             }
         }
 
-        private List<string> ParseProjectReferences(Project project)
+        private void NugetifySolution(FileInfo solutionFile)
         {
-            Console.WriteLine("Checking for any project References for packages.config...");
-            var refs = new List<string>();
-            var references = project.GetItems("ProjectReference");
-            foreach (var reference in references)
-            {
-                var refProject = new Project(Path.Combine(project.DirectoryPath, reference.UnevaluatedInclude),new Dictionary<string, string>(),null,new ProjectCollection());
-                refs.Add(refProject.GetPropertyValue("AssemblyName"));
-            }
-            return refs;
-        }
+            Console.WriteLine("Loading projects from solution {0}", solutionFile.Name);
 
-        private void UpdateProjectFileReferenceHintPaths(DirectoryInfo solutionRoot, Project project, string projectPath, IEnumerable<KeyValuePair<string, List<IPackage>>> resolvedMappings, ICollection<ProjectItem> references)
-        {
-            foreach (var mapping in resolvedMappings)
+            var existingSolutionPackagesRepo = new SharedPackageRepository(Path.Combine(solutionFile.Directory.FullName, "packages"));
+            using (var solutionAdapter = new CachingSolutionLoader(solutionFile, GetMsBuildProperties(solutionFile), Console))
             {
-                var referenceMatch = references.FirstOrDefault(r => ResolveProjectReferenceItemByAssemblyName(r, mapping.Key));
-                if (referenceMatch != null)
+                var projectAdapters = solutionAdapter.GetProjects();
+
+                Console.WriteLine("Processing {0} projects...", projectAdapters.Count);
+                foreach (var projectAdapter in projectAdapters)
                 {
-                    var includeName = referenceMatch.EvaluatedInclude.Contains(',') ? referenceMatch.EvaluatedInclude.Split(',')[0] : referenceMatch.EvaluatedInclude;
-                    var includeVersion = referenceMatch.EvaluatedInclude.Contains(',') ? referenceMatch.EvaluatedInclude.Split(',')[1].Split('=')[1] : null;
-                    var package = mapping.Value.OrderBy(p => p.GetFiles().Count()).First();
+                    Console.WriteLine();
+                    Console.WriteLine("Processing project: {0}", projectAdapter.ProjectName);
 
-                    LogHintPathRewriteMessage(package, includeName, includeVersion);
+                    NugetifyProject(projectAdapter, solutionFile.Directory, existingSolutionPackagesRepo);
 
-                    var fileLocation = GetFileLocationFromPackage(package, mapping.Key);
-                    var newHintPathFull  = Path.Combine(solutionRoot.FullName, "packages", package.Id, fileLocation);
-                    var newHintPathRelative = String.Format(GetRelativePath(projectPath, newHintPathFull));
-                    //TODO make version available, currently only works for non versioned package directories...
-                    referenceMatch.SetMetadataValue("HintPath", newHintPathRelative);
+                    Console.WriteLine("Project completed!");
                 }
             }
-            project.Save();
+            Console.WriteLine("Complete!");
         }
 
-        private void LogHintPathRewriteMessage(IPackage package, string includeName, string includeVersion)
+        private void NugetifyProject(IVsProject projectAdapter, DirectoryInfo solutionRoot, ISharedPackageRepository existingSolutionPackagesRepo)
         {
-            var message = string.Format("Attempting to update hintpaths for \"{0}\" {1}using package \"{2}\" version \"{3}\"",
-                                        includeName,
-                                        string.IsNullOrEmpty(includeVersion) ? "" : "version \"" + includeVersion + "\" ",
-                                        package.Id,
-                                        package.Version);
-            if (package.Id.Equals(includeName, StringComparison.OrdinalIgnoreCase))
-            {
-                if (!string.IsNullOrEmpty(includeVersion) && package.Version.Version != SemanticVersion.Parse(includeVersion).Version)
-                    Console.WriteWarning(message);
-                else
-                    Console.WriteLine(message);
-            }
-            else
-                Console.WriteWarning(message);
-        }
+            var projectNugetifier = CreateProjectNugetifier(projectAdapter);
+            var packagesAdded = projectNugetifier.NugetifyReferences(solutionRoot);
+            projectNugetifier.AddNugetReferenceMetadata(existingSolutionPackagesRepo, packagesAdded);
+            projectAdapter.Save();
 
-        private void CreateNuGetScaffolding(SharedPackageRepository sharedPackagesRepository, List<ManifestDependency> manifestDependencies, IEnumerable<KeyValuePair<string, List<IPackage>>> resolvedMappings, FileInfo projectFileInfo, Project project, List<string> projectDependencies)
-        {
-            //Now, create the packages.config for the resolved packages, and update the repositories.config
-            Console.WriteLine("Creating packages.config");
-            var packagesConfigFilePath = Path.Combine(projectFileInfo.Directory.FullName + "\\", "packages.config");
-            var packagesConfig = new PackageReferenceFile(packagesConfigFilePath);
-            foreach (var referenceMapping in resolvedMappings)
-            {
-                //TODO We shouldnt need to resolve this twice....
-                var package = referenceMapping.Value.OrderBy(p => p.GetFiles().Count()).First();
-                if (!packagesConfig.EntryExists(package.Id, package.Version))
-                    packagesConfig.AddEntry(package.Id, package.Version);
-                if (NuSpec && manifestDependencies.All(m => m.Id != package.Id))
-                {
-                    manifestDependencies.Add(new ManifestDependency {Id = package.Id});
-                }
-            }
-
-            //This is messy...refactor
-            //For any resolved project dependencies, add a manifest dependency if we are doing nuspecs
             if (NuSpec)
             {
-                foreach (var projectDependency in projectDependencies)
-                {
-                    if (manifestDependencies.All(m => m.Id != projectDependency))
-                    {
-                        manifestDependencies.Add(new ManifestDependency {Id = projectDependency});
-                    }
-                }
-            }
-            //Register the packages.config
-            sharedPackagesRepository.RegisterRepository(packagesConfigFilePath);
-
-            //Add the packages.config to the project content, otherwise later versions of the VSIX fail...
-            if (!project.GetItems("None").Any(i => i.UnevaluatedInclude.Equals("packages.config")))
-            {
-                project.Xml.AddItemGroup().AddItem("None", "packages.config");
-                project.Save();
+                var manifestDependencies = projectNugetifier.GetManifestDependencies(packagesAdded);
+                var nuspecBuilder = new NuspecBuilder(projectAdapter.AssemblyName);
+                nuspecBuilder.SetMetadata(this, manifestDependencies);
+                nuspecBuilder.SetDependencies(manifestDependencies);
+                nuspecBuilder.Save(Console);
             }
         }
 
-        private IEnumerable<KeyValuePair<string, List<IPackage>>> ResolveReferenceMappings(ICollection<ProjectItem> references, FileInfo projectFileInfo)
+        private ProjectNugetifier CreateProjectNugetifier(IVsProject projectAdapter)
         {
-            var referenceList = GetReferencedAssemblies(references);
-            if (referenceList.Any())
-            {
-                var referenceMappings = ResolveAssembliesToPackagesConfigFile(projectFileInfo, referenceList);
-                var resolvedMappings = referenceMappings.Where(m => m.Value.Any());
-                var failedMappings = referenceMappings.Where(m => m.Value.Count == 0);
-                //next, lets rewrite the project file with the mappings to the new location...
-                //Going to have to use the mapping to assembly name that we get back from the resolve above
-                Console.WriteLine();
-                Console.WriteLine("Found {0} package to assembly mappings on feed...", resolvedMappings.Count());
-                failedMappings.ToList().ForEach(f => Console.WriteWarning("Could not match: {0}", f.Key));
-                return resolvedMappings;
-            }
-
-            Console.WriteLine("No references found to resolve (all GAC?)");
-            return null;
-        }
-
-        private void CreateAndOutputNuSpecFile(string assemblyOutput, List<ManifestDependency> manifestDependencies, string targetFramework = ".NET Framework, Version=4.0")
-        {
-            var manifest = new Manifest
-                               {
-                                   Metadata =
-                                       {
-                                           //TODO need to revisit and get the TargetFramework from the assembly...
-                                           DependencySets = new List<ManifestDependencySet>
-                                               {
-                                                   new ManifestDependencySet{Dependencies = manifestDependencies,TargetFramework = targetFramework}
-                                               },
-                                           Id = Id ?? assemblyOutput,
-                                           Title = Title ?? assemblyOutput,
-                                           Version = "$version$",
-                                           Description = Description ?? assemblyOutput,
-                                           Authors = Author ?? "$author$",
-                                           Tags = Tags ?? "$tags$",
-                                           LicenseUrl = LicenseUrl ?? "$licenseurl$",
-                                           RequireLicenseAcceptance = RequireLicenseAcceptance,
-                                           Copyright = Copyright ?? "$copyright$",
-                                           IconUrl = IconUrl ?? "$iconurl$",
-                                           ProjectUrl = ProjectUrl ?? "$projrcturl$",
-                                           Owners = Owners ?? Author ?? "$author$"                                          
-                                       },
-                                   Files = new List<ManifestFile>
-                                               {
-                                                   new ManifestFile
-                                                       {
-                                                           Source = assemblyOutput + ".dll",
-                                                           Target = "lib"
-                                                       }
-                                               }
-                               };
-
-            string nuspecFile = assemblyOutput + Constants.ManifestExtension;
-            
-            //Dont add a releasenotes node if we dont have any to add...
-            if (!string.IsNullOrEmpty(ReleaseNotes))
-                manifest.Metadata.ReleaseNotes = ReleaseNotes;
-
-            try
-            {
-                Console.WriteLine("Saving new NuSpec: {0}", nuspecFile);
-                using (var stream = new MemoryStream())
-                {
-                    manifest.Save(stream, validate: false);
-                    stream.Seek(0, SeekOrigin.Begin);
-                    var content = stream.ReadToEnd();
-                    File.WriteAllText(nuspecFile, RemoveSchemaNamespace(content));
-                }
-            }
-            catch (Exception)
-            {
-                Console.WriteError("Could not save file: {0}", nuspecFile);
-                throw;
-            }
-        }
-
-        private string GetFileLocationFromPackage(IPackage package, string key)
-        {
-            return (from fileLocation in package.GetFiles()
-                    where fileLocation.Path.ToLowerInvariant().EndsWith(key, StringComparison.OrdinalIgnoreCase)
-                    select fileLocation.Path).FirstOrDefault();
-        }
-
-        private static String GetRelativePath(string root, string child)
-        {
-            // Validate paths.
-            Contract.Assert(!String.IsNullOrEmpty(root));
-            Contract.Assert(!String.IsNullOrEmpty(child));
-
-            // Create Uris
-            var rootUri = new Uri(root);
-            var childUri = new Uri(child);
-
-            // Get relative path.
-            var relativeUri = rootUri.MakeRelativeUri(childUri);
-
-            // Clean path and return.
-            return Uri.UnescapeDataString(relativeUri.ToString()).Replace('/', Path.DirectorySeparatorChar);
-        }
-
-        private static string RemoveSchemaNamespace(string content)
-        {
-            // This seems to be the only way to clear out xml namespaces.
-            return Regex.Replace(content, @"(xmlns:?[^=]*=[""][^""]*[""])", String.Empty, RegexOptions.IgnoreCase | RegexOptions.Multiline);
-        }
-
-        private Dictionary<string, List<IPackage>> ResolveAssembliesToPackagesConfigFile(FileInfo projectFileInfo, List<string> referenceFiles)
-        {
-            var results = new Dictionary<string, List<IPackage>>();
-            if (referenceFiles.Any())
-            {
-                Console.WriteLine("Checking feed for {0} references...", referenceFiles.Count);
-
-                IQueryable<IPackage> packageSource = GetRepository().GetPackages().OrderBy(p => p.Id);
-
-                var assemblyResolver = new RepositoryAssemblyResolver(referenceFiles,
-                                                                      packageSource,
-                                                                      new PhysicalFileSystem(projectFileInfo.Directory.ToString()),
-                                                                      Console);
-                results = assemblyResolver.ResolveAssemblies(false);
-                assemblyResolver.OutputPackageConfigFile();
-            }
-            else
-            {
-                Console.WriteWarning("No references found to resolve (all GAC?)");
-            }
-            return results;
-        }
-
-        private static List<string> GetReferencedAssemblies(IEnumerable<ProjectItem> references)
-        {
-            var referenceFiles = new List<string>();
-
-            foreach (ProjectItem reference in references)
-            {
-                //TODO deal with GAC assemblies that we want to replace as well....
-                if (reference.HasMetadata("HintPath"))
-                {
-                    var hintPath = reference.GetMetadataValue("HintPath");
-                    referenceFiles.Add(Path.GetFileName(hintPath));
-                }
-            }
-            return referenceFiles;
-        }
-
-        private bool ResolveProjectReferenceItemByAssemblyName(ProjectItem reference, string mapping)
-        {
-            if (reference.HasMetadata("HintPath"))
-            {
-                var hintpath = reference.GetMetadataValue("HintPath");
-                var fileInfo = new FileInfo(hintpath);
-                return fileInfo.Name.Equals(mapping, StringComparison.OrdinalIgnoreCase);
-            }
-
-            return false;
-        }
-
-        private IPackageRepository GetRepository()
-        {
+            var projectFileSystem = new PhysicalFileSystem(projectAdapter.ProjectDirectory.ToString());
             var repository = AggregateRepositoryHelper.CreateAggregateRepositoryFromSources(RepositoryFactory, SourceProvider, Source);
             repository.Logger = Console;
-            return repository;
+            var hintPathGenerator = new HintPathGenerator();
+            return new ProjectNugetifier(projectAdapter, repository, projectFileSystem, Console, hintPathGenerator);
+        }
+
+        private IDictionary<string, string> GetMsBuildProperties(FileInfo solutionFile)
+        {
+            var buildProperties = GetParsedBuildProperties();
+            buildProperties["SolutionDir"] = solutionFile.Directory.FullName;
+            return buildProperties;
+        }
+
+        private IDictionary<string, string> GetParsedBuildProperties()
+        {
+            if (MsBuildProperties == null) return new Dictionary<string, string>();
+            var keyValuePairs = MsBuildProperties.Split(',');
+            var twoElementArrays = keyValuePairs.Select(kvp => kvp.Split('=')).ToList();
+            foreach (var errorKvp in twoElementArrays.Where(a => a.Length != 2)) throw new ArgumentException(string.Format("Key value pair near {0} is formatted incorrectly", string.Join(",", errorKvp[0])));
+            return twoElementArrays.ToDictionary(kvp => kvp[0].Trim(), kvp => kvp[1].Trim());
         }
     }
 }

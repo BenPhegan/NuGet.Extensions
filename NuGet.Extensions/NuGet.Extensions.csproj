@@ -69,7 +69,22 @@
     <Compile Include="Caches\MemoryBasedPackageCache.cs" />
     <Compile Include="Caches\NuGetCacheManager.cs" />
     <Compile Include="Commands\Audit.cs" />
+    <Compile Include="ExtensionMethods\IPackageExtensions.cs" />
+    <Compile Include="MSBuild\CachingProjectLoader.cs" />
+    <Compile Include="MSBuild\NullProjectAdapter.cs" />
+    <Compile Include="MSBuild\CachingSolutionLoader.cs" />
+    <Compile Include="Nuspec\INuspecDataSource.cs" />
+    <Compile Include="Nuspec\NuspecBuilder.cs" />
+    <Compile Include="MSBuild\BinaryReferenceAdapter.cs" />
     <Compile Include="Commands\FixReferences.cs" />
+    <Compile Include="MSBuild\IProjectLoader.cs" />
+    <Compile Include="MSBuild\IReference.cs" />
+    <Compile Include="MSBuild\IVsProject.cs" />
+    <Compile Include="MSBuild\ProjectAdapter.cs" />
+    <Compile Include="MSBuild\ProjectReferenceAdapter.cs" />
+    <Compile Include="ReferenceAnalysers\HintPathGenerator.cs" />
+    <Compile Include="ReferenceAnalysers\IHintPathGenerator.cs" />
+    <Compile Include="ReferenceAnalysers\ProjectNugetifier.cs" />
     <Compile Include="Comparers\LambdaComparer.cs" />
     <Compile Include="Comparers\PackageReferenceEqualityComparer.cs" />
     <Compile Include="Comparers\VersionSpecEqualityComparer.cs" />
@@ -102,7 +117,7 @@
     <Compile Include="Commands\Details.cs" />
     <Compile Include="Commands\Nugetify.cs" />
     <Compile Include="Commands\TeamCity.cs" />
-    <Compile Include="FeedAudit\GacResolver.cs" />
+    <Compile Include="ReferenceAnalysers\GacResolver.cs" />
     <Compile Include="FeedAudit\PackageAuditEventArgs.cs" />
     <Compile Include="FeedAudit\PackageIgnoreEventArgs.cs" />
     <Compile Include="FindFilesPatternToRegex.cs" />
@@ -120,6 +135,7 @@
     <Compile Include="Packages\PackageEnumerator.cs" />
     <Compile Include="Packages\PackageResolutionManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Repositories\AssemblyToPackageMapping.cs" />
     <Compile Include="Repositories\IRepositoryEnumerator.cs" />
     <Compile Include="Repositories\IRepositoryManager.cs" />
     <Compile Include="Repositories\RepositoryAssemblyResolver.cs" />
@@ -155,9 +171,9 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>if not exist $(TargetDir)Merged mkdir $(TargetDir)Merged
-copy $(TargetDir)NuGet.Extensions.nuspec $(TargetDir)Merged\Nuget.Extensions.nuspec /y
-$(SolutionDir)tools\ilmerge\ilmerge.exe /v4 /t:library /out:$(TargetDir)Merged\$(TargetFileName) $(TargetPath) $(TargetDir)QuickGraph.dll $(TargetDir)QuickGraph.Serialization.dll $(TargetDir)RestSharp.dll</PostBuildEvent>
+    <PostBuildEvent>if not exist "$(TargetDir)Merged" mkdir "$(TargetDir)Merged"
+%25SystemRoot%25\system32\xcopy.exe "$(TargetDir)NuGet.Extensions.nuspec" "$(TargetDir)Merged\Nuget.Extensions.nuspec" /y
+"$(SolutionDir)tools\ilmerge\ilmerge.exe" /v4 /t:library /out:"$(TargetDir)Merged\$(TargetFileName)" "$(TargetPath)" "$(TargetDir)QuickGraph.dll" "$(TargetDir)QuickGraph.Serialization.dll" "$(TargetDir)RestSharp.dll"</PostBuildEvent>
   </PropertyGroup>
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.

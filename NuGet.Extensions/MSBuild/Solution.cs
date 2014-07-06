@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Diagnostics;
-using System.Reflection;
 using System.IO;
+using System.Linq;
+using System.Reflection;
 
-namespace NuGet.Extensions.GetLatest.MSBuild
+namespace NuGet.Extensions.MSBuild
 {
 
     /// <summary>

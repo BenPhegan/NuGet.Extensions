@@ -5,7 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
-namespace NuGet.Extensions.FeedAudit
+namespace NuGet.Extensions.ReferenceAnalysers
 {
     /// <summary>
     /// http://trikks.wordpress.com/2011/07/13/programmatically-check-if-an-assembly-is-loaded-in-gac-with-c/
@@ -16,7 +16,7 @@ namespace NuGet.Extensions.FeedAudit
         {
             try
             {
-                response = QueryAssemblyInfo(assemblyname);
+                response = GetAssemblyPath(assemblyname);
                 return !string.IsNullOrEmpty(response);
             }
             catch (FileNotFoundException e)
@@ -26,22 +26,17 @@ namespace NuGet.Extensions.FeedAudit
             }
         }
 
-        public static String QueryAssemblyInfo(string assemblyName)
+        public static String GetAssemblyPath(string assemblyName)
         {
             var assemblyNames = GetAllAssemblyNames(assemblyName);
-            var assemblyPath = string.Empty;
-            foreach (var assembly in assemblyNames)
-            {
-                assemblyPath = QueryAssemblyInfoInternal(assembly);
-                if (!String.IsNullOrEmpty(assemblyPath))
-                    return assemblyPath;
-            }
-
-            return assemblyPath;
+            return assemblyNames.Select(GetGacAssemblyPath).SkipWhile(String.IsNullOrEmpty).FirstOrDefault();
         }
 
-        // If assemblyName is not fully qualified, a random matching may be 
-        private static String QueryAssemblyInfoInternal(string assemblyName)
+        /// <summary>
+        /// If assemblyName is not fully qualified, an incorrect match may be returned
+        /// </summary>
+        /// <remarks>This method may return differently depending on what is loaded in the current AppDomain - see GacResolverTests</remarks>
+        private static String GetGacAssemblyPath(string assemblyName)
         {
             var assembyInfo = new AssemblyInfo {cchBuf = 512};
             assembyInfo.currentAssemblyPath = new String('\0',assembyInfo.cchBuf);
