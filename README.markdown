@@ -1,4 +1,5 @@
 # NuGet.Extensions
+[![Build status](https://ci.appveyor.com/api/projects/status/cd6eu7k8l30sk4kp)](https://ci.appveyor.com/project/BenPhegan/nuget-extensions)
 
 Provides a set of extensions to NuGet.  Many of these are aimed at large corporate Development Operations teams, and the management of large numbers of feeds, packages, relationships, and a different level of complexity than might be normally found in the consumption of NuGet packages for open source projects.
 
