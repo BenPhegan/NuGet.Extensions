@@ -56,7 +56,7 @@ namespace NuGet.Extensions.Commands
         [Option("NuSpec ID")]
         public string Id { get; set; }
 
-        [Option("Create NuSpecs for solution")]
+        [Option("Create a NuSpec for each processed project with nuspec dependencies on any package dependencies that were added")]
         public Boolean NuSpec { get; set; }
 
         [Option("NuSpec title")]
