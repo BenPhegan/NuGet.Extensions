@@ -206,7 +206,8 @@ namespace NuGet.Extensions.Commands
             {
                 using (package.GetStream())
                 {
-                    packageServer.PushPackage(apiKey, package, 60000);
+                    var fileSize = new FileInfo(packagePath).Length;
+                    packageServer.PushPackage(apiKey, package, fileSize, 60000, false);
                 }
             }
             catch 
