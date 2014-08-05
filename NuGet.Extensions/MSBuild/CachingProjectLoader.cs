@@ -47,7 +47,7 @@ namespace NuGet.Extensions.MSBuild
             }
             catch (Exception e)
             {
-                LogProjectLoadException(e);
+                LogProjectLoadException(e, absoluteProjectPath);
                 return new NullProjectAdapter(absoluteProjectPath);
             }
         }
@@ -58,9 +58,9 @@ namespace NuGet.Extensions.MSBuild
             return GetRealProjectAdapter(msBuildProject);
         }
 
-        private void LogProjectLoadException(Exception e)
+        private void LogProjectLoadException(Exception e, string absoluteProjectPath)
         {
-            _console.WriteWarning("Problem loading {0}, any future messages about modifications to it are speculative only:");
+            _console.WriteWarning("Problem loading {0}, any future messages about modifications to it are speculative only:", absoluteProjectPath);
             _console.WriteWarning("  {0}", e.Message);
         }
 
