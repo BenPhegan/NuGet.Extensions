@@ -129,7 +129,7 @@ namespace NuGet.Extensions.Tests.MSBuild
         {
             var binaryDependency = _projectBinaryReferenceAdapters.Single(IsExpectedBinaryDependency);
 
-            var isForCorrespondingAssembly = binaryDependency.IsForAssembly(ExpectedBinaryDependencyAssemblyName + ".dll");
+            var isForCorrespondingAssembly = binaryDependency.AssemblyFilenameEquals(ExpectedBinaryDependencyAssemblyName + ".dll");
 
             Assert.That(isForCorrespondingAssembly, Is.True);
         }
@@ -139,7 +139,7 @@ namespace NuGet.Extensions.Tests.MSBuild
         {
             var binaryDependency = _projectBinaryReferenceAdapters.Single(IsExpectedBinaryDependency);
 
-            var isForBlankAssemblyName = binaryDependency.IsForAssembly("") || binaryDependency.IsForAssembly(".dll");
+            var isForBlankAssemblyName = binaryDependency.AssemblyFilenameEquals("") || binaryDependency.AssemblyFilenameEquals(".dll");
 
             Assert.That(isForBlankAssemblyName, Is.False);
         }

@@ -43,9 +43,14 @@ namespace NuGet.Extensions.MSBuild
 
         public bool Condition { get; private set; }
 
-        public bool IsForAssembly(string assemblyFilename)
+        public string AssemblyFilename
         {
-            return (AssemblyName + ".dll").Equals(assemblyFilename, StringComparison.OrdinalIgnoreCase);
+            get { return AssemblyName + ".dll"; }
+        }
+
+        public bool AssemblyFilenameEquals(string filename)
+        {
+            return string.Equals(filename, AssemblyFilename, StringComparison.OrdinalIgnoreCase);
         }
     }
 }

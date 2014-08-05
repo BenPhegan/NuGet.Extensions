@@ -32,21 +32,26 @@ namespace NuGet.Extensions.ReferenceAnalysers
         public ICollection<IPackage> NugetifyReferences(DirectoryInfo solutionDir)
         {
             var references = GetReferences().ToList();
-            var resolvedMappings = ResolveReferenceMappings(references).ToList();
+            var resolvedMappings = ResolveReferenceMappings(references).ToDictionary(p => p.Key, p => p.Value);
             var packageReferencesAdded = new HashSet<IPackage>(new LambdaComparer<IPackage>(IPackageExtensions.Equals, IPackageExtensions.GetHashCode));
-            foreach (var mapping in resolvedMappings)
+
+            foreach (var reference in references)
             {
-                foreach (var referenceMatch in references.Where(r => r.IsForAssembly(mapping.Key)))
+                string assemblyFilename = reference.AssemblyFilename;
+                var includeName = reference.AssemblyName;
+                var includeVersion = reference.AssemblyVersion;
+
+                List<IPackage> matchingPackages;
+                if (resolvedMappings.TryGetValue(assemblyFilename, out matchingPackages))
                 {
-                    var includeName = referenceMatch.AssemblyName;
-                    var includeVersion = referenceMatch.AssemblyVersion;
-                    var package = mapping.Value.OrderBy(p => p.GetFiles().Count()).First();
+
+                    var package = matchingPackages.OrderBy(p => p.GetFiles().Count()).First();
                     packageReferencesAdded.Add(package);
                     LogHintPathRewriteMessage(package, includeName, includeVersion);
 
                     var newHintPath = _hintPathGenerator.ForAssembly(solutionDir, _vsProject.ProjectDirectory,
-                        package, mapping.Key);
-                    referenceMatch.ConvertToNugetReferenceWithHintPath(newHintPath);
+                        package, assemblyFilename);
+                    reference.ConvertToNugetReferenceWithHintPath(newHintPath);
                 }
             }
 
@@ -132,20 +137,15 @@ namespace NuGet.Extensions.ReferenceAnalysers
 
             foreach (var reference in references)
             {
-                string hintPath;
                 string gacPath;
-                if (reference.TryGetHintPath(out hintPath))
-                {
-                    referenceFiles.Add(Path.GetFileName(hintPath));
-                }
-                else if (GacResolver.AssemblyExist(reference.AssemblyName, out gacPath))
+                if (GacResolver.AssemblyExist(reference.AssemblyName, out gacPath))
                 {
                     var publicKeyToken = GetPublicKeyTokenFromGacPath(gacPath);
                     WarnAboutIgnoredReference(reference, publicKeyToken);
                 }
                 else
                 {
-                    referenceFiles.Add(reference.AssemblyName + ".dll");
+                    referenceFiles.Add(reference.AssemblyFilename);
                 }
             }
 
