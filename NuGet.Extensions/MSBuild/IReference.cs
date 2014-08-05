@@ -4,12 +4,14 @@ namespace NuGet.Extensions.MSBuild
         string AssemblyVersion { get; }
         string AssemblyName { get; }
         bool Condition { get; }
-        bool IsForAssembly(string assemblyFilename);
+        string AssemblyFilename { get; }
         bool TryGetHintPath(out string hintPath);
 
         /// <summary>
         /// Note: The parent project must be saved in order for this change to persist
         /// </summary>
         void ConvertToNugetReferenceWithHintPath(string hintPath);
+
+        bool AssemblyFilenameEquals(string filename);
     }
 }
