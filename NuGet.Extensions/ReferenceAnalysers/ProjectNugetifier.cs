@@ -38,16 +38,16 @@ namespace NuGet.Extensions.ReferenceAnalysers
             foreach (var reference in references)
             {
                 string assemblyFilename = reference.AssemblyFilename;
-                var includeName = reference.AssemblyName;
+                var assemblyName = reference.AssemblyName;
                 var includeVersion = reference.AssemblyVersion;
 
                 List<IPackage> matchingPackages;
                 if (resolvedMappings.TryGetValue(assemblyFilename, out matchingPackages))
                 {
 
-                    var package = matchingPackages.OrderBy(p => p.GetFiles().Count()).First();
+                    var package = GetBestPackage(matchingPackages, assemblyName);
                     packageReferencesAdded.Add(package);
-                    LogHintPathRewriteMessage(package, includeName, includeVersion);
+                    LogHintPathRewriteMessage(package, assemblyName, includeVersion);
 
                     var newHintPath = _hintPathGenerator.ForAssembly(solutionDir, _vsProject.ProjectDirectory,
                         package, assemblyFilename);
@@ -56,6 +56,14 @@ namespace NuGet.Extensions.ReferenceAnalysers
             }
 
             return packageReferencesAdded;
+        }
+
+        private static IPackage GetBestPackage(List<IPackage> matchingPackages, string assemblyName)
+        {
+            var bestPackages =
+                matchingPackages.Where(p => p.GetFullName().IndexOf(assemblyName, StringComparison.OrdinalIgnoreCase) != -1).ToList();
+            if (!bestPackages.Any()) bestPackages = matchingPackages;
+            return bestPackages.OrderBy(p => p.GetFiles().Count()).First();
         }
 
         private IEnumerable<IReference> GetReferences()
