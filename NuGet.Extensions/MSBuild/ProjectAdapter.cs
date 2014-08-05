@@ -68,11 +68,19 @@ namespace NuGet.Extensions.MSBuild
 
         private ProjectReferenceAdapter GetProjectReferenceAdapter(ProjectItem r, bool conditionTrue)
         {
-            var projectGuid = r.GetMetadataValue("Project");
+            var projectGuidString = r.GetMetadataValue("Project");
             var csprojRelativePath = r.EvaluatedInclude;
             var absoluteProjectPath = Path.Combine(ProjectDirectory.FullName, csprojRelativePath);
-            var referencedProjectAdapter = _projectLoader.GetProject(Guid.Parse(projectGuid), absoluteProjectPath);
+            var guid = ParsedOrDefault(projectGuidString);
+            var referencedProjectAdapter = _projectLoader.GetProject(guid, absoluteProjectPath);
             return new ProjectReferenceAdapter(referencedProjectAdapter, () => _project.RemoveItem(r), AddBinaryReferenceIfNotExists, conditionTrue);
+        }
+
+        private static Guid? ParsedOrDefault(string projectGuidString)
+        {
+            Guid guid;
+            if (Guid.TryParse(projectGuidString, out guid)) return guid;
+            return null;
         }
 
         private void AddBinaryReferenceIfNotExists(string includePath, KeyValuePair<string, string> metadata)
