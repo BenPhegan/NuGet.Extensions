@@ -81,7 +81,7 @@ namespace NuGet.Extensions.ReferenceAnalysers
             var packagesConfig = new PackageReferenceFile(_projectFileSystem, PackageReferenceFilename);
             foreach (var package in packagesToAdd)
             {
-                if (!packagesConfig.EntryExists(package.Id, package.Version)) packagesConfig.AddEntry(package.Id, package.Version);
+                if (!packagesConfig.EntryExists(package.Id, package.Version)) packagesConfig.AddEntry(package.Id, package.Version, false);
             }
         }
 

@@ -42,7 +42,7 @@
     </Reference>
     <Reference Include="NuGet, Version=2.5.40416.9020, Culture=neutral, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\NuGet.CommandLine.2.7.1\tools\NuGet.exe</HintPath>
+      <HintPath>..\packages\NuGet.CommandLine.2.8.2\tools\NuGet.exe</HintPath>
     </Reference>
     <Reference Include="nunit.framework">
       <HintPath>..\packages\NUnit.2.5.10.11092\lib\nunit.framework.dll</HintPath>
