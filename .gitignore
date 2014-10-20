@@ -20,3 +20,4 @@ _ReSharper.*/**
 /Test.Debug
 /Test.Release
 _Resharper.*/**
+.vs/
