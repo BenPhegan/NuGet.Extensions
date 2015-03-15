@@ -13,7 +13,6 @@
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
-    <RestorePackages>true</RestorePackages>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -179,7 +178,6 @@ copy "$(TargetDir)NuGet.Extensions.nuspec" "$(TargetDir)Merged\Nuget.Extensions.
 if "%25APPVEYOR_BUILD_VERSION%25"=="" set APPVEYOR_BUILD_VERSION=1.0.0.0
 "$(SolutionDir)packages\NuGet.CommandLine.2.8.2\tools\nuget.exe" pack "$(TargetDir)Merged\Nuget.Extensions.nuspec" -version %25APPVEYOR_BUILD_VERSION%25 -outputdirectory "$(TargetDir)Merged"</PostBuildEvent>
   </PropertyGroup>
-  <Import Project="$(SolutionDir)\.nuget\NuGet.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
