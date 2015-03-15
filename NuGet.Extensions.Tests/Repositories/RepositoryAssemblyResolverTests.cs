@@ -122,7 +122,7 @@ namespace NuGet.Extensions.Tests.Repositories
             var resolved = assemblyResolver.GetAssemblyToPackageMapping(false);
             resolved.OutputPackageConfigFile();
             Assert.AreEqual(1,filesystem.Paths.Count);
-            var file = new PackageReferenceFile(filesystem, string.Concat(filesystem.Root, ".\\packages.config"));
+            var file = new PackageReferenceFile(filesystem, string.Concat(filesystem.Root, "packages.config"));
             Assert.AreEqual(1, file.GetPackageReferences().Count());
         }
 
@@ -142,7 +142,7 @@ namespace NuGet.Extensions.Tests.Repositories
             var resolved = assemblyResolver.GetAssemblyToPackageMapping(false);
             resolved.OutputPackageConfigFile();
             Assert.AreEqual(1, filesystem.Paths.Count);
-            var file = new PackageReferenceFile(filesystem, string.Concat(filesystem.Root, ".\\packages.config"));
+            var file = new PackageReferenceFile(filesystem, string.Concat(filesystem.Root, "packages.config"));
             Assert.AreEqual(1, file.GetPackageReferences().Count());
             Assert.AreEqual(true, file.EntryExists(AssemblyCommon,SemanticVersion.Parse("1.0")));
         }
