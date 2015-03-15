@@ -73,15 +73,15 @@ namespace NuGet.Extensions.ReferenceAnalysers
             else _console.WriteWarning(message);
         }
 
-        public void AddNugetReferenceMetadata(ISharedPackageRepository sharedPackagesRepository, ICollection<IPackage> packagesToAdd)
+        public void AddNugetReferenceMetadata(ISharedPackageRepository sharedPackagesRepository, ICollection<IPackage> packagesToAdd, FrameworkName targetFramework)
         {
             _console.WriteLine("Checking for any project references for {0}...", PackageReferenceFilename);
             if (!packagesToAdd.Any()) return;
-            CreatePackagesConfig(packagesToAdd);
+            CreatePackagesConfig(packagesToAdd, targetFramework);
             RegisterPackagesConfig(sharedPackagesRepository);
         }
 
-        private void CreatePackagesConfig(ICollection<IPackage> packagesToAdd, FrameworkName targetFramework = null)
+        private void CreatePackagesConfig(ICollection<IPackage> packagesToAdd, FrameworkName targetFramework)
         {
             _console.WriteLine("Creating {0}", PackageReferenceFilename);
             var packagesConfig = new PackageReferenceFile(_projectFileSystem, PackageReferenceFilename);
