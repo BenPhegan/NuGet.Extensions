@@ -145,6 +145,14 @@ namespace NuGet.Extensions.Tests.Mocks
             Deleted.Add(path);
         }
 
+        public void DeleteFiles(IEnumerable<IPackageFile> files, string rootDir)
+        {
+            foreach (var file in files)
+            {
+                DeleteFile(file.Path);
+            }
+        }
+
         public virtual bool FileExists(string path)
         {
             return Paths.ContainsKey(path);
@@ -213,6 +221,20 @@ namespace NuGet.Extensions.Tests.Mocks
             AddFile(path, getStream.Target.ToString());
         }
 
+        public void AddFiles(IEnumerable<IPackageFile> files, string rootDir)
+        {
+            foreach (var file in files)
+            {
+                AddFile(file.Path);
+            }
+        }
+
+        public void MoveFile(string source, string destination)
+        {
+            DeleteFile(source);
+            AddFile(destination);
+        }
+
         public virtual Stream CreateFile(string path)
         {
             return new MemoryStream();
@@ -230,7 +252,6 @@ namespace NuGet.Extensions.Tests.Mocks
 
         public virtual void MakeFileWritable(string path)
         {
-            throw new NotImplementedException();
         }
     }
 }

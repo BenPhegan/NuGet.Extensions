@@ -13,7 +13,6 @@
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
-    <RestorePackages>true</RestorePackages>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -37,7 +36,7 @@
     <Reference Include="Microsoft.Build" />
     <Reference Include="NuGet, Version=2.5.40416.9020, Culture=neutral, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\NuGet.CommandLine.2.7.1\tools\NuGet.exe</HintPath>
+      <HintPath>..\packages\NuGet.CommandLine.2.8.2\tools\NuGet.exe</HintPath>
     </Reference>
     <Reference Include="QuickGraph">
       <HintPath>..\packages\QuickGraph.3.6.61119.7\lib\net4\QuickGraph.dll</HintPath>
@@ -177,9 +176,8 @@ copy "$(TargetDir)NuGet.Extensions.nuspec" "$(TargetDir)Merged\Nuget.Extensions.
 
 "$(SolutionDir)tools\ilmerge\ilmerge.exe" /v4 /t:library /out:"$(TargetDir)Merged\$(TargetFileName)" "$(TargetPath)" "$(TargetDir)QuickGraph.dll" "$(TargetDir)QuickGraph.Serialization.dll" "$(TargetDir)RestSharp.dll"
 if "%25APPVEYOR_BUILD_VERSION%25"=="" set APPVEYOR_BUILD_VERSION=1.0.0.0
-"$(SolutionDir)packages\NuGet.CommandLine.2.7.1\tools\nuget.exe" pack "$(TargetDir)Merged\Nuget.Extensions.nuspec" -version %25APPVEYOR_BUILD_VERSION%25 -outputdirectory "$(TargetDir)Merged"</PostBuildEvent>
+"$(SolutionDir)packages\NuGet.CommandLine.2.8.2\tools\nuget.exe" pack "$(TargetDir)Merged\Nuget.Extensions.nuspec" -version %25APPVEYOR_BUILD_VERSION%25 -outputdirectory "$(TargetDir)Merged"</PostBuildEvent>
   </PropertyGroup>
-  <Import Project="$(SolutionDir)\.nuget\NuGet.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

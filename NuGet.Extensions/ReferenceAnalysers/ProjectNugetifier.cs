@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.Versioning;
 using NuGet.Common;
 using NuGet.Extensions.Comparers;
 using NuGet.Extensions.ExtensionMethods;
@@ -75,13 +76,16 @@ namespace NuGet.Extensions.ReferenceAnalysers
             RegisterPackagesConfig(sharedPackagesRepository);
         }
 
-        private void CreatePackagesConfig(ICollection<IPackage> packagesToAdd)
+        private void CreatePackagesConfig(ICollection<IPackage> packagesToAdd, FrameworkName targetFramework = null)
         {
             _console.WriteLine("Creating {0}", PackageReferenceFilename);
             var packagesConfig = new PackageReferenceFile(_projectFileSystem, PackageReferenceFilename);
             foreach (var package in packagesToAdd)
             {
-                if (!packagesConfig.EntryExists(package.Id, package.Version)) packagesConfig.AddEntry(package.Id, package.Version);
+                if (!packagesConfig.EntryExists(package.Id, package.Version)) //Note we don't re-add entries that have the wrong targetFramework set
+                {
+                    packagesConfig.AddEntry(package.Id, package.Version, false, targetFramework);
+                }
             }
         }
 
