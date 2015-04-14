@@ -22,7 +22,7 @@ namespace NuGet.Extensions.MSBuild
 
         public string AssemblyName
         {
-            get { return null; }
+            get { return "Unknown"; }
         }
 
         public string ProjectName

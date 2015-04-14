@@ -37,7 +37,7 @@ namespace NuGet.Extensions.Repositories
 
             if (!_fileSystem.FileExists(packagesConfig))
             {
-                var prf = new PackageReferenceFile(_fileSystem, string.Format(".\\{0}", packagesConfig));
+                var prf = new PackageReferenceFile(_fileSystem, packagesConfig);
                 foreach (var assemblyToPackageMapping in ResolvedMappings)
                 {
                     IPackage smallestPackage;

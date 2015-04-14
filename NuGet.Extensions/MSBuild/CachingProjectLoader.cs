@@ -29,13 +29,20 @@ namespace NuGet.Extensions.MSBuild
             _projectCollection.Dispose();
         }
 
-        public IVsProject GetProject(Guid projectGuid, string absoluteProjectPath)
+        public IVsProject GetProject(Guid? projectGuid, string absoluteProjectPath)
         {
             IVsProject projectAdapter;
-            if (_projectsByGuid.TryGetValue(projectGuid, out projectAdapter)) return projectAdapter;
+            if (projectGuid.HasValue && _projectsByGuid.TryGetValue(projectGuid.Value, out projectAdapter))
+            {
+                return projectAdapter;
+            }
 
             projectAdapter = GetVsProjectFromPath(absoluteProjectPath);
-            _projectsByGuid.Add(projectGuid, projectAdapter); //TODO This could cause an incorrect mapping, get the guid from the loaded project
+
+            //TODO This could cause an incorrect mapping, get the guid from the loaded project
+            if (projectGuid.HasValue) _projectsByGuid.Add(projectGuid.Value, projectAdapter);
+            else _console.WriteWarning("Attempting to workaround a project reference without a GUID for {0}", absoluteProjectPath);
+
             return projectAdapter;
         }
 
@@ -47,7 +54,7 @@ namespace NuGet.Extensions.MSBuild
             }
             catch (Exception e)
             {
-                LogProjectLoadException(e);
+                LogProjectLoadException(e, absoluteProjectPath);
                 return new NullProjectAdapter(absoluteProjectPath);
             }
         }
@@ -58,9 +65,9 @@ namespace NuGet.Extensions.MSBuild
             return GetRealProjectAdapter(msBuildProject);
         }
 
-        private void LogProjectLoadException(Exception e)
+        private void LogProjectLoadException(Exception e, string absoluteProjectPath)
         {
-            _console.WriteWarning("Problem loading {0}, any future messages about modifications to it are speculative only:");
+            _console.WriteWarning("Problem loading {0}, any future messages about modifications to it are speculative only:", absoluteProjectPath);
             _console.WriteWarning("  {0}", e.Message);
         }
 
