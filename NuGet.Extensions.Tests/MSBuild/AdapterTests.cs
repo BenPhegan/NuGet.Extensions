@@ -71,6 +71,7 @@ namespace NuGet.Extensions.Tests.MSBuild
             var conditionTrueReferences = emptyConfigurationDependencies.Where(r => r.Condition).Select(r => r.AssemblyName).ToArray();
             var conditionFalseReferences = emptyConfigurationDependencies.Where(r => !r.Condition).Select(r => r.AssemblyName).ToArray();
             Assert.That(conditionTrueReferences, Contains.Item("AssemblyReferencedWhenConfigurationNotEqualsRelease"));
+            Assert.That(conditionFalseReferences.Single(), Is.EqualTo("AssemblyReferencedWhenConfigurationEqualsRelease"));
         }
 
         [Test]
@@ -80,6 +81,7 @@ namespace NuGet.Extensions.Tests.MSBuild
             var conditionTrueReferences = emptyConfigurationDependencies.Where(r => r.Condition).Select(r => r.AssemblyName).ToArray();
             var conditionFalseReferences = emptyConfigurationDependencies.Where(r => !r.Condition).Select(r => r.AssemblyName).ToArray();
             Assert.That(conditionTrueReferences, Contains.Item("AssemblyReferencedWhenConfigurationEqualsRelease"));
+            Assert.That(conditionFalseReferences.Single(), Is.EqualTo("AssemblyReferencedWhenConfigurationNotEqualsRelease"));
         }
         
         public IEnumerable<IReference> GetReferencesForProjectWithDependencies(IDictionary<string, string> globalMsBuildProperties)
@@ -127,7 +129,7 @@ namespace NuGet.Extensions.Tests.MSBuild
         {
             var binaryDependency = _projectBinaryReferenceAdapters.Single(IsExpectedBinaryDependency);
 
-            var isForCorrespondingAssembly = binaryDependency.IsForAssembly(ExpectedBinaryDependencyAssemblyName + ".dll");
+            var isForCorrespondingAssembly = binaryDependency.AssemblyFilenameEquals(ExpectedBinaryDependencyAssemblyName + ".dll");
 
             Assert.That(isForCorrespondingAssembly, Is.True);
         }
@@ -137,7 +139,7 @@ namespace NuGet.Extensions.Tests.MSBuild
         {
             var binaryDependency = _projectBinaryReferenceAdapters.Single(IsExpectedBinaryDependency);
 
-            var isForBlankAssemblyName = binaryDependency.IsForAssembly("") || binaryDependency.IsForAssembly(".dll");
+            var isForBlankAssemblyName = binaryDependency.AssemblyFilenameEquals("") || binaryDependency.AssemblyFilenameEquals(".dll");
 
             Assert.That(isForBlankAssemblyName, Is.False);
         }

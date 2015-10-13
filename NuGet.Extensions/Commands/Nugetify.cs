@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
+using System.Runtime.Versioning;
 using NuGet.Commands;
 using NuGet.Common;
 using NuGet.Extensions.MSBuild;
@@ -30,6 +31,12 @@ namespace NuGet.Extensions.Commands
 
         [Option("Comma separated list of key=value pairs of parameters to be used when loading projects, note that SolutionDir is automatically set.")]
         public string MsBuildProperties { get; set; }
+
+        [Option("Format as in the packages.config file: {framework}{version}-{profile}")]
+        public string TargetFramework { get; set; }
+
+        [Option("Use hint paths that don't contain the package version")]
+        public bool ExcludeVersion { get; set; }
 
         [Option("NuSpec project URL")]
         public string ProjectUrl { get; set; }
@@ -111,9 +118,10 @@ namespace NuGet.Extensions.Commands
 
         private void NugetifyProject(IVsProject projectAdapter, DirectoryInfo solutionRoot, ISharedPackageRepository existingSolutionPackagesRepo)
         {
+            var targetFramework = TargetFramework != null ? VersionUtility.ParseFrameworkName(TargetFramework) : null;
             var projectNugetifier = CreateProjectNugetifier(projectAdapter);
             var packagesAdded = projectNugetifier.NugetifyReferences(solutionRoot);
-            projectNugetifier.AddNugetReferenceMetadata(existingSolutionPackagesRepo, packagesAdded);
+            projectNugetifier.AddNugetReferenceMetadata(existingSolutionPackagesRepo, packagesAdded, targetFramework);
             projectAdapter.Save();
 
             if (NuSpec)
@@ -121,7 +129,7 @@ namespace NuGet.Extensions.Commands
                 var manifestDependencies = projectNugetifier.GetManifestDependencies(packagesAdded);
                 var nuspecBuilder = new NuspecBuilder(projectAdapter.AssemblyName);
                 nuspecBuilder.SetMetadata(this, manifestDependencies);
-                nuspecBuilder.SetDependencies(manifestDependencies);
+                nuspecBuilder.SetDependencies(manifestDependencies, TargetFramework);
                 nuspecBuilder.Save(Console);
             }
         }
@@ -131,7 +139,7 @@ namespace NuGet.Extensions.Commands
             var projectFileSystem = new PhysicalFileSystem(projectAdapter.ProjectDirectory.ToString());
             var repository = AggregateRepositoryHelper.CreateAggregateRepositoryFromSources(RepositoryFactory, SourceProvider, Source);
             repository.Logger = Console;
-            var hintPathGenerator = new HintPathGenerator();
+            var hintPathGenerator = new HintPathGenerator(!ExcludeVersion);
             return new ProjectNugetifier(projectAdapter, repository, projectFileSystem, Console, hintPathGenerator);
         }
 

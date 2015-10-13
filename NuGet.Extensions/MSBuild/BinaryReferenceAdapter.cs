@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using Microsoft.Build.Evaluation;
+using NuGet.Extensions.ReferenceAnalysers;
 
 namespace NuGet.Extensions.MSBuild
 {
@@ -31,6 +32,11 @@ namespace NuGet.Extensions.MSBuild
             _reference.SetMetadataValue("HintPath", hintPath);
         }
 
+        public bool AssemblyFilenameEquals(string filename)
+        {
+            return string.Equals(filename, AssemblyFilename, StringComparison.OrdinalIgnoreCase);
+        }
+
         public string AssemblyVersion
         {
             get { return _reference.EvaluatedInclude.Contains(',') ? _reference.EvaluatedInclude.Split(',')[1].Split('=')[1] : null; }
@@ -41,17 +47,20 @@ namespace NuGet.Extensions.MSBuild
             get { return _reference.EvaluatedInclude.Contains(',') ? _reference.EvaluatedInclude.Split(',')[0] : _reference.EvaluatedInclude; }
         }
 
-        public bool IsForAssembly(string assemblyFilename)
+        public string AssemblyFilename
         {
-            string hintpath;
-
-            if (TryGetHintPath(out hintpath))
+            get
             {
-                var fileInfo = new FileInfo(hintpath);
-                return fileInfo.Name.Equals(assemblyFilename, StringComparison.OrdinalIgnoreCase);
+                string hintPath;
+                if (TryGetHintPath(out hintPath))
+                {
+                    return Path.GetFileName(hintPath);
+                }
+                else
+                {
+                    return AssemblyName + ".dll";
+                }
             }
-
-            return false;
         }
 
         public bool Condition { get; private set; }

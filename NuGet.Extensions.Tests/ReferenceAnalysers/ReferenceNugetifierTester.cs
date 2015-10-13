@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.Versioning;
 using Moq;
 using NuGet.Common;
 using NuGet.Extensions.MSBuild;
@@ -12,12 +13,12 @@ namespace NuGet.Extensions.Tests.ReferenceAnalysers
 {
     public class ReferenceNugetifierTester 
     {
-        public static List<IPackage> AddReferenceMetadata(ProjectNugetifier nugetifier, Mock<ISharedPackageRepository> repositoriesConfig = null, DirectoryInfo solutionDir = null)
+        public static List<IPackage> AddReferenceMetadata(ProjectNugetifier nugetifier, Mock<ISharedPackageRepository> repositoriesConfig = null, DirectoryInfo solutionDir = null, FrameworkName targetFrameWork = null)
         {
             var sharedPackageRepository = repositoriesConfig ?? new Mock<ISharedPackageRepository>();
             solutionDir = solutionDir ?? GetMockDirectory();
             var packages = nugetifier.NugetifyReferences(solutionDir);
-            nugetifier.AddNugetReferenceMetadata(sharedPackageRepository.Object, packages);
+            nugetifier.AddNugetReferenceMetadata(sharedPackageRepository.Object, packages, targetFrameWork);
             return packages.ToList();
         }
 

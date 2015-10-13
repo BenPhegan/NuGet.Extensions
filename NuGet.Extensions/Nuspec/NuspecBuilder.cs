@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.Versioning;
 using System.Text.RegularExpressions;
 using NuGet.Common;
 
@@ -54,13 +55,10 @@ namespace NuGet.Extensions.Nuspec
             if (!String.IsNullOrEmpty(nuspecData.ReleaseNotes)) metadata.ReleaseNotes = nuspecData.ReleaseNotes;
         }
 
-        public void SetDependencies(ICollection<ManifestDependency> manifestDependencies, string targetFramework = ".NET Framework, Version=4.0")
+        public void SetDependencies(ICollection<ManifestDependency> manifestDependencies, string targetFramework)
         {
-            _manifest.Metadata.DependencySets =
-                new List<ManifestDependencySet>
-                {
-                    new ManifestDependencySet {Dependencies = manifestDependencies.ToList(), TargetFramework = targetFramework}
-                };
+            var manifestDependencySet = new ManifestDependencySet {Dependencies = manifestDependencies.ToList(), TargetFramework = targetFramework};
+            _manifest.Metadata.DependencySets = new List<ManifestDependencySet>{ manifestDependencySet };
         }
 
         public void Save(IConsole console)

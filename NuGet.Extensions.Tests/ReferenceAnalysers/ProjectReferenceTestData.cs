@@ -29,8 +29,9 @@ namespace NuGet.Extensions.Tests.ReferenceAnalysers
 
             var dependency = new Mock<IReference>();
             dependency.SetupGet(d => d.AssemblyName).Returns(Path.GetFileNameWithoutExtension(includeFilename));
+            dependency.SetupGet(d => d.AssemblyFilename).Returns(includeFilename);
             dependency.SetupGet(d => d.AssemblyVersion).Returns(includeVersion ?? "0.0.0.0");
-            dependency.Setup(d => d.IsForAssembly(includeFilename)).Returns(true);
+            dependency.Setup(d => d.AssemblyFilenameEquals(includeFilename)).Returns(true);
 
             string anydependencyHintpath = includeFilename;
             dependency.Setup(d => d.TryGetHintPath(out anydependencyHintpath)).Returns(hasHintpath);

@@ -31,31 +31,46 @@ namespace NuGet.Extensions.ReferenceAnalysers
 
         public ICollection<IPackage> NugetifyReferences(DirectoryInfo solutionDir)
         {
-            var binaryReferences = GetReferences().ToList();
-            var resolvedMappings = ResolveReferenceMappings(binaryReferences).ToList();
+            var references = GetReferences().ToList();
+            var resolvedMappings = ResolveReferenceMappings(references).ToDictionary(p => p.Key, p => p.Value);
             var packageReferencesAdded = new HashSet<IPackage>(new LambdaComparer<IPackage>(IPackageExtensions.Equals, IPackageExtensions.GetHashCode));
-            foreach (var mapping in resolvedMappings)
-            {
-                var referenceMatch = binaryReferences.FirstOrDefault(r => r.IsForAssembly(mapping.Key));
-                if (referenceMatch != null)
-                {
-                    var includeName = referenceMatch.AssemblyName;
-                    var includeVersion = referenceMatch.AssemblyVersion;
-                    var package = mapping.Value.OrderBy(p => p.GetFiles().Count()).First();
-                    packageReferencesAdded.Add(package);
-                    LogHintPathRewriteMessage(package, includeName, includeVersion);
 
-                    var newHintPath = _hintPathGenerator.ForAssembly(solutionDir, _vsProject.ProjectDirectory, package, mapping.Key);
-                    referenceMatch.ConvertToNugetReferenceWithHintPath(newHintPath);
+            foreach (var reference in references)
+            {
+                string assemblyFilename = reference.AssemblyFilename;
+                var assemblyName = reference.AssemblyName;
+                var includeVersion = reference.AssemblyVersion;
+
+                List<IPackage> matchingPackages;
+                if (resolvedMappings.TryGetValue(assemblyFilename, out matchingPackages))
+                {
+
+                    var package = GetBestPackage(matchingPackages, assemblyName);
+                    packageReferencesAdded.Add(package);
+                    LogHintPathRewriteMessage(package, assemblyName, includeVersion);
+
+                    var newHintPath = _hintPathGenerator.ForAssembly(solutionDir, _vsProject.ProjectDirectory,
+                        package, assemblyFilename);
+                    reference.ConvertToNugetReferenceWithHintPath(newHintPath);
                 }
             }
 
             return packageReferencesAdded;
         }
 
+        private static IPackage GetBestPackage(List<IPackage> matchingPackages, string assemblyName)
+        {
+            var bestPackages =
+                matchingPackages.Where(p => p.GetFullName().IndexOf(assemblyName, StringComparison.OrdinalIgnoreCase) != -1).ToList();
+            if (!bestPackages.Any()) bestPackages = matchingPackages;
+            return bestPackages.OrderBy(p => p.GetFiles().Count()).First();
+        }
+
         private IEnumerable<IReference> GetReferences()
         {
-            return _vsProject.GetBinaryReferences();
+            var binaryReferences = _vsProject.GetBinaryReferences();
+            var projectReferences = _vsProject.GetProjectReferences();
+            return binaryReferences.Concat(projectReferences);
         }
 
         private void LogHintPathRewriteMessage(IPackage package, string includeName, string includeVersion)
@@ -73,15 +88,15 @@ namespace NuGet.Extensions.ReferenceAnalysers
             else _console.WriteWarning(message);
         }
 
-        public void AddNugetReferenceMetadata(ISharedPackageRepository sharedPackagesRepository, ICollection<IPackage> packagesToAdd)
+        public void AddNugetReferenceMetadata(ISharedPackageRepository sharedPackagesRepository, ICollection<IPackage> packagesToAdd, FrameworkName targetFramework)
         {
             _console.WriteLine("Checking for any project references for {0}...", PackageReferenceFilename);
             if (!packagesToAdd.Any()) return;
-            CreatePackagesConfig(packagesToAdd);
+            CreatePackagesConfig(packagesToAdd, targetFramework);
             RegisterPackagesConfig(sharedPackagesRepository);
         }
 
-        private void CreatePackagesConfig(ICollection<IPackage> packagesToAdd, FrameworkName targetFramework = null)
+        private void CreatePackagesConfig(ICollection<IPackage> packagesToAdd, FrameworkName targetFramework)
         {
             _console.WriteLine("Creating {0}", PackageReferenceFilename);
             var packagesConfig = new PackageReferenceFile(_projectFileSystem, PackageReferenceFilename);
@@ -124,20 +139,39 @@ namespace NuGet.Extensions.ReferenceAnalysers
             return Enumerable.Empty<KeyValuePair<string, List<IPackage>>>();
         }
 
-        private static List<string> GetReferencedAssemblies(IEnumerable<IReference> references)
+        private List<string> GetReferencedAssemblies(IEnumerable<IReference> references)
         {
             var referenceFiles = new List<string>();
 
             foreach (var reference in references)
             {
-                //TODO deal with GAC assemblies that we want to replace as well....
-                string hintPath;
-                if (reference.TryGetHintPath(out hintPath))
+                string gacPath;
+                if (GacResolver.AssemblyExist(reference.AssemblyName, out gacPath))
                 {
-                    referenceFiles.Add(Path.GetFileName(hintPath));
+                    var publicKeyToken = GetPublicKeyTokenFromGacPath(gacPath);
+                    WarnAboutIgnoredReference(reference, publicKeyToken);
+                }
+                else
+                {
+                    referenceFiles.Add(reference.AssemblyFilename);
                 }
             }
+
             return referenceFiles;
+        }
+
+        private void WarnAboutIgnoredReference(IReference reference, string publicKeyToken)
+        {
+            if (!PublicKeyTokens.UsedInNetFramework.Contains(publicKeyToken))
+            {
+                _console.WriteWarning("Ignoring {0} because it was found in the GAC (with public key token {1})", reference.AssemblyName, publicKeyToken);
+            }
+        }
+
+        private static string GetPublicKeyTokenFromGacPath(string hintPath)
+        {
+            var versionUnderscoreToken = Path.GetDirectoryName(hintPath);
+            return versionUnderscoreToken.Split('_').Last();
         }
 
         public ICollection<ManifestDependency> GetManifestDependencies(ICollection<IPackage> packagesAdded)
