@@ -19,7 +19,7 @@ Provides the ability to graph the package dependency for an entire feed.  Also l
 
 For an example of the output, the graph below was produced by pointing it at http://nuget.org.  Turns out, their graph is currently acyclic (this is a GOOD thing!).  There are quite a lot of disconnected graphs, and some quite interesting clusters of usage.  Worth a browse.
 
-<img src="http://github.com/BenPhegan/NuGet.Extensions/raw/master/images/NuGetOrgDependencyGraph.png" alt="NuGet TeamCity Package Dependency Graph" height="500" width="700" />
+<img src="https://github.com/BenPhegan/NuGet.Extensions/raw/master/images/NuGetOrgDependencyGraph.png" alt="NuGet TeamCity Package Dependency Graph" height="500" width="700" />
 
 To have a play with the data yourself, you can load the DGML graph directly into Visual Studio 2010 or greater from [here.](https://raw.github.com/BenPhegan/NuGet.Extensions/master/images/NuGetOrgDependencyGraph.dgml)
 
