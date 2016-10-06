@@ -21,16 +21,16 @@ For an example of the output, the graph below was produced by pointing it at htt
 
 <img src="https://github.com/BenPhegan/NuGet.Extensions/raw/master/images/NuGetOrgDependencyGraph.png" alt="NuGet TeamCity Package Dependency Graph" height="500" width="700" />
 
-To have a play with the data yourself, you can load the DGML graph directly into Visual Studio 2010 or greater from [here.](https://raw.github.com/BenPhegan/NuGet.Extensions/master/images/NuGetOrgDependencyGraph.dgml)
+To have a play with the data yourself, you can load the DGML graph directly into Visual Studio 2010 or greater from [here.](https://raw.githubusercontent.com/BenPhegan/NuGet.Extensions/master/images/NuGetOrgDependencyGraph.dgml)
 
 ## TEAMCITY
 The **teamcity** command produces a dependency graph of all NuGet publish and subscribe relationships on a TeamCity build server.  With the ability to pack, publish and trigger directly from NuGet packages, as well as its ability to function as a NuGet OData feed, TeamCity provides the perfect platform to produce and consume NuGet packages on.  This command makes it very easy to graphically represent these publish/subscribe realationships.
 
 Using the option -packageasvertex, you will get a graph that represents each build configuration as a solid node, and each package as a label with edges representing dependencies.  See below for an example.  This graph was built with packages being published via both NuGet Package build steps, and directly from the artifacts.
 
-<img src="http://github.com/BenPhegan/NuGet.Extensions/raw/master/images/TeamCityPackageTriggers.png" alt="NuGet TeamCity Package Dependency Graph" height="500" width="700" />
+<img src="https://github.com/BenPhegan/NuGet.Extensions/raw/master/images/TeamCityPackageTriggers.png" alt="NuGet TeamCity Package Dependency Graph" height="500" width="700" />
 
-To have a play with the data yourself, you can load the DGML graph directly into Visual Studio 2010 or greater from [here.](https://raw.github.com/BenPhegan/NuGet.Extensions/master/images/TeamCityPackageTriggers.dgml)
+To have a play with the data yourself, you can load the DGML graph directly into Visual Studio 2010 or greater from [here.](https://raw.githubusercontent.com/BenPhegan/NuGet.Extensions/master/images/TeamCityPackageTriggers.dgml)
 
 ## NUGETIFY
 The "nugetify" command allows a simple conversion to using simple file references to using NuGet package references.  What it does:
