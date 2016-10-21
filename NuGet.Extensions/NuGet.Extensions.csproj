@@ -68,6 +68,14 @@
     <Compile Include="Caches\MemoryBasedPackageCache.cs" />
     <Compile Include="Caches\NuGetCacheManager.cs" />
     <Compile Include="Commands\Audit.cs" />
+    <Compile Include="Commands\Graph.cs" />
+    <Compile Include="Commands\GraphCommand\Comparers.cs" />
+    <Compile Include="Commands\GraphCommand\FullPackageInfo.cs" />
+    <Compile Include="Commands\GraphCommand\FullPackageInfoFactory.cs" />
+    <Compile Include="Commands\GraphCommand\IPackageInfo.cs" />
+    <Compile Include="Commands\GraphCommand\IPackageInfoFactory.cs" />
+    <Compile Include="Commands\GraphCommand\SimplePackageInfo.cs" />
+    <Compile Include="Commands\GraphCommand\SimplePackageInfoFactory.cs" />
     <Compile Include="ExtensionMethods\IPackageExtensions.cs" />
     <Compile Include="MSBuild\CachingProjectLoader.cs" />
     <Compile Include="MSBuild\NullProjectAdapter.cs" />
@@ -98,7 +106,6 @@
     <Compile Include="FeedAudit\AssemblyNameEqualityComparer.cs" />
     <Compile Include="FeedAudit\FeedAuditor.cs" />
     <Compile Include="FeedAudit\PackageAuditResult.cs" />
-    <Compile Include="Commands\Graph.cs" />
     <Compile Include="CloneResources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
