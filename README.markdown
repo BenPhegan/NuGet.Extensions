@@ -43,11 +43,7 @@ The "nugetify" command allows a simple conversion to using simple file reference
 
 It works best if the feed you want to satisfy the file references with is a local directory.  To get a useful local directory, look at the "clone" command here as well.  Clone the feed locally, prune it if required, then run nugetify.  Using an SSD you can get pretty snappy results.
 
-What it does not do (currently):
-
-1. Only satisfies the build dependency closure.  It does not do the same thing as a "nuget install" as you will not get the full transitive runtime closure.  It will purely provide a mapping between your file references and packages that will provide them.  THIS IS BY DESIGN!  If you want full transitive closure, post running "nuget nugetify" run a "nuget update".
-1. It does not support versioned package directories.  Again, by design.  It may change (its trivial) but it is such an annoying default for such an edgecase usage...frankly versioned package directories piss me off.
-1. The whole thing should be considered "pragmatic" code.  It seems to work on my machine.  Its not pretty.  It could be faster.  It will get better.
+Note that by design, it will only provide a mapping between your file references and packages that will provide them. In order to pull in dependencies, after running `nuget nugetify` you can run `nuget update -reinstall`.
 
 ## CLONE
 Clone a feed from one location to another.  Also provides the ability to refresh a feed (update any packages that already exist from another feed).
