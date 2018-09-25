@@ -1,15 +1,15 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
-using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using NuGet.Commands;
 using NuGet.Common;
+using NuGet.Extensions.Commands.GraphCommand;
 using QuickGraph;
-using QuickGraph.Serialization;
 using QuickGraph.Algorithms;
+using QuickGraph.Serialization;
 
 namespace NuGet.Extensions.Commands
 {
@@ -17,7 +17,8 @@ namespace NuGet.Extensions.Commands
     public class Graph : Command
     {
         private readonly List<string> _sources = new List<string>();
-        private AdjacencyGraph<string, Edge<string>> _graph;
+        private AdjacencyGraph<IPackageInfo, Edge<IPackageInfo>> _graph;
+        private IPackageInfoFactory _packageInfoFactory;
 
         [Option("A list of sources to search")]
         public ICollection<string> Source
@@ -40,6 +41,10 @@ namespace NuGet.Extensions.Commands
             set { _output = value; }
         }
 
+
+        [Option("With version details.")]
+        public bool WithVersion { get; set; }
+
         [ImportingConstructor]
         public Graph () {}
 
@@ -47,11 +52,15 @@ namespace NuGet.Extensions.Commands
         {
             var sw = new Stopwatch();
             sw.Start();
+
             var repository = GetRepository();
-            var packageSource = repository.GetPackages().Where(p => p.IsLatestVersion);
+            var packageSource = repository.GetPackages();
             var packages = FilterPackageList(packageSource);
 
-            _graph = new AdjacencyGraph<string,Edge<string>>();
+            _packageInfoFactory = WithVersion
+                                      ? (IPackageInfoFactory) new FullPackageInfoFactory()
+                                      : new SimplePackageInfoFactory();
+            _graph = new AdjacencyGraph<IPackageInfo, Edge<IPackageInfo>>();
 
             foreach (var package in packages)
             {
@@ -63,9 +72,17 @@ namespace NuGet.Extensions.Commands
                 RemoveLonersFromGraph();
             }
 
-            var dgml = _graph.ToDirectedGraphML(_graph.GetVertexIdentity(),_graph.GetEdgeIdentity(),(n,d) => d.Label = n,(e,l) => l.Label = "");
+            var dgml = _graph.ToDirectedGraphML(_graph.GetVertexIdentity(), 
+                                                _graph.GetEdgeIdentity(),
+                                                (n, d) =>
+                                                {
+                                                    d.Label = n.ToString();
+                                                    d.Description = n.Details;
+                                                },
+                                                (e, l) => l.Label = e.Target.TargetInfo);
             if (File.Exists(Output))
                 File.Delete(Output);
+
             dgml.WriteXml(Output);
 
             var isDirectedAcyclicGraph = _graph.IsDirectedAcyclicGraph();
@@ -83,54 +100,66 @@ namespace NuGet.Extensions.Commands
 
         private void RemoveLonersFromGraph()
         {
-//If we have a vertex that isnt used in an edge, and we are looking for a cleaner graph, then delete the vertex...
+            //If we have a vertex that isn't used in an edge, and we are looking for a cleaner graph, then delete the vertex...
             var toDelete =
                 _graph.Vertices.Where(vertex => !_graph.Edges.Any(e => e.Source.Equals(vertex) || e.Target.Equals(vertex))).
-                    ToList();
+                      ToList();
             toDelete.ForEach(v =>
-                                 {
-                                     Console.WriteLine("Removing loner: {0}", v);
-                                     _graph.RemoveVertex(v);
-                                 });
+                             {
+                                 Console.WriteLine("Removing loner: {0}", v);
+                                 _graph.RemoveVertex(v);
+                             });
         }
 
         private void RecursePackageDependencies(IPackage package)
         {
             Console.WriteLine("Adding package and dependencies: {0}", package.Id);
-            _graph.AddVertex(package.Id.ToLowerInvariant());
+            _graph.AddVertex(_packageInfoFactory.From(package));
             //We are going to ignore the TargetFramework for these purposes...
-            foreach (var dependency in package.DependencySets.SelectMany(p => p.Dependencies))
+            foreach (PackageDependency dependency in package.DependencySets.SelectMany(p => p.Dependencies))
             {
-                if (!_graph.Vertices.Contains(package.Id.ToLowerInvariant()))
-                    RecursePackageDependencies((IPackage)dependency);
-                _graph.AddVerticesAndEdge(new Edge<string>(package.Id.ToLowerInvariant(), dependency.Id.ToLowerInvariant()));
+                _graph.AddVerticesAndEdge(new Edge<IPackageInfo>(_packageInfoFactory.From(package),
+                                                                 _packageInfoFactory.From(dependency)));
             }
         }
 
 
         private IEnumerable<IPackage> FilterPackageList(IQueryable<IPackage> packageSource)
-          {
-              IQueryable<IPackage> packages;
-              if (Arguments.Count > 0 && !string.IsNullOrEmpty(Arguments[0]))
-              {
-                  packages = packageSource.Where(p => p.Id.Equals(Arguments[0], StringComparison.OrdinalIgnoreCase));
-              }
-              else
-              {
-                  packages = packageSource.OrderBy(p => p.Id);
-              }
-              return packages;
-          }
+        {
+            IQueryable<IPackage> packages;
+            if (Arguments.Count > 0 && !string.IsNullOrEmpty(Arguments[0]))
+            {
+                packages = packageSource.Where(p => p.Id.Equals(Arguments[0], StringComparison.OrdinalIgnoreCase));
+            }
+            else
+            {
+                packages = packageSource.OrderBy(p => p.Id);
+            }
+            return packages;
+        }
 
         private void OutputElapsedTime(Stopwatch sw)
         {
             Console.WriteLine("Completed graph in {0} seconds", sw.Elapsed.TotalSeconds);
         }
+
         private IPackageRepository GetRepository()
         {
+            FixSource();
+
             var repository = AggregateRepositoryHelper.CreateAggregateRepositoryFromSources(RepositoryFactory, SourceProvider, Source);
             repository.Logger = Console;
             return repository;
+        }
+
+        private void FixSource()
+        {
+            // Allow to run without source or with "." as current folder
+            if (Source.Count == 0 || (Source.Count == 1 && Source.Contains(".")))
+            {
+                Source.Clear();
+                Source.Add(Environment.CurrentDirectory);
+            }
         }
     }
 }
